@@ -1,5 +1,3 @@
-# Clan_Bot_Assistant
- 
 # Clan Management Bot 🤖
 
 **Clan Management Bot** is a powerful Discord bot designed to streamline the creation, management, and tracking of clans. It provides robust tools for administrators and members to handle clan-related tasks efficiently, all within the Discord platform.

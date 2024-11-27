@@ -1,0 +1,33 @@
+package Bot;
+
+import Command.ManagerCommands;
+import net.dv8tion.jda.api.OnlineStatus;
+import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
+import net.dv8tion.jda.api.utils.MemberCachePolicy;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
+import javax.security.auth.login.LoginException;
+import java.util.Arrays;
+import java.util.EnumSet;
+
+public class Bot {
+    final String token = "MTMxMDE3MzY4NTI2ODc0NjI2Mg.GeWkHX._DXswbdkA_PzB62kd2aoVarg2f4tFqkSU3WaVc";
+    public Bot() throws LoginException {
+        DefaultShardManagerBuilder manager = DefaultShardManagerBuilder.createDefault(token);
+        manager.setActivity(Activity.customStatus("Helping The Admin to Manage Clan Related Things"));
+        manager.setAutoReconnect(true);
+        manager.setStatus(OnlineStatus.ONLINE);
+        manager.addEventListeners(new ManagerCommands()); // add all new event
+
+        //enable all privilage to do things
+        manager.enableIntents(EnumSet.allOf(GatewayIntent.class));
+        manager.setMemberCachePolicy(MemberCachePolicy.ALL);
+
+        // Abilita tutte le cache
+        manager.enableCache(Arrays.asList(CacheFlag.values()));
+        manager.build();
+        System.out.println("The bot is running");
+
+    }
+}

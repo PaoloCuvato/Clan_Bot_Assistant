@@ -31,4 +31,3 @@ public class ClanMember extends ListenerAdapter {
         this.losses--;
     }
 }
-

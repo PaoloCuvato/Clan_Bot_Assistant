@@ -37,6 +37,28 @@
             <artifactId>spring-boot-starter-web</artifactId>
             <version>3.2.1</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.10.1</version> <!-- Usa l'ultima versione disponibile -->
+        </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20210307</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver-sync</artifactId>
+            <version>4.9.0</version>
+        </dependency>
+
+            <dependency>
+                <groupId>org.mongodb</groupId>
+                <artifactId>mongodb-driver-sync</artifactId>
+                <version>4.7.0</version> <!-- Make sure to use the latest version -->
+            </dependency>
+
     </dependencies>
     <properties>
         <maven.compiler.source>17</maven.compiler.source>

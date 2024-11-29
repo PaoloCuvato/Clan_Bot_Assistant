@@ -82,7 +82,6 @@ public class Clan extends ListenerAdapter {
         return true;
     }
 
-
     public void addWin() {
         this.wins++;
     }

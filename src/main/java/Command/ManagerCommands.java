@@ -2,6 +2,8 @@ package Command;
 
 import ClanManager.Clan;
 import ClanManager.ClanStorage;
+import ClanManager.ClanStorageWithJson;
+import MongoDB.MongoDBManager;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
@@ -11,6 +13,7 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -89,17 +92,24 @@ public class ManagerCommands extends ListenerAdapter {
 
 
 
-        // Handling the /register_clan command
+// Handling the /register_clan command
+
         if (command.equals("register_clan")) {
             if (event.getMember() != null && event.getMember().hasPermission(Permission.ADMINISTRATOR)) {
+                // Estrai le opzioni dal comando
                 String clanName = event.getOption("name").getAsString();
-                User user = (User) event.getOption("user").getAsUser();
-                int victories = event.getOption("victories").getAsInt();
-                int losses = event.getOption("losses").getAsInt();
-                TextChannel channel = (TextChannel) event.getChannel();
-                Clan clan = new Clan(clanName, (User) user, victories, losses);
+                User user = (User) event.getOption("user").getAsUser(); // Utente che crea il clan
+                int victories = event.getOption("victories").getAsInt();  // Vittorie
+                int losses = event.getOption("losses").getAsInt();       // Perdite
+                TextChannel channel = (TextChannel) event.getChannel();   // Canale in cui inviare il messaggio
 
-                // Creazione dell'embed per il riepilogo
+                // Crea il nuovo clan
+                Clan clan = new Clan(clanName, user, victories, losses);
+
+                // Inserisci il clan nel database MongoDB
+                MongoDBManager.insertClan(clan);
+
+                // Crea l'embed per il riepilogo
                 EmbedBuilder builder = new EmbedBuilder();
                 builder.setTitle("▬▬▬▬ Clan Registered Successfully! ▬▬▬▬");
                 builder.setColor(Color.GREEN);
@@ -113,8 +123,12 @@ public class ManagerCommands extends ListenerAdapter {
 
                 // Invio dell'embed come risposta
                 event.replyEmbeds(builder.build()).queue();
+            } else {
+                // Risposta nel caso in cui il membro non abbia i permessi necessari
+                event.reply("You don't have the required permissions to register a clan.").setEphemeral(true).queue();
             }
         }
+
         if (event.getName().equals("add_user")) {
             String clanName = event.getOption("clan_name").getAsString();
             User user = event.getOption("user").getAsUser();
@@ -459,6 +473,34 @@ public class ManagerCommands extends ListenerAdapter {
         }
     }
     //test3
+
+    @Override
+    public void onMessageReceived(MessageReceivedEvent event) {
+        // Un esempio di comando per recuperare un clan dal database
+        if (event.getMessage().getContentRaw().equals("!getClanData")) {
+            String clanName = "NewClan";  // Sostituisci con il nome reale del clan
+            Clan clan = MongoDBManager.getClanByName(clanName);
+
+            if (clan != null) {
+                event.getChannel().sendMessage("Clan found: " + clan.getName()).queue();
+            } else {
+                event.getChannel().sendMessage("Clan not found.").queue();
+            }
+        }
+
+        // Altri comandi per inserire, aggiornare o eliminare clan
+
+        if (event.getMessage().getContentRaw().equals("!addClan")) {
+            Clan newClan = new Clan();
+            newClan.setName("NewClan");
+            newClan.setWins(0);
+            newClan.setLosses(0);
+            MongoDBManager.insertClan(newClan);
+            event.getChannel().sendMessage("Clan added successfully!").queue();
+        }
+
+        // Altri comandi per aggiornare o eliminare clan
+    }
 
     @Override
     public void onGuildReady(GuildReadyEvent event) {

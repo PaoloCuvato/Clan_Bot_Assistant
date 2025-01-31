@@ -425,25 +425,31 @@ public class ManagerCommands extends ListenerAdapter {
 
             // Controlla se il clan esiste
             if (ClanStorage.hasClan(clanName)) {
-                // Rimuovi il clan
-                boolean isDeleted = ClanStorage.deleteClan(clanName);
+                // Rimuovi il clan dalla memoria
+                ClanStorage.removeClan(clanName);
 
-                if (isDeleted) {
+                // Rimuovi il clan dal database
+                boolean isDeletedFromDB = ClanStorage.deleteClanFromDatabase(clanName);
+
+                if (isDeletedFromDB) {
                     EmbedBuilder embedBuilder = new EmbedBuilder();
                     embedBuilder.setTitle("▬▬▬▬▬▬ Clan Deleted Successfully ▬▬▬▬▬▬▬");
                     embedBuilder.setDescription(
-                            " > **The clan `" + clanName + "` has been successfully deleted.**\n\n" +
+                            " > **The clan `" + clanName + "` has been successfully deleted from both memory and database.**\n\n" +
                                     "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
                     embedBuilder.setColor(Color.decode("#B90000")); // Colore rosso per indicare la cancellazione
                     embedBuilder.setImage("https://media1.tenor.com/m/qvsXglbsb7oAAAAd/shinra-tensei.gif");
                     event.replyEmbeds(embedBuilder.build()).queue();
+                    System.out.println("Clan: "+ clanName +" Successfully deleted from the DB");
+
                 } else {
-                    event.reply("Failed to delete the clan. Please try again.").setEphemeral(true).queue();
+                    event.reply("Failed to delete the clan from the database. Please try again.").setEphemeral(true).queue();
                 }
             } else {
                 event.reply("The clan **" + clanName + "** does not exist.").setEphemeral(true).queue();
             }
         }
+
 
         if (event.getName().equals("ft_request")) {
             String clanName = event.getOption("clan_name").getAsString();

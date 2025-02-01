@@ -4,9 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3b262208-d821-4e0f-b39a-d652720c0813" name="Changes" comment="modified to send data to mongo db">
-      <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
+    <list default="true" id="3b262208-d821-4e0f-b39a-d652720c0813" name="Changes" comment="now you if you delete a clan, you delete him even on the DB">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/Bot/Bot.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Bot/Bot.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/ClanManager/ClanStorage.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ClanManager/ClanStorage.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/Command/ManagerCommands.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Command/ManagerCommands.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -35,16 +36,16 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Application.Main.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.Main.executor": "Run",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true"
   }
-}</component>
+}]]></component>
   <component name="RunManager">
     <configuration name="Main" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="org.example.Main" />
@@ -89,19 +90,28 @@
       <option name="project" value="LOCAL" />
       <updated>1732906097157</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="now you if you delete a clan, you delete him even on the DB">
+      <option name="closed" value="true" />
+      <created>1738353501459</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1738353501459</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="modified to send data to mongo db" />
-    <option name="LAST_COMMIT_MESSAGE" value="modified to send data to mongo db" />
+    <MESSAGE value="now you if you delete a clan, you delete him even on the DB" />
+    <option name="LAST_COMMIT_MESSAGE" value="now you if you delete a clan, you delete him even on the DB" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/ClanManager/ClanStorage.java</url>
-          <line>25</line>
+          <line>34</line>
           <option name="timeStamp" value="4" />
         </line-breakpoint>
       </breakpoints>

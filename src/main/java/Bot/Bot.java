@@ -1,5 +1,6 @@
 package Bot;
 
+import ClanManager.ClanStorage;
 import Command.ManagerCommands;
 import MongoDB.MongoDBManager;
 import net.dv8tion.jda.api.OnlineStatus;
@@ -24,6 +25,8 @@ public class Bot {
         manager.setAutoReconnect(true);
         manager.setStatus(OnlineStatus.ONLINE);
         manager.addEventListeners(new ManagerCommands()); // Aggiungi i comandi
+        manager.addEventListeners(new ClanStorage());
+
 
         // Abilita i permessi di intenti
         manager.enableIntents(EnumSet.allOf(GatewayIntent.class));

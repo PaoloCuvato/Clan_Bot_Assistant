@@ -352,11 +352,13 @@ public class ManagerCommands extends ListenerAdapter {
             // Costruzione della lista dei clan
             StringBuilder clanList = new StringBuilder();
             clanList.append("**Registered Clans:**\n"); // Linea introduttiva
+            System.out.println("Number of clans: " + allClans.size());
 
             for (String clanName : allClans.keySet()) {
                 Clan clan = allClans.get(clanName);
                 clanList.append("  > * ").append(clanName)
                         .append(" - Members: ").append(clan.getMemberCount()).append("\n");
+                System.out.println("Clan found: " + clanName);
             }
 
             // Controllo se ci sono clan

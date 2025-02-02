@@ -64,6 +64,26 @@ public class MongoDBManager {
         }
     }
 
+    public static boolean updateClanNameInDatabase(String oldName, String newName) {
+        MongoCollection<Document> collection = getDatabase().getCollection("clans");
+
+        // Check if the clan exists in the database
+        Document query = new Document("name", oldName);
+        Document update = new Document("$set", new Document("name", newName));
+
+        try {
+            if (collection.updateOne(query, update).getModifiedCount() > 0) {
+                System.out.println("✅ Clan name updated in MongoDB: " + oldName + " ➝ " + newName);
+                return true;
+            } else {
+                System.out.println("❌ Error: Clan " + oldName + " was not found in the database.");
+                return false;
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error updating clan name in the database: " + e.getMessage());
+            return false;
+        }
+    }
 
 
 

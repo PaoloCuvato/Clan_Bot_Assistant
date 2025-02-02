@@ -281,26 +281,27 @@ public class ManagerCommands extends ListenerAdapter {
             String oldName = event.getOption("old_name").getAsString();
             String newName = event.getOption("new_name").getAsString();
 
-            // Controllo se esiste già un clan con il vecchio nome
             if (ClanStorage.hasClan(oldName)) {
-                // Modifica del nome del clan esistente
-                if (ClanStorage.updateClanName(oldName, newName)) {
+                boolean success = ClanStorage.updateClanName(oldName, newName);
+
+                if (success) {
                     EmbedBuilder embedBuilder = new EmbedBuilder();
-                    embedBuilder.setTitle("▬▬▬▬▬ Clan Name Updated Successfully! ▬▬▬▬");
+                    embedBuilder.setTitle("✅ Clan Name Updated Successfully!");
                     embedBuilder.setDescription(
-                                    "\n\n > * **Old Name** ->   "+ oldName +
-                                    "\n\n > * **New Name** ->   "+ newName +
+                            "\n\n > * **Old Name** ->   " + oldName +
+                                    "\n\n > * **New Name** ->   " + newName +
                                     "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
                     embedBuilder.setImage("https://media1.tenor.com/m/lhsiMCdib-IAAAAd/itachi-uchiha-forehead-protector.gif");
                     embedBuilder.setColor(Color.decode("#20B2AA"));
                     event.replyEmbeds(embedBuilder.build()).queue();
-
                 } else {
-                    event.reply("Failed to update the clan name. Please try again.").setEphemeral(true).queue();
+                    event.reply("⚠️ Error: Unable to update the clan name,check if a clan with that name already exist").setEphemeral(true).queue();
                 }
-
+            } else {
+                event.reply("⚠️ Error: Clan **" + oldName + "** does not exist.").setEphemeral(true).queue();
             }
         }
+
 
 
         if (event.getName().equals("clan_member_list")) {

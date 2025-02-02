@@ -63,22 +63,52 @@ public class ClanStorage extends ListenerAdapter {
     }
 
     // Aggiorna il nome di un clan in memoria
+//    public static boolean updateClanName(String oldName, String newName) {
+//        if (!hasClan(oldName)) {
+//            return false; // Il clan con il vecchio nome non esiste
+//        }
+//        if (newName == null || newName.trim().isEmpty() || hasClan(newName)) {
+//            throw new IllegalArgumentException("New clan name is invalid or already exists.");
+//        }
+//        // Recupera il clan e rimuove la vecchia entry
+//        Clan clan = clans.get(oldName);
+//        clans.remove(oldName);
+//
+//        // Aggiorna il nome del clan e reinseriscilo con il nuovo nome
+//        clan.updateClanName(newName);
+//        clans.put(newName, clan);
+//        return true;
+//    }
     public static boolean updateClanName(String oldName, String newName) {
         if (!hasClan(oldName)) {
-            return false; // Il clan con il vecchio nome non esiste
+            System.out.println("❌ Error: Clan " + oldName + " does not exist in memory.");
+            return false; // Clan not found in memory
         }
-        if (newName == null || newName.trim().isEmpty() || hasClan(newName)) {
-            throw new IllegalArgumentException("New clan name is invalid or already exists.");
+        if (hasClan(newName)) {
+            System.out.println("❌ Error: A clan with the name " + newName + " already exists.");
+            return false; // The new name is already in use
         }
-        // Recupera il clan e rimuove la vecchia entry
+
+        // Retrieve the clan and remove the old name
         Clan clan = clans.get(oldName);
         clans.remove(oldName);
 
-        // Aggiorna il nome del clan e reinseriscilo con il nuovo nome
+        // Update the clan name
         clan.updateClanName(newName);
-        clans.put(newName, clan);
+        clans.put(newName, clan); // Save the clan with the new name
+
+        // Update the database
+        boolean dbUpdated = MongoDBManager.updateClanNameInDatabase(oldName, newName);
+
+        if (!dbUpdated) {
+            System.out.println("⚠️ Warning: Database update failed!");
+            return false;
+        }
+
+        System.out.println("✅ Clan name updated successfully: " + oldName + " ➝ " + newName);
         return true;
     }
+
 
     // Rimuovi un clan dalla memoria
     public static boolean deleteClan(String clanName) {

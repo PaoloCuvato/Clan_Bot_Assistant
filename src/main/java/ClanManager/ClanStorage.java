@@ -21,6 +21,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static MongoDB.MongoDBManager.getDatabase;
+
 public class ClanStorage extends ListenerAdapter {
     static Guild guild;
     // Getter per tutti i clan in memoria
@@ -153,7 +155,7 @@ public class ClanStorage extends ListenerAdapter {
 
     // Trova il clan di appartenenza di un utente (dal database)
     public static Clan getClanByUserFromDatabase(User user) {
-        MongoCollection<Document> collection = MongoDBManager.getDatabase().getCollection("clans");
+        MongoCollection<Document> collection = getDatabase().getCollection("clans");
 
         // Crea il filtro per trovare un clan che contiene l'utente
         FindIterable<Document> iterable = collection.find(Filters.eq("members", user.getId())); // Assuming "members" is an array of user IDs
@@ -210,7 +212,7 @@ public class ClanStorage extends ListenerAdapter {
 
 
     public static void loadAllClansFromDatabase() {
-        MongoCollection<Document> collection = MongoDBManager.getDatabase().getCollection("clans");
+        MongoCollection<Document> collection = getDatabase().getCollection("clans");
 
         // Verifica la connessione al database
         if (collection == null) {
@@ -237,6 +239,52 @@ public class ClanStorage extends ListenerAdapter {
             }
         }
     }
+
+    public static boolean updateClanWinsInDatabase(String clanName, int newWins) {
+        MongoCollection<Document> collection = getDatabase().getCollection("clans");
+
+        // Creiamo la query per trovare il clan
+        Document query = new Document("name", clanName);
+
+        // Creiamo l'update per modificare solo le vittorie
+        Document update = new Document("$set", new Document("wins", newWins));
+
+        try {
+            if (collection.updateOne(query, update).getModifiedCount() > 0) {
+                System.out.println("✅ Clan wins updated in MongoDB: " + clanName + " ➝ Wins: " + newWins);
+                return true;
+            } else {
+                System.out.println("❌ Error: Clan " + clanName + " not found in the database.");
+                return false;
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error updating clan wins in the database: " + e.getMessage());
+            return false;
+        }
+    }
+    public static boolean updateClanLossesInDatabase(String clanName, int newLosses) {
+        MongoCollection<Document> collection = getDatabase().getCollection("clans");
+
+        // Creiamo la query per trovare il clan
+        Document query = new Document("name", clanName);
+
+        // Creiamo l'update per modificare solo le sconfitte
+        Document update = new Document("$set", new Document("losses", newLosses));
+
+        try {
+            if (collection.updateOne(query, update).getModifiedCount() > 0) {
+                System.out.println("✅ Clan losses updated in MongoDB: " + clanName + " ➝ Losses: " + newLosses);
+                return true;
+            } else {
+                System.out.println("❌ Error: Clan " + clanName + " not found in the database.");
+                return false;
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error updating clan losses in the database: " + e.getMessage());
+            return false;
+        }
+    }
+
 
 
 
@@ -292,8 +340,6 @@ public class ClanStorage extends ListenerAdapter {
         System.out.println("User not found in guild: " + userName);  // Log se l'utente non viene trovato
         return null;
     }
-
-
 
     @Override
     public void onGuildReady(GuildReadyEvent event) {

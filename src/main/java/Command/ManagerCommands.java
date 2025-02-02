@@ -28,6 +28,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import static ClanManager.ClanStorage.updateClanLossesInDatabase;
+import static ClanManager.ClanStorage.updateClanWinsInDatabase;
+
 public class ManagerCommands extends ListenerAdapter {
 
     @Override
@@ -194,46 +197,59 @@ public class ManagerCommands extends ListenerAdapter {
             String clanName = event.getOption("clan_name").getAsString();
             int newWins = event.getOption("wins").getAsInt();
 
-            // Trova il clan nel ClanStorage
             Clan clan = ClanStorage.getClan(clanName);
             if (clan == null) {
                 event.reply("Clan `" + clanName + "` does not exist!").setEphemeral(true).queue();
                 return;
             }
 
-            // Aggiorna le vittorie usando il setter
+            // Aggiorna localmente e nel database
             clan.setWins(newWins);
+            boolean updated = updateClanWinsInDatabase(clanName, newWins);
+
             EmbedBuilder embed = new EmbedBuilder();
-            embed.setTitle("▬▬▬▬▬  Victories Updated Successfully ▬▬▬▬▬ ");
+            embed.setTitle("▬▬▬▬▬ Victories Updated Successfully ▬▬▬▬▬");
             embed.setColor(Color.decode("#1CAFEC"));
             embed.setDescription("**The victories of the clan have been updated successfully!**");
             embed.addField("**Clan Name:**", clan.getName(), true);
             embed.addField("**New Wins:**", String.valueOf(clan.getWins()), true);
             embed.setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
-            event.replyEmbeds(embed.build()).queue();
+
+            if (updated) {
+                event.replyEmbeds(embed.build()).queue();
+            } else {
+                event.reply("❌ Error updating clan wins in the database.").setEphemeral(true).queue();
+            }
         }
+
 
         if (event.getName().equals("edit_losses")) {
             String clanName = event.getOption("clan_name").getAsString();
             int newLosses = event.getOption("losses").getAsInt();
 
-            // Trova il clan nel ClanStorage
             Clan clan = ClanStorage.getClan(clanName);
             if (clan == null) {
                 event.reply("Clan `" + clanName + "` does not exist!").setEphemeral(true).queue();
                 return;
             }
 
-            // Aggiorna le sconfitte usando il setter
+            // Aggiorna localmente e nel database
             clan.setLosses(newLosses);
+            boolean updated = updateClanLossesInDatabase(clanName, newLosses);
+
             EmbedBuilder embed = new EmbedBuilder();
-            embed.setTitle("▬▬▬▬▬  Losses Updated Successfully ▬▬▬▬▬");
+            embed.setTitle("▬▬▬▬▬ Losses Updated Successfully ▬▬▬▬▬");
             embed.setColor(Color.decode("#776644"));
             embed.setDescription("**The losses of the clan have been updated successfully!**");
             embed.addField("**Clan Name:**", clan.getName(), true);
             embed.addField("**New Losses:**", String.valueOf(clan.getLosses()), true);
             embed.setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
-            event.replyEmbeds(embed.build()).queue();
+
+            if (updated) {
+                event.replyEmbeds(embed.build()).queue();
+            } else {
+                event.reply("❌ Error updating clan losses in the database.").setEphemeral(true).queue();
+            }
         }
 
         if (event.getName().equals("info_user")) {
@@ -286,9 +302,9 @@ public class ManagerCommands extends ListenerAdapter {
 
                 if (success) {
                     EmbedBuilder embedBuilder = new EmbedBuilder();
-                    embedBuilder.setTitle("✅ Clan Name Updated Successfully!");
+                    embedBuilder.setTitle("▬▬▬▬▬ Clan Name Updated Successfully! ▬▬▬▬");
                     embedBuilder.setDescription(
-                            "\n\n > * **Old Name** ->   " + oldName +
+                                    "\n\n > * **Old Name** ->   " + oldName +
                                     "\n\n > * **New Name** ->   " + newName +
                                     "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
                     embedBuilder.setImage("https://media1.tenor.com/m/lhsiMCdib-IAAAAd/itachi-uchiha-forehead-protector.gif");
@@ -301,7 +317,6 @@ public class ManagerCommands extends ListenerAdapter {
                 event.reply("⚠️ Error: Clan **" + oldName + "** does not exist.").setEphemeral(true).queue();
             }
         }
-
 
 
         if (event.getName().equals("clan_member_list")) {
@@ -377,8 +392,8 @@ public class ManagerCommands extends ListenerAdapter {
 
 
         if (event.getName().equals("clan_stat")) {
-            //  String clanName = Objects.requireNonNull(event.getOption("clan_name")).getAsString();
             String clanName = event.getOption("clan_name").getAsString();
+            System.out.println("Received clan name: " + clanName);
 
             // Recupera il clan dal nome
             Clan clan = ClanStorage.getClan(clanName);
@@ -389,40 +404,63 @@ public class ManagerCommands extends ListenerAdapter {
 
             // Ottieni la lista dei membri del clan
             ArrayList<User> clanMembers = clan.getListClanMember();
+            System.out.println("Number of members: " + clanMembers.size());
 
             // Crea l'embed
             EmbedBuilder embedBuilder = new EmbedBuilder();
             embedBuilder.setTitle("▬▬▬▬▬▬▬▬ Clan Info ▬▬▬▬▬▬▬▬"); // Titolo con il nome del clan
             embedBuilder.setColor(Color.red);
 
-            // Aggiungi le informazioni principali/
+            // Aggiungi le informazioni principali
             embedBuilder.addField("**Clan Name**", clan.getName(), false);
             embedBuilder.addField("**Wins**", String.valueOf(clan.getWins()), true);
             embedBuilder.addField("**Losses**", String.valueOf(clan.getLosses()), true);
             embedBuilder.addField("**Creation Date**", clan.getFormattedCreationDate(), false);
 
-            // Costruzione della lista membri
+// Costruzione della lista membri
             StringBuilder memberList = new StringBuilder();
             memberList.append("**List of Members:**\n"); // Linea introduttiva
 
-            for (User member : clanMembers) {
-                memberList.append("  > * ").append(member.getName())
-                        .append(" - ").append(member.getAsMention()).append("\n");
-            }
+// Verifica se i membri non sono null o vuoti
+            if (clanMembers != null && !clanMembers.isEmpty()) {
+                System.out.println("Clan has members, proceeding with list...");
 
-            // Controllo se ci sono membri
-            if (clanMembers.isEmpty()) {
+                for (User member : clanMembers) {
+                    System.out.println("Processing member: " + member.getName());  // Stampa il nome completo con tag
+
+                    // Prendi solo la parte del nome (senza il tag)
+                    String memberName = member.getEffectiveName();
+
+                    System.out.println("Extracted member name: " + memberName);  // Stampa solo il nome senza tag
+
+                    memberList.append("  > * ").append(memberName)  // Usa solo il nome, non il tag
+                            .append(" - ").append(member.getAsMention()).append("\n");
+                    System.out.println("Embed content: " + embedBuilder.build().toData().toString());
+
+                }
+            } else {
+                System.out.println("No members found in this clan.");
                 memberList.append("No members in this clan.");
             }
 
-            // Imposta descrizione ed eventuale conteggio
+// Verifica se la lista dei membri è stata correttamente formattata
+            System.out.println("Member list generated: \n" + memberList.toString());
+
+// Imposta la descrizione e il conteggio
             embedBuilder.setDescription(memberList.toString());
             embedBuilder.appendDescription("\n**Total members in this clan: ** " + clanMembers.size());
-            embedBuilder.setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
 
-            // Rispondi con l'embed
-            event.replyEmbeds(embedBuilder.build()).queue();
+// Verifica che l'embed stia per essere inviato
+            System.out.println("Sending embed...");
+
+// Rispondi con l'embed
+            event.replyEmbeds(embedBuilder.build()).queue(
+                    success -> System.out.println("Embed sent successfully"),
+                    failure -> System.out.println("Error sending embed: " + failure.getMessage())
+            );
+
         }
+
         if (event.getName().equals("delete_clan")) {
             String clanName = event.getOption("clan_name").getAsString();
 

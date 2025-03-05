@@ -156,7 +156,7 @@ public class ManagerCommands extends ListenerAdapter {
                 // Embed remains the same
                 EmbedBuilder embed = new EmbedBuilder();
                 embed.setTitle(" Player Added Successfully to the clan");
-                embed.setTitle("▬▬▬ User Registered Successfully to a Clan! ▬▬▬");
+                embed.setTitle("▬▬▬ User Registered Successfully to a Clan! ▬▬▬▬");
                 embed.setColor(Color.decode("#859BC6"));
                 embed.setDescription("**Your operation was successful!\nThe player has been added to the clan.**");
                 embed.addField("**Player Id: **", user.getId(), true);
@@ -165,7 +165,8 @@ public class ManagerCommands extends ListenerAdapter {
                 embed.addField("**Victories: **", String.valueOf(clan.getWins()), true);
                 embed.addField("**Losses: **", String.valueOf(clan.getLosses()), true);
                 embed.addField("**Clan Creation Date: **", clan.getFormattedCreationDate(), false);
-                embed.setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
+                embed.setImage("https://media1.tenor.com/m/hmS-_I4TaGAAAAAd/dyar-and.gif");
+                embed.setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
                 //     embed.setFooter(user.getName() +"  "+user.getEffectiveAvatarUrl());
                 event.replyEmbeds(embed.build()).queue();
             } catch (IllegalStateException e) {
@@ -195,14 +196,16 @@ public class ManagerCommands extends ListenerAdapter {
 
                 // Embed remains the same
                 EmbedBuilder embed = new EmbedBuilder();
-                embed.setTitle("▬▬▬ User Kicked Successfully of the Clan! ▬▬▬");
+                embed.setTitle("▬▬▬▬ User Kicked Successfully of the Clan! ▬▬▬▬");
                 embed.setColor(Color.red);
                 embed.setDescription("**Your operation was successful!\nThe player has been kicked out of the clan.**");
                 embed.addField("**Player Id: **", user.getId(), true);
                 embed.addField("**Player Name: **", user.getEffectiveName(), true);
                 embed.addField("**Clan Name: **", clan.getName(), false);
                 embed.addField("**Clan Creation Date: **", clan.getFormattedCreationDate(), true);
-                embed.setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
+                embed.setImage("https://media1.tenor.com/m/kUaBa_GPTfAAAAAC/obito-death.gif");
+
+                embed.setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
                 //     embed.setFooter(user.getName() +"  "+user.getEffectiveAvatarUrl());
                 event.replyEmbeds(embed.build()).queue();
             } catch (IllegalStateException e) {

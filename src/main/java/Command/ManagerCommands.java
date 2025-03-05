@@ -28,8 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static ClanManager.ClanStorage.updateClanLossesInDatabase;
-import static ClanManager.ClanStorage.updateClanWinsInDatabase;
+import static ClanManager.ClanStorage.*;
 
 public class ManagerCommands extends ListenerAdapter {
 
@@ -319,78 +318,6 @@ public class ManagerCommands extends ListenerAdapter {
         }
 
 
-        if (event.getName().equals("clan_member_list")) {
-            String clanName = Objects.requireNonNull(event.getOption("clan_name")).getAsString();
-
-            // Recupera il clan dal nome
-            Clan clan = ClanStorage.getClan(clanName);
-            if (clan == null) {
-                event.reply("The clan **" + clanName + "** does not exist.").setEphemeral(true).queue();
-                return;
-            }
-
-            // Ottieni la lista dei membri del clan
-            ArrayList<User> clanMembers = clan.getListClanMember();
-            EmbedBuilder embedBuilder = new EmbedBuilder();
-            embedBuilder.setTitle("**Clan:** " + clanName); // Titolo con il nome del clan
-            embedBuilder.setColor(Color.decode("#FFD151")); // Colore dell'embed
-
-            // Costruzione della lista membri
-            StringBuilder memberList = new StringBuilder();
-            memberList.append("**List of Members:**\n"); // Linea introduttiva
-
-            for (User member : clanMembers) {
-                memberList.append("  > * ").append(member.getName())
-                        .append(" - ").append(member.getAsMention()).append("\n");
-            }
-
-            // Controllo se ci sono membri
-            if (clanMembers.isEmpty()) {
-                memberList.append("No members in this clan.");
-            }
-
-            // Imposta descrizione ed eventuale conteggio
-            embedBuilder.setDescription(memberList.toString());
-            embedBuilder.appendDescription("\n**Total members in this clan: ** " + clanMembers.size());
-
-            // Rispondi con l'embed
-            event.replyEmbeds(embedBuilder.build()).queue();
-        }
-
-        if (event.getName().equals("list_all_clan")) {
-            // Recupera tutti i clan
-            Map<String, Clan> allClans = ClanStorage.getClans();
-
-            EmbedBuilder embedBuilder = new EmbedBuilder();
-            embedBuilder.setTitle("**List of All Clans**"); // Titolo dell'embed
-            embedBuilder.setColor(Color.decode("#FFD151")); // Colore dell'embed
-
-            // Costruzione della lista dei clan
-            StringBuilder clanList = new StringBuilder();
-            clanList.append("**Registered Clans:**\n"); // Linea introduttiva
-            System.out.println("Number of clans: " + allClans.size());
-
-            for (String clanName : allClans.keySet()) {
-                Clan clan = allClans.get(clanName);
-                clanList.append("  > * ").append(clanName)
-                        .append(" - Members: ").append(clan.getMemberCount()).append("\n");
-                System.out.println("Clan found: " + clanName);
-            }
-
-            // Controllo se ci sono clan
-            if (allClans.isEmpty()) {
-                clanList.append("No clans are currently registered.");
-            }
-
-            // Imposta descrizione ed eventuale conteggio
-            embedBuilder.setDescription(clanList.toString());
-            embedBuilder.appendDescription("\n**Total clans registered: ** " + allClans.size());
-
-            // Rispondi con l'embed
-            event.replyEmbeds(embedBuilder.build()).queue();
-        }
-
-
         if (event.getName().equals("clan_stat")) {
             String clanName = event.getOption("clan_name").getAsString();
             System.out.println("Received clan name: " + clanName);
@@ -417,11 +344,11 @@ public class ManagerCommands extends ListenerAdapter {
             embedBuilder.addField("**Losses**", String.valueOf(clan.getLosses()), true);
             embedBuilder.addField("**Creation Date**", clan.getFormattedCreationDate(), false);
 
-// Costruzione della lista membri
+            // Costruzione della lista membri
             StringBuilder memberList = new StringBuilder();
             memberList.append("**List of Members:**\n"); // Linea introduttiva
 
-// Verifica se i membri non sono null o vuoti
+            // Verifica se i membri non sono null o vuoti
             if (clanMembers != null && !clanMembers.isEmpty()) {
                 System.out.println("Clan has members, proceeding with list...");
 
@@ -435,30 +362,27 @@ public class ManagerCommands extends ListenerAdapter {
 
                     memberList.append("  > * ").append(memberName)  // Usa solo il nome, non il tag
                             .append(" - ").append(member.getAsMention()).append("\n");
-                    System.out.println("Embed content: " + embedBuilder.build().toData().toString());
-
                 }
             } else {
                 System.out.println("No members found in this clan.");
                 memberList.append("No members in this clan.");
             }
 
-// Verifica se la lista dei membri è stata correttamente formattata
+            // Verifica se la lista dei membri è stata correttamente formattata
             System.out.println("Member list generated: \n" + memberList.toString());
 
-// Imposta la descrizione e il conteggio
+            // Imposta la descrizione e il conteggio
             embedBuilder.setDescription(memberList.toString());
             embedBuilder.appendDescription("\n**Total members in this clan: ** " + clanMembers.size());
 
-// Verifica che l'embed stia per essere inviato
-            System.out.println("Sending embed...");
+            // Imposta il footer con la chiusura
+            embedBuilder.setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
 
-// Rispondi con l'embed
+            // Rispondi con l'embed
             event.replyEmbeds(embedBuilder.build()).queue(
                     success -> System.out.println("Embed sent successfully"),
                     failure -> System.out.println("Error sending embed: " + failure.getMessage())
             );
-
         }
 
         if (event.getName().equals("delete_clan")) {

@@ -35,8 +35,8 @@ public class MongoDBManager {
         MongoCollection<Document> collection = getDatabase().getCollection("clans");
 
         // Serializza la lista dei membri
-        List<String> memberNames = clan.getListClanMember().stream()
-                .map(user -> user.getAsTag())  // Usa il tag dell'utente
+        List<String> memberIDs = clan.getListClanMember().stream()
+                .map(user -> user.getId())  // Usa il tag dell'utente (MODIFICATO DA GET AS TAG A ID)
                 .collect(Collectors.toList());
 
         // Creazione del documento
@@ -44,7 +44,7 @@ public class MongoDBManager {
                 .append("wins", clan.getWins())
                 .append("losses", clan.getLosses())
                 .append("creationDate", clan.getFormattedCreationDate())
-                .append("members", memberNames);
+                .append("members", memberIDs);
 
         // Log documento da inserire
         System.out.println("Document to insert: " + clanDocument.toJson());

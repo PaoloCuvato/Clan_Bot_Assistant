@@ -488,10 +488,9 @@ public class ManagerCommands extends ListenerAdapter {
                                 "This FT request is open to all clans. If interested, reply to this message or contact the clan directly." +
                                 "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
                 );
-                embedBuilder.setColor(Color.ORANGE); // Colore distintivo per la richiesta
-                embedBuilder.setImage("https://media1.tenor.com/m/12s59XBmULkAAAAd/obito-uchiha-vs-kakashi-hatake-naruto-shippuden.gif");
-
-                // Rispondi con l'embed
+                embedBuilder.setColor(Color.orange); // Colore distintivo per la richiesta
+                embedBuilder.setImage("https://media1.tenor.com/m/hR6O2mOHfkgAAAAd/madara-madara-fighting.gif");
+                // vecchia gif kakashi vs obito: embedBuilder.setImage("https://media1.tenor.com/m/12s59XBmULkAAAAd/obito-uchiha-vs-kakashi-hatake-naruto-shippuden.gif");
                 event.replyEmbeds(embedBuilder.build()).queue();
             } else {
                 // Risposta se il clan non esiste

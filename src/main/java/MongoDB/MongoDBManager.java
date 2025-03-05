@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Updates.*;
 
 public class MongoDBManager {
     private static MongoClient mongoClient;
@@ -85,6 +86,47 @@ public class MongoDBManager {
         }
     }
 
+    public static boolean addUserToClan(String clanName, String userID) {
+        MongoCollection<Document> collection = getDatabase().getCollection("clans");
+
+        // Aggiungi l'ID all'array "members" solo se non è già presente
+        Document query = new Document("name", clanName);
+        Document update = new Document("$addToSet", new Document("members", userID));
+
+        try {
+            if (collection.updateOne(query, update).getModifiedCount() > 0) {
+                System.out.println("✅ User " + userID + " added to clan " + clanName);
+                return true;
+            } else {
+                System.out.println("⚠️ Clan not found or user already in the clan.");
+                return false;
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error adding user to clan: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public static boolean removeUserFromClan(String clanName, String userID) {
+        MongoCollection<Document> collection = getDatabase().getCollection("clans");
+
+        // Rimuove l'ID dall'array "members"
+        Document query = new Document("name", clanName);
+        Document update = new Document("$pull", new Document("members", userID));
+
+        try {
+            if (collection.updateOne(query, update).getModifiedCount() > 0) {
+                System.out.println("✅ User " + userID + " removed from clan " + clanName);
+                return true;
+            } else {
+                System.out.println("⚠️ Clan not found or user not in the clan.");
+                return false;
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error removing user from clan: " + e.getMessage());
+            return false;
+        }
+    }
 
 
 

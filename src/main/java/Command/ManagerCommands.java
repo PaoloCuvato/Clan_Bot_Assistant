@@ -77,7 +77,7 @@ public class ManagerCommands extends ListenerAdapter {
                                 "\n\n > * **/commands** -> __This command will show you all the commands of the bot__" +
                                 "\n\n > * **/register_clan** -> __This command will register a new clan in the bot__" +
                                 "\n\n > * **/edit_clan_name** -> __This command will edit the name of a specific clan__" +
-                                "\n\n > * **/info_clan** -> __This command will give you all info about a specific clan__" +
+                                "\n\n > * **/clan_stat** -> __This command will give you all info about a specific clan__" +
                                 "\n\n > * **/ft_request** -> __This command will make a friendly challenge between 2 random clans__" +
                                 "\n\n > * **/clan_win** -> __This command will update the victory count for a specific clan__" +
                                 "\n\n > * **/clan_loses** -> __This command will update the losses for a specific clan__" +
@@ -336,7 +336,7 @@ public class ManagerCommands extends ListenerAdapter {
             // Crea l'embed
             EmbedBuilder embedBuilder = new EmbedBuilder();
             embedBuilder.setTitle("▬▬▬▬▬▬▬▬ Clan Info ▬▬▬▬▬▬▬▬"); // Titolo con il nome del clan
-            embedBuilder.setColor(Color.red);
+            embedBuilder.setColor(Color.green);
 
             // Aggiungi le informazioni principali
             embedBuilder.addField("**Clan Name**", clan.getName(), false);
@@ -385,6 +385,64 @@ public class ManagerCommands extends ListenerAdapter {
             );
         }
 
+        if (event.getName().equals("clan_member_list")) {
+            String clanName = event.getOption("clan_name").getAsString();
+            System.out.println("Received clan name: " + clanName);
+
+            // Recupera il clan dal nome
+            Clan clan = ClanStorage.getClan(clanName);
+            if (clan == null) {
+                event.reply("The clan **" + clanName + "** does not exist.").setEphemeral(true).queue();
+                return;
+            }
+
+            // Ottieni la lista dei membri del clan
+            ArrayList<User> clanMembers = clan.getListClanMember();
+            System.out.println("Number of members: " + clanMembers.size());
+
+            // Crea l'embed
+            EmbedBuilder embedBuilder = new EmbedBuilder();
+            embedBuilder.setTitle("▬▬▬▬▬▬▬▬▬▬ " + clan.getName() + " ▬▬▬▬▬▬▬▬▬▬▬"); // Titolo con il nome del clan
+            embedBuilder.setColor(Color.green);
+
+            // Costruzione della lista membri
+            StringBuilder memberList = new StringBuilder();
+            memberList.append("**List of Members:**\n"); // Linea introduttiva
+
+            // Verifica se i membri non sono null o vuoti
+            if (clanMembers != null && !clanMembers.isEmpty()) {
+                System.out.println("Clan has members, proceeding with list...");
+
+                for (User member : clanMembers) {
+                    System.out.println("Processing member: " + member.getName());  // Stampa il nome completo con tag
+                    // Prendi solo la parte del nome (senza il tag)
+                    String memberName = member.getEffectiveName();
+                    System.out.println("Extracted member name: " + memberName);  // Stampa solo il nome senza tag
+
+                    memberList.append("  > * ").append(memberName)  // Usa solo il nome, non il tag
+                            .append(" - ").append(member.getAsMention()).append("\n");
+                }
+            } else {
+                System.out.println("No members found in this clan.");
+                memberList.append("No members in this clan.");
+            }
+
+            // Verifica se la lista dei membri è stata correttamente formattata
+            System.out.println("Member list generated: \n" + memberList.toString());
+
+            // Imposta la descrizione e il conteggio
+            embedBuilder.setDescription(memberList.toString());
+            embedBuilder.appendDescription("\n**Total members in this clan: ** " + clanMembers.size()+ "\n\n ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
+            embedBuilder.setImage("https://media1.tenor.com/m/SbU1R7BA53gAAAAC/naruto-data-naruto.gif");
+
+
+            // Rispondi con l'embed
+            event.replyEmbeds(embedBuilder.build()).queue(
+                    success -> System.out.println("Embed sent successfully"),
+                    failure -> System.out.println("Error sending embed: " + failure.getMessage())
+            );
+        }
+// gif https://media.tenor.com/SbU1R7BA53gAAAAM/naruto-data-naruto.gif
         if (event.getName().equals("delete_clan")) {
             String clanName = event.getOption("clan_name").getAsString();
 

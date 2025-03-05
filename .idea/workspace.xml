@@ -4,12 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3b262208-d821-4e0f-b39a-d652720c0813" name="Changes" comment="added edit wins and losses but error while you try to get member list">
+    <list default="true" id="3b262208-d821-4e0f-b39a-d652720c0813" name="Changes" comment="FINALLY FIXED THE MAP ON THE DB AND THE BUG ON CLAN STAT">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/ClanManager/Clan.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ClanManager/Clan.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/ClanManager/ClanStorage.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ClanManager/ClanStorage.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/Command/ManagerCommands.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Command/ManagerCommands.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/MongoDB/MongoDBManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/MongoDB/MongoDBManager.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -126,7 +123,15 @@
       <option name="project" value="LOCAL" />
       <updated>1738505380556</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="FINALLY FIXED THE MAP ON THE DB AND THE BUG ON CLAN STAT">
+      <option name="closed" value="true" />
+      <created>1741185535171</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1741185535171</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -135,7 +140,8 @@
     <MESSAGE value="you loaad the list of all clan when the guild on guild ready" />
     <MESSAGE value="he update the name of the clan in the db and locally on the bot" />
     <MESSAGE value="added edit wins and losses but error while you try to get member list" />
-    <option name="LAST_COMMIT_MESSAGE" value="added edit wins and losses but error while you try to get member list" />
+    <MESSAGE value="FINALLY FIXED THE MAP ON THE DB AND THE BUG ON CLAN STAT" />
+    <option name="LAST_COMMIT_MESSAGE" value="FINALLY FIXED THE MAP ON THE DB AND THE BUG ON CLAN STAT" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

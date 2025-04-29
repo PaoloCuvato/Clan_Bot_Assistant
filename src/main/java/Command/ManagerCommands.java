@@ -2,7 +2,6 @@ package Command;
 
 import ClanManager.Clan;
 import ClanManager.ClanStorage;
-import ClanManager.ClanStorageWithJson;
 import MongoDB.MongoDBManager;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;

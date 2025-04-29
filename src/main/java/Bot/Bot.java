@@ -2,6 +2,7 @@ package Bot;
 
 import ClanManager.ClanStorage;
 import Command.ManagerCommands;
+import MatchMaking.MatchMakingCommand;
 import MongoDB.MongoDBManager;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
@@ -24,7 +25,10 @@ public class Bot {
         manager.setActivity(Activity.customStatus("Helping The Admin to Manage Clan Related Things"));
         manager.setAutoReconnect(true);
         manager.setStatus(OnlineStatus.ONLINE);
-        manager.addEventListeners(new ManagerCommands()); // Aggiungi i comandi
+        manager.addEventListeners(
+                                    new ManagerCommands(),
+                                    new MatchMakingCommand()
+        ); // Aggiungi i comandi
         manager.addEventListeners(new ClanStorage());
 
 

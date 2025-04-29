@@ -187,7 +187,7 @@ public class MatchMakingCommand extends ListenerAdapter {
             System.err.println("Log channel not found!");
             return;
         }
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd:MM:yyyy HH_mm_ss");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd:MM:yyyy HH:mm:ss");
         String creationTime = LocalDateTime.now().format(formatter);
 
         EmbedBuilder eb = new EmbedBuilder()

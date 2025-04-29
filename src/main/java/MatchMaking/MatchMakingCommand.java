@@ -3,18 +3,21 @@ package MatchMaking;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.GenericSelectMenuInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
-import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
+import net.dv8tion.jda.api.interactions.components.text.TextInput;
+import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
+import net.dv8tion.jda.api.interactions.modals.Modal;
 
 import java.awt.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +30,9 @@ public class MatchMakingCommand extends ListenerAdapter {
 
     private final Map<String, String> platformSelections = new HashMap<>();
     private final Map<String, String> gameSelections = new HashMap<>();
+    private final Map<String, String> playerGameNameSelections = new HashMap<>();
+
+    GuildReadyEvent  guildOnReadyEvent;
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
@@ -110,14 +116,58 @@ public class MatchMakingCommand extends ListenerAdapter {
             gameSelections.put(event.getMember().getId(), selectedGame);
             event.getMessage().delete().queue();
             System.out.println(selectedGame);
+            String userId = event.getUser().getId();
+
+            String selectedPlatform = platformSelections.get(userId);
+            String inputLabel = switch (selectedPlatform.toLowerCase()) {
+                case "pc" -> "Enter your Steam Name Or Id";
+                case "xbox" -> "Enter your Xbox Name Account";
+                case "psn" -> "Enter your PSN Name Account";
+                case "nintendo switch" -> "Enter your Nintendo Switch Name Account";
+                default -> "Enter your Player ID";
+            };
+
+            TextInput playerIdInput = TextInput.create("player_id", inputLabel, TextInputStyle.SHORT)
+                    .setPlaceholder("e.g. naruto123")
+                    .setRequired(true)
+                    .build();
+
+            Modal modal = Modal.create("submit_player_id", "Enter Your ID")
+                    .addActionRow(playerIdInput)
+                    .build();
+
+            event.replyModal(modal).queue(); // Questo apre il modale all’utente
         }
     }
 
 
+    @Override
+    public void onModalInteraction(ModalInteractionEvent event) {
+
+            if (event.getModalId().equals("submit_player_id")) {
+                String userId = event.getUser().getId();
+                String playerGameName = event.getValue("player_id").getAsString();
+                playerGameNameSelections.put(event.getMember().getId(),playerGameName);
+                sendLobbyRecap( userId,  event.getUser().getName(), gameSelections.get(userId), platformSelections.get(userId), playerGameName);
+                // Puoi salvarlo o loggarlo
+                System.out.println("User " + userId + " submitted: " + playerGameName);
+
+                // Stampa l'intera mappa
+                System.out.println("📋 Current PlayerGameNameSelections Map:");
+                playerGameNameSelections.forEach((k, v) ->
+                        System.out.println(" > User ID: " + k + " -> PlayerGameName: " + v)
+                );
+
+                event.reply("✅ Your ID has been saved successfully!")
+                        .setEphemeral(true)
+                        .queue();
+            }
+        }
 
 
     @Override
     public void onGuildReady(GuildReadyEvent event) {
+        this.guildOnReadyEvent = event;
         List<CommandData> commands = new ArrayList<>();
         Long guildId = 856147888550969345L; // Replace with your server's ID
         Guild guild = event.getJDA().getGuildById(guildId);
@@ -126,6 +176,41 @@ public class MatchMakingCommand extends ListenerAdapter {
 
        guild.updateCommands().addCommands(commands).queue();
     }
+
+    public void sendLobbyRecap( String userId, String username, String game, String platform, String playerName) {
+
+        // ID del canale di log (sostituisci con il tuo)
+        long logChannelId = 1366842485791526994L; // <-- Sostituisci con il tuo vero ID
+
+        TextChannel logChannel = guildOnReadyEvent.getGuild().getTextChannelById(logChannelId);
+        if (logChannel == null) {
+            System.err.println("Log channel not found!");
+            return;
+        }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd:MM:yyyy HH_mm_ss");
+        String creationTime = LocalDateTime.now().format(formatter);
+
+        EmbedBuilder eb = new EmbedBuilder()
+                .setTitle("▬▬▬▬▬▬▬▬ Lobby Created ▬▬▬▬▬▬▬▬ ")
+                .setDescription(
+                        "**A new matchmaking lobby has been created!**\n\n" +
+                                "**User Info:**\n" +
+                                "> **Discord ID:** `" + userId + "`\n" +
+                                "> **Username:** `" + username + "`\n\n" +
+                                "**Lobby Info:**\n" +
+                                "> **Game:** `" + game + "`\n" +
+                                "> **Platform:** `" + platform + "`\n" +
+                                "> **Player Name:** `" + playerName + "`\n\n" +
+                                "**Created At:** `" + creationTime + "` \n\n"+
+                        "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+
+                )
+                .setColor(Color.WHITE);
+                //.setImage("https://cdn.discordapp.com/attachments/1350633984740032582/1362835603489554652/Shunsui_Gif_2.gif?ex=6803d710&is=68028590&hm=0ff797ef08a8b6d066295b3f45e59bcd53b7ae8288f5d85381fa6573e553d5df&");
+
+        logChannel.sendMessageEmbeds(eb.build()).queue();
+    }
+
 }
 
 

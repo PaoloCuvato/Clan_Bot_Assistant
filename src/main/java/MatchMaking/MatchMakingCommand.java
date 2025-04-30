@@ -3,9 +3,11 @@ package MatchMaking;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.GenericSelectMenuInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
@@ -14,6 +16,7 @@ import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 
 import java.awt.*;
 import java.time.LocalDateTime;
@@ -143,7 +146,35 @@ public class MatchMakingCommand extends ListenerAdapter {
 
     @Override
     public void onModalInteraction(ModalInteractionEvent event) {
+        if (event.getModalId().equals("submit_player_id")) {
+            String userId = event.getUser().getId();
+            String playerGameName = event.getValue("player_id").getAsString();
 
+            playerGameNameSelections.put(event.getMember().getId(), playerGameName);
+
+            sendLobbyRecap(userId, event.getUser().getName(), gameSelections.get(userId), platformSelections.get(userId), playerGameName);
+
+            System.out.println("User " + userId + " submitted: " + playerGameName);
+            System.out.println("📋 Current PlayerGameNameSelections Map:");
+            playerGameNameSelections.forEach((k, v) ->
+                    System.out.println(" > User ID: " + k + " -> PlayerGameName: " + v)
+            );
+
+            // Embed creation
+            EmbedBuilder embed = new EmbedBuilder()
+                    .setTitle("🎮 Lobby created from " + playerGameName)
+                    .setDescription("A player has started a new lobby.\nClick the button below to join!")
+                    .setColor(Color.decode("#252428"));
+
+            // Button creation
+            Button joinButton = Button.secondary("join_lobby", "🎮 Join Lobby");
+
+            event.replyEmbeds(embed.build())
+                    .addActionRow(joinButton)
+                    .setEphemeral(false)
+                    .queue();
+        }
+/*
             if (event.getModalId().equals("submit_player_id")) {
                 String userId = event.getUser().getId();
                 String playerGameName = event.getValue("player_id").getAsString();
@@ -162,8 +193,25 @@ public class MatchMakingCommand extends ListenerAdapter {
                         .setEphemeral(true)
                         .queue();
             }
+
+ */
         }
 
+    @Override
+    public void onButtonInteraction(ButtonInteractionEvent event) {
+        if (event.getComponentId().equals("join_lobby")) {
+            event.deferReply().queue(); // optional: if you want to acknowledge immediately
+
+            // Create a thread from the message
+            event.getMessage().createThreadChannel("lobby")
+                    .setAutoArchiveDuration(ThreadChannel.AutoArchiveDuration.TIME_24_HOURS)
+                    .queue(thread -> {
+                        thread.sendMessage("🎮 Welcome to the lobby!").queue();
+                    });
+
+            event.getHook().sendMessage("✅ Lobby thread created!").setEphemeral(true).queue();
+        }
+    }
 
     @Override
     public void onGuildReady(GuildReadyEvent event) {

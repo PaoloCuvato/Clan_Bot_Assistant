@@ -61,7 +61,7 @@ public class ForumMatchmaking extends ListenerAdapter {
 
     GuildReadyEvent  guildOnReadyEvent;
     private static final String GUILD_ID = "1261880269573459990";
-    private static final long FORUM_CHANNEL_ID = 1367168791921819758L;
+    private static final long FORUM_CHANNEL_ID = 1367186054045761616L;
 
 
     @Override
@@ -205,7 +205,7 @@ public class ForumMatchmaking extends ListenerAdapter {
             sendLobbyRecap( userId,  event.getUser().getName(), gameSelections.get(userId), platformSelections.get(userId), playerGameName);
 
             // Rispondi all'utente
-            event.reply("✅ Lobby post creata nel canale Forum!").setEphemeral(true).queue();
+            event.reply("✅ Lobby successfully created on the Lobby forum channel").setEphemeral(true).queue();
         }
 
 
@@ -275,21 +275,16 @@ public class ForumMatchmaking extends ListenerAdapter {
 
         // Tagga entrambi nel thread
         event.getChannel().sendMessageFormat(
-                "<@%s>, è entrato <@%s> nella lobby!",
+                "<@%s>, Joined on <@%s> on the lobby!",
                 hostId, joinerId
         ).queue();
 
         // Ack privato
-        event.reply("✅ Ti sei unito con successo!").setEphemeral(true).queue();
+        event.reply("✅ You joined successfully on the lobby!").setEphemeral(true).queue();
     }
 
 
-    private void createForumPost(Guild guild,
-                                 String userId,
-                                 String username,
-                                 String game,
-                                 String platform,
-                                 String playerName)
+    private void createForumPost(Guild guild, String userId, String username, String game, String platform, String playerName)
     {
         // 1) Prendo il ForumChannel
         ForumChannel forum = guild.getForumChannelById(FORUM_CHANNEL_ID);
@@ -300,19 +295,30 @@ public class ForumMatchmaking extends ListenerAdapter {
 
         // 2) Embed di recap
         EmbedBuilder eb = new EmbedBuilder()
-                .setTitle("🎮 Nuova Lobby di " + username)
+                .setTitle("▬▬▬▬▬▬▬▬ Lobby Created ▬▬▬▬▬▬▬▬")
+//                .setDescription(
+//                        "**Creator:** <@" + userId + ">\n" +
+//                                "**Game:** "      + game     + "\n" +
+//                                "**Platform:** "+ platform + "\n" +
+//                                "**In-game name:** `" + playerName + "`\n\n" +
+//                                "Click On The Button to Join"
+//
+//                )
                 .setDescription(
-                        "**Creatore:** <@" + userId + ">\n" +
-                                "**Gioco:** "      + game     + "\n" +
-                                "**Piattaforma:** "+ platform + "\n" +
-                                "**In-game name:** `" + playerName + "`\n\n" +
-                                "Clicca sul bottone per unirti!"
+                        "**A new matchmaking lobby has been created!**\n\n" +
+                                "**Lobby Info:**\n" +
+                                "> **Creator:** <@" + userId + ">\n" +
+                                "> **Game:** `" + game + "`\n" +
+                                "> **Platform:** `" + platform + "`\n" +
+                                "> **Player Name:** `" + playerName + "`\n\n" +
+                                "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+
                 )
                 .setColor(Color.decode("#252428"))
                 .setTimestamp(Instant.now());
 
         // 3) Bottone “Unisciti”
-        Button join = Button.success("join_lobby:" + userId, "🎮 Unisciti");
+        Button join = Button.success("join_lobby:" + userId, "🎮 Join");
 
         // 4) Costruisco il MessageCreateData
         MessageCreateData msgData = new MessageCreateBuilder()
@@ -321,7 +327,7 @@ public class ForumMatchmaking extends ListenerAdapter {
                 .build();
 
         // 5) Creo il post-forum (ThreadChannel) senza ulteriori code
-        forum.createForumPost("Lobby di " + username, msgData)
+        forum.createForumPost("Lobby Of " + username, msgData)
                 .queue();
     }
 

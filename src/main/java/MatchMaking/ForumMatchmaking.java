@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -21,6 +22,9 @@ import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import java.awt.*;
 import java.time.Instant;
@@ -283,19 +287,26 @@ public class ForumMatchmaking extends ListenerAdapter {
         forum.createForumPost("Lobby Of " + username, msgData)
                 .queue();
     }
+    public void deleteArchivedPosts(Guild guild) {
+        ForumChannel forum = guild.getForumChannelById(FORUM_CHANNEL_ID);
+        if (forum == null) {
+            System.err.println("Forum channel not found!");
+            return;
+        }
 
+        forum.retrieveArchivedPublicThreadChannels().queue(archivedThreads -> {
+            if (archivedThreads.isEmpty()) {
+                System.out.println("No archived threads found.");
+                return;
+            }
 
-
-    @Override
-    public void onGuildReady(GuildReadyEvent event) {
-        this.guildOnReadyEvent = event;
-        List<CommandData> commands = new ArrayList<>();
-        Long guildId = 856147888550969345L; // Replace with your server's ID
-        Guild guild = event.getJDA().getGuildById(guildId);
-
-        commands.add(Commands.slash("matchmaking", "Open a Matchmaking Request"));
-
-        guild.updateCommands().addCommands(commands).queue();
+            for (ThreadChannel thread : archivedThreads) {
+                thread.delete().queue(
+                        success -> System.out.println("Deleted archived thread: " + thread.getName()),
+                        error -> System.err.println("Failed to delete thread: " + thread.getName())
+                );
+            }
+        });
     }
 
     public void sendLobbyRecap(String userId, String username, String game, String platform, String playerName) {
@@ -330,5 +341,23 @@ public class ForumMatchmaking extends ListenerAdapter {
         //.setImage("https://cdn.discordapp.com/attachments/1350633984740032582/1362835603489554652/Shunsui_Gif_2.gif?ex=6803d710&is=68028590&hm=0ff797ef08a8b6d066295b3f45e59bcd53b7ae8288f5d85381fa6573e553d5df&");
 
         logChannel.sendMessageEmbeds(eb.build()).queue();
+    }
+
+    @Override
+    public void onGuildReady(GuildReadyEvent event) {
+        this.guildOnReadyEvent = event;
+        List<CommandData> commands = new ArrayList<>();
+        Long guildId = 856147888550969345L; // Replace with your server's ID
+        Guild guild = event.getJDA().getGuildById(guildId);
+
+        commands.add(Commands.slash("matchmaking", "Open a Matchmaking Request"));
+
+        guild.updateCommands().addCommands(commands).queue();
+
+        // 🔁 Scheduler che ogni 6 ore elimina i post archiviati
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        scheduler.scheduleAtFixedRate(() -> {
+            deleteArchivedPosts(guild);
+        }, 0, 24, TimeUnit.HOURS); // ⏰ Ogni 24 ore
     }
 }

@@ -1,50 +1,29 @@
 package MatchMaking;
 
-import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.entities.channel.ChannelType;
-import net.dv8tion.jda.api.entities.channel.attribute.IPermissionContainer;
 import net.dv8tion.jda.api.entities.channel.concrete.Category;
+import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.GenericSelectMenuInteractionEvent;
-import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
-import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
-import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.managers.channel.concrete.ThreadChannelManager;
-
-import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
-import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
-import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 
-import java.time.Instant;
-import java.util.concurrent.TimeUnit;
-
-
 import java.awt.*;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -55,15 +34,11 @@ public class ForumMatchmaking extends ListenerAdapter {
     private final Map<String, String> platformSelections = new HashMap<>();
     private final Map<String, String> gameSelections = new HashMap<>();
     private final Map<String, String> playerGameNameSelections = new HashMap<>();
-
     private final Map<String, String> lobbyOwners = new HashMap<>();
+    public GuildReadyEvent  guildOnReadyEvent;
     public Long lobbyId;
-
-    GuildReadyEvent  guildOnReadyEvent;
     private static final String GUILD_ID = "1261880269573459990";
     private static final long FORUM_CHANNEL_ID = 1367186054045761616L;
-
-
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         String command = event.getName();
@@ -209,28 +184,6 @@ public class ForumMatchmaking extends ListenerAdapter {
         }
 
 
-
-/*
-            if (event.getModalId().equals("submit_player_id")) {
-                String userId = event.getUser().getId();
-                String playerGameName = event.getValue("player_id").getAsString();
-                playerGameNameSelections.put(event.getMember().getId(),playerGameName);
-                sendLobbyRecap( userId,  event.getUser().getName(), gameSelections.get(userId), platformSelections.get(userId), playerGameName);
-                // Puoi salvarlo o loggarlo
-                System.out.println("User " + userId + " submitted: " + playerGameName);
-
-                // Stampa l'intera mappa
-                System.out.println("📋 Current PlayerGameNameSelections Map:");
-                playerGameNameSelections.forEach((k, v) ->
-                        System.out.println(" > User ID: " + k + " -> PlayerGameName: " + v)
-                );
-
-                event.reply("✅ Your ID has been saved successfully!")
-                        .setEphemeral(true)
-                        .queue();
-            }
-
- */
 
     public void createLobby(String userId, String playerGameName, Guild guild) {
         // Recupera o crea la categoria "Lobby"

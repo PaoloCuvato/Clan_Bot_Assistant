@@ -4,8 +4,10 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.attribute.IPermissionContainer;
+import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
@@ -13,6 +15,7 @@ import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.GenericSelectMenuInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -26,6 +29,7 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.managers.channel.concrete.ThreadChannelManager;
 
 import java.awt.*;
 import java.time.LocalDateTime;
@@ -37,14 +41,15 @@ import java.util.Map;
 
 
 
-
 public class MatchMakingCommand extends ListenerAdapter {
 
     private final Map<String, String> platformSelections = new HashMap<>();
     private final Map<String, String> gameSelections = new HashMap<>();
     private final Map<String, String> playerGameNameSelections = new HashMap<>();
+    private static final String GUILD_ID = "1261880269573459990";
     private final Map<String, String> lobbyOwners = new HashMap<>();
     private final Map<String, String> lobbyHostsByMessageId = new HashMap<>();
+    public Long lobbyId;
 
     GuildReadyEvent  guildOnReadyEvent;
 
@@ -161,7 +166,7 @@ public class MatchMakingCommand extends ListenerAdapter {
             String userId = event.getUser().getId();
             String playerGameName = event.getValue("player_id").getAsString();
             playerGameNameSelections.put(event.getMember().getId(), playerGameName);
-            lobbyOwners.put(userId, userId); // l'host è se stesso, lo salvi come chiave e valore
+            lobbyOwners.put(userId, this.lobbyId.toString()); // l'host è se stesso, lo salvi come chiave e valore
 
             sendLobbyRecap(userId, event.getUser().getName(), gameSelections.get(userId), platformSelections.get(userId), playerGameName);
 
@@ -171,6 +176,11 @@ public class MatchMakingCommand extends ListenerAdapter {
                     System.out.println(" > User ID: " + k + " -> PlayerGameName: " + v)
             );
 
+            System.out.println("📋 Current lobbyOwners Map:");
+            lobbyOwners.forEach((k, v) ->
+                    System.out.println(" > User ID: " + k + " -> channelID: " + v)
+            );
+            createLobby(userId,event.getMember().getEffectiveName(),event.getGuild());
             // Embed creation
             EmbedBuilder embed = new EmbedBuilder()
                     .setTitle("🎮 Lobby created from " + playerGameName)
@@ -185,6 +195,8 @@ public class MatchMakingCommand extends ListenerAdapter {
                     .setEphemeral(false)
                     .queue();
         }
+
+
 /*
             if (event.getModalId().equals("submit_player_id")) {
                 String userId = event.getUser().getId();
@@ -208,8 +220,81 @@ public class MatchMakingCommand extends ListenerAdapter {
  */
         }
 
+    public void createLobby(String userId, String playerGameName, Guild guild) {
+        // Recupera o crea la categoria "Lobby"
+        Category category = guild.getCategoriesByName("Lobby", true)
+                .stream().findFirst()
+                .orElseGet(() -> guild.createCategory("Lobby").complete());
+
+        // Crea il nome del canale in modo che sia valido
+        String channelName = guild.getMemberById(userId).getEffectiveName() + " -lobby"; // Puoi modificare il nome come desideri
+        boolean lobbyExists = category.getTextChannels().stream().anyMatch(channel ->
+                channel.getName().equals(channelName));
+
+        if (lobbyExists) {
+            // Se la lobby esiste già, puoi inviare un messaggio di errore
+            return;
+        }
+
+        // Crea il canale privato
+        category.createTextChannel(channelName)
+                .addPermissionOverride(guild.getPublicRole(), 0L, Permission.VIEW_CHANNEL.getRawValue())
+                .addPermissionOverride(guild.getMemberById(userId),
+                        Permission.VIEW_CHANNEL.getRawValue()
+                                | Permission.MESSAGE_SEND.getRawValue()
+                                | Permission.MESSAGE_HISTORY.getRawValue(),
+                        0L)
+                .setTopic("Lobby Owner ID: " + userId)
+                .queue(channel -> {
+                    this.lobbyId = Long.valueOf(channel.getId());
+                    channel.sendMessage(guild.getMemberById(userId).getAsMention() + " — Your private lobby has been created!").queue();
+
+                });
+    }
+
+
+/*
+
     @Override
-    public void onButtonInteraction(ButtonInteractionEvent event) {
+        public void onButtonInteraction(ButtonInteractionEvent event) {
+            if (!event.getComponentId().equals("join_lobby")) return;
+
+            // Recupera il membro che ha cliccato il bottone
+            Member clicker = event.getMember();
+            String clickerId = clicker.getId();
+
+            // Ottieni l'ID del creatore della lobby, che dovresti avere salvato precedentemente
+            String lobbyOwnerId = lobbyOwners.get();
+
+            if (lobbyOwnerId == null) {
+                event.reply("❌ Lobby not found").setEphemeral(true).queue();
+                return;
+            }
+
+            // Recupera il canale della lobby
+            TextChannel lobbyChannel = event.getGuild().getTextChannelById(lobbyOwnerId + "-lobby");
+            if (lobbyChannel == null) {
+                event.reply("❌ Lobby channel not found").setEphemeral(true).queue();
+                return;
+            }
+
+            // Aggiungi il clicker al canale
+            lobbyChannel.getPermissionContainer()
+                    .upsertPermissionOverride(clicker)
+                    .setAllowed(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND)
+                    .queue();
+
+            // Messaggio di benvenuto nel canale della lobby
+            lobbyChannel.sendMessage("🎮 <@" + clickerId + "> has joined the lobby!").queue();
+
+            // Risposta effimera per confermare che l'utente è stato aggiunto
+            event.reply("✅ You've been added to the lobby!").setEphemeral(true).queue();
+
+
+
+
+ */
+        /*
         if (!event.getComponentId().equals("join_lobby")) return;
 
         Guild guild      = event.getGuild();
@@ -254,7 +339,9 @@ public class MatchMakingCommand extends ListenerAdapter {
 
         // 7) Conferma effimera al clicker
         event.reply("✅ Lobby thread created and you're in!").setEphemeral(true).queue();
-    }
+
+         */
+
 
 
     @Override

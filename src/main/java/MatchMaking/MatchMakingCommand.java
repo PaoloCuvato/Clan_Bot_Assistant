@@ -1,7 +1,11 @@
 package MatchMaking;
 
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.channel.ChannelType;
+import net.dv8tion.jda.api.entities.channel.attribute.IPermissionContainer;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
@@ -17,6 +21,11 @@ import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 import java.awt.*;
 import java.time.LocalDateTime;
@@ -34,6 +43,8 @@ public class MatchMakingCommand extends ListenerAdapter {
     private final Map<String, String> platformSelections = new HashMap<>();
     private final Map<String, String> gameSelections = new HashMap<>();
     private final Map<String, String> playerGameNameSelections = new HashMap<>();
+    private final Map<String, String> lobbyOwners = new HashMap<>();
+    private final Map<String, String> lobbyHostsByMessageId = new HashMap<>();
 
     GuildReadyEvent  guildOnReadyEvent;
 
@@ -149,8 +160,8 @@ public class MatchMakingCommand extends ListenerAdapter {
         if (event.getModalId().equals("submit_player_id")) {
             String userId = event.getUser().getId();
             String playerGameName = event.getValue("player_id").getAsString();
-
             playerGameNameSelections.put(event.getMember().getId(), playerGameName);
+            lobbyOwners.put(userId, userId); // l'host è se stesso, lo salvi come chiave e valore
 
             sendLobbyRecap(userId, event.getUser().getName(), gameSelections.get(userId), platformSelections.get(userId), playerGameName);
 
@@ -199,19 +210,52 @@ public class MatchMakingCommand extends ListenerAdapter {
 
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
-        if (event.getComponentId().equals("join_lobby")) {
-            event.deferReply().queue(); // optional: if you want to acknowledge immediately
+        if (!event.getComponentId().equals("join_lobby")) return;
 
-            // Create a thread from the message
-            event.getMessage().createThreadChannel("lobby")
-                    .setAutoArchiveDuration(ThreadChannel.AutoArchiveDuration.TIME_24_HOURS)
-                    .queue(thread -> {
-                        thread.sendMessage("🎮 Welcome to the lobby!").queue();
-                    });
+        Guild guild      = event.getGuild();
+        Member clicker   = event.getMember();
+        String clickerId = clicker.getId();
+        // Recupera l'host dal messageId salvato in onModalInteraction
+        String hostId    = lobbyHostsByMessageId.get(event.getMessage().getId());
 
-            event.getHook().sendMessage("✅ Lobby thread created!").setEphemeral(true).queue();
-        }
+        // 1) Elimina subito il messaggio col bottone
+        event.getMessage().delete().queue();
+
+        // 2) Crea un thread pubblico "lobby"
+        event.getMessage()
+                .createThreadChannel("lobby")
+                .setAutoArchiveDuration(ThreadChannel.AutoArchiveDuration.TIME_24_HOURS)
+                .queue(thread -> {
+                    IPermissionContainer perms = thread.getPermissionContainer();
+
+                    // 3) Nega VIEW_CHANNEL a tutti (@everyone)
+                    perms.upsertPermissionOverride(guild.getPublicRole())
+                            .setDenied(Permission.VIEW_CHANNEL)
+                            .queue();
+
+                    // 4) Concede VIEW + SEND al clicker
+                    perms.upsertPermissionOverride(clicker)
+                            .setAllowed(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND)
+                            .queue();
+
+                    // 5) Concede VIEW + SEND anche all’host
+                    if (hostId != null && !hostId.equals(clickerId)) {
+                        guild.retrieveMemberById(hostId).queue(hostMember ->
+                                        perms.upsertPermissionOverride(hostMember)
+                                                .setAllowed(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND)
+                                                .queue(),
+                                err -> System.err.println("Host non trovato: " + err.getMessage())
+                        );
+                    }
+
+                    // 6) Messaggio di benvenuto nel thread
+                    thread.sendMessage("🎮 <@" + clickerId + "> joined the lobby!").queue();
+                });
+
+        // 7) Conferma effimera al clicker
+        event.reply("✅ Lobby thread created and you're in!").setEphemeral(true).queue();
     }
+
 
     @Override
     public void onGuildReady(GuildReadyEvent event) {

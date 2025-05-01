@@ -7,6 +7,8 @@ import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
+import net.dv8tion.jda.api.entities.channel.forums.ForumTag;
+import net.dv8tion.jda.api.entities.channel.forums.ForumTagSnowflake;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -25,6 +27,23 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import net.dv8tion.jda.api.entities.channel.attribute.*;
+import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
+import net.dv8tion.jda.api.entities.channel.*;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
+import net.dv8tion.jda.api.entities.channel.attribute.*;
+import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
+import net.dv8tion.jda.api.utils.messages.MessageCreateData;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.utils.*;
+
+import java.awt.Color;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+
 
 import java.awt.*;
 import java.time.Instant;
@@ -151,41 +170,40 @@ public class ForumMatchmaking extends ListenerAdapter {
 
 
 
-        @Override
-        public void onModalInteraction(ModalInteractionEvent event) {
-            if (!event.getModalId().equals("submit_player_id")) return;
+    @Override
+    public void onModalInteraction(ModalInteractionEvent event) {
+        if (!event.getModalId().equals("submit_player_id")) return;
 
-            String uid    = event.getUser().getId();
-            String uname  = event.getUser().getName();
-            String game   = gameSelections.get(uid);
-            String pf     = platformSelections.get(uid);
-            String pgName = event.getValue("player_id").getAsString();
+        String uid = event.getUser().getId();
+        String uname = event.getUser().getName();
+        String game = gameSelections.get(uid);
+        String pf = platformSelections.get(uid);
+        String playerGameName = event.getValue("player_id").getAsString();
 
-            // Salva il nome in-game
-            playerGameNameSelections.put(uid, pgName);
+        // Salva il nome in-game
+        playerGameNameSelections.put(uid, playerGameName);
 
-            // Crea il post nel Forum
-            createForumPost(event.getGuild(), uid, uname, game, pf, pgName);
+        // Crea il post nel Forum
+        createForumPost(event.getGuild(), uid, uname, game, pf, playerGameName);
 
-            String userId = event.getUser().getId();
-            String playerGameName = event.getValue("player_id").getAsString();
-            playerGameNameSelections.put(event.getMember().getId(), playerGameName);
-            System.out.println("User " + userId + " submitted: " + playerGameName);
-            System.out.println("📋 Current PlayerGameNameSelections Map:");
-            playerGameNameSelections.forEach((k, v) ->
-                    System.out.println(" > User ID: " + k + " -> PlayerGameName: " + v)
-            );
+        // Log di debug
+        System.out.println("User " + uid + " submitted: " + playerGameName);
+        System.out.println("📋 Current PlayerGameNameSelections Map:");
+        playerGameNameSelections.forEach((k, v) ->
+                System.out.println(" > User ID: " + k + " -> PlayerGameName: " + v)
+        );
 
-            System.out.println("📋 Current lobbyOwners Map:");
-            lobbyOwners.forEach((k, v) ->
-                    System.out.println(" > User ID: " + k + " -> channelID: " + v)
-            );
+        System.out.println("📋 Current lobbyOwners Map:");
+        lobbyOwners.forEach((k, v) ->
+                System.out.println(" > User ID: " + k + " -> channelID: " + v)
+        );
 
-            sendLobbyRecap( userId,  event.getUser().getName(), gameSelections.get(userId), platformSelections.get(userId), playerGameName);
+        // Invia un riepilogo privato all'utente
+        sendLobbyRecap(uid, uname, game, pf, playerGameName);
 
-            // Rispondi all'utente
-            event.reply("✅ Lobby successfully created on the Lobby forum channel").setEphemeral(true).queue();
-        }
+        // Risposta all'utente
+        event.reply("✅ Lobby successfully created on the Lobby forum channel").setEphemeral(true).queue();
+    }
 
 
 
@@ -241,8 +259,7 @@ public class ForumMatchmaking extends ListenerAdapter {
     }
 
 
-    private void createForumPost(Guild guild, String userId, String username, String game, String platform, String playerName)
-    {
+    private void createForumPost(Guild guild, String userId, String username, String game, String platform, String playerName) {
         // 1) Prendo il ForumChannel
         ForumChannel forum = guild.getForumChannelById(FORUM_CHANNEL_ID);
         if (forum == null) {
@@ -250,17 +267,27 @@ public class ForumMatchmaking extends ListenerAdapter {
             return;
         }
 
-        // 2) Embed di recap
+        // 2) Recupero i tag disponibili e trovo quelli giusti per gioco e piattaforma
+        List<ForumTag> availableTags = forum.getAvailableTags();
+        List<ForumTagSnowflake> tagIds = new ArrayList<>();
+
+        // Aggiungi il tag del gioco
+        for (ForumTag tag : availableTags) {
+            if (tag.getName().equalsIgnoreCase(game)) {
+                tagIds.add(ForumTagSnowflake.fromId(tag.getId())); // Tag del gioco trovato, aggiunto alla lista
+            }
+        }
+
+        // Aggiungi il tag della piattaforma
+        for (ForumTag tag : availableTags) {
+            if (tag.getName().equalsIgnoreCase(platform)) {
+                tagIds.add(ForumTagSnowflake.fromId(tag.getId())); // Tag della piattaforma trovato, aggiunto alla lista
+            }
+        }
+
+        // 3) Embed di recap con le informazioni della lobby
         EmbedBuilder eb = new EmbedBuilder()
                 .setTitle("▬▬▬▬▬▬▬▬ Lobby Created ▬▬▬▬▬▬▬▬")
-//                .setDescription(
-//                        "**Creator:** <@" + userId + ">\n" +
-//                                "**Game:** "      + game     + "\n" +
-//                                "**Platform:** "+ platform + "\n" +
-//                                "**In-game name:** `" + playerName + "`\n\n" +
-//                                "Click On The Button to Join"
-//
-//                )
                 .setDescription(
                         "**A new matchmaking lobby has been created!**\n\n" +
                                 "**Lobby Info:**\n" +
@@ -269,24 +296,25 @@ public class ForumMatchmaking extends ListenerAdapter {
                                 "> **Platform:** `" + platform + "`\n" +
                                 "> **Player Name:** `" + playerName + "`\n\n" +
                                 "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
-
                 )
                 .setColor(Color.decode("#252428"))
                 .setTimestamp(Instant.now());
 
-        // 3) Bottone “Unisciti”
+        // 4) Bottone “Unisciti”
         Button join = Button.success("join_lobby:" + userId, "🎮 Join");
 
-        // 4) Costruisco il MessageCreateData
+        // 5) Costruisco il MessageCreateData
         MessageCreateData msgData = new MessageCreateBuilder()
                 .setEmbeds(eb.build())
                 .addActionRow(join)
                 .build();
 
-        // 5) Creo il post-forum (ThreadChannel) senza ulteriori code
+        // 6) Creo il post-forum (ThreadChannel) con i tag (gioco e piattaforma)
         forum.createForumPost("Lobby Of " + username, msgData)
+                .setTags(tagIds)
                 .queue();
     }
+
     public void deleteArchivedPosts(Guild guild) {
         ForumChannel forum = guild.getForumChannelById(FORUM_CHANNEL_ID);
         if (forum == null) {

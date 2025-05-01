@@ -109,7 +109,7 @@ public class ForumMatchmaking extends ListenerAdapter {
                     .setPlaceholder("Choose your game...")
                     .addOption("Storm Connections", "Storm Connections")
                     .addOption("Storm Evo", "Storm Evo")
-                    .addOption("Storm 4", "Storm4")
+                    .addOption("Storm 4", "Storm 4")
                     .addOption("Storm Trilogy", "Storm Trilogy")
                     .build();
 

@@ -190,12 +190,16 @@ public class ForumMatchmaking extends ListenerAdapter {
         String game = gameSelections.get(uid);
         String pf = platformSelections.get(uid);
         String playerGameName = event.getValue("player_id").getAsString();
+        String connection = connectionTypeSelections.get(uid);
 
         // Salva il nome in-game
         playerGameNameSelections.put(uid, playerGameName);
 
         // Crea il post nel Forum
-        createForumPost(event.getGuild(), uid, uname, game, pf, playerGameName);
+        createForumPost(event.getGuild(), uid, uname, game, pf,connection, playerGameName);
+
+        //Control if every haspmap size is too big
+        checkAndClearMaps();
 
         // Log di debug
         System.out.println("User " + uid + " submitted: " + playerGameName);
@@ -270,7 +274,7 @@ public class ForumMatchmaking extends ListenerAdapter {
     }
 
 
-    private void createForumPost(Guild guild, String userId, String username, String game, String platform, String playerName) {
+    private void createForumPost(Guild guild, String userId, String username, String game, String platform,String connection, String playerName) {
         // 1) Prendo il ForumChannel
         ForumChannel forum = guild.getForumChannelById(FORUM_CHANNEL_ID);
         if (forum == null) {
@@ -296,6 +300,14 @@ public class ForumMatchmaking extends ListenerAdapter {
             }
         }
 
+        // Add The Tag Connection at the post
+        for (ForumTag tag : availableTags){
+            if(tag.getName().equalsIgnoreCase(connection)){
+                tagIds.add(ForumTagSnowflake.fromId(tag.getId()));
+            }
+        }
+
+
         // 3) Embed di recap con le informazioni della lobby
         EmbedBuilder eb = new EmbedBuilder()
                 .setTitle("▬▬▬▬▬▬▬▬ Lobby Created ▬▬▬▬▬▬▬▬")
@@ -305,6 +317,7 @@ public class ForumMatchmaking extends ListenerAdapter {
                                 "> **Creator:** <@" + userId + ">\n" +
                                 "> **Game:** `" + game + "`\n" +
                                 "> **Platform:** `" + platform + "`\n" +
+                                "> **Connection:** `" + connection + "`\n" +
                                 "> **Player Name:** `" + playerName + "`\n\n" +
                                 "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
                 )
@@ -346,6 +359,28 @@ public class ForumMatchmaking extends ListenerAdapter {
                 );
             }
         });
+    }
+    public void checkAndClearMaps(){
+        if(platformSelections.size() >= 100 ){
+            platformSelections.clear();
+            System.out.println("PlatformSelection Map got cleaned up");
+        }
+        if(gameSelections.size() >= 100){
+            gameSelections.clear();
+            System.out.println("GameSelection Map got cleaned up");
+        }
+        if(playerGameNameSelections.size()  >= 100){
+            platformSelections.clear();
+            System.out.println("PlayerGameNameSelections Map got cleaned up");
+        }
+        if (lobbyOwners.size() >= 100){
+            lobbyOwners.clear();
+            System.out.println("LobbyOwners Map got cleaned up");
+        }
+        if (connectionTypeSelections.size() >= 100){
+            connectionTypeSelections.clear();
+            System.out.println("ConnectionTypeSelection Map got cleaned up");
+        }
     }
 
     public void sendLobbyRecap(String userId, String username, String game, String platform, String playerName) {

@@ -58,6 +58,7 @@ public class ForumMatchmaking extends ListenerAdapter {
     private final Map<String, String> gameSelections = new HashMap<>();
     private final Map<String, String> playerGameNameSelections = new HashMap<>();
     private final Map<String, String> lobbyOwners = new HashMap<>();
+    private final Map<String, String> connectionTypeSelections = new HashMap<>();
     public GuildReadyEvent  guildOnReadyEvent;
     public Long lobbyId;
     private static final String GUILD_ID = "1261880269573459990";
@@ -101,29 +102,27 @@ public class ForumMatchmaking extends ListenerAdapter {
                     .addActionRow(platformMenu) // Aggiungi il menu dropdown
                     .setEphemeral(true) // Risposta effimera
                     .queue();
+
         }
     }
 
+
     @Override
     public void onGenericSelectMenuInteraction(GenericSelectMenuInteractionEvent event) {
-        // Verifica che l'interazione provenga dal menu giusto
         if (event.getComponentId().equals("select_platform")) {
-            String selectedPlatform = (String) event.getValues().get(0); // "pc", "xbox", "psn"
-            // add the user to the store with his choice
-            platformSelections.put(event.getMember().getId(), selectedPlatform);
-            // Elimina il messaggio effimero che contiene il menu
+            String selectedPlatform = (String) event.getValues().get(0); // Ottieni la piattaforma selezionata
+            platformSelections.put(event.getUser().getId(), selectedPlatform);
+
+            // Elimina il messaggio del menu precedente
             event.getMessage().delete().queue();
-            System.out.println(selectedPlatform);
 
-
-            // Chiedi all'utente di scegliere il gioco
+            // Chiedi all'utente di selezionare il gioco
             EmbedBuilder gameEmbed = new EmbedBuilder();
             gameEmbed.setTitle("▬▬▬▬▬▬▬▬▬ Game Selection ▬▬▬▬▬▬▬▬▬");
             gameEmbed.setDescription("Now, please select the game you want to play.\n\n" +
                     "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
             gameEmbed.setColor(Color.decode("#252428")); // Puoi usare qualsiasi colore
 
-            // Menu per selezionare il gioco (ad esempio, titoli di giochi)
             StringSelectMenu gameMenu = StringSelectMenu.create("select_game")
                     .setPlaceholder("Choose your game...")
                     .addOption("Storm Connections", "Storm Connections")
@@ -132,31 +131,43 @@ public class ForumMatchmaking extends ListenerAdapter {
                     .addOption("Storm Trilogy", "Storm Trilogy")
                     .build();
 
-            // Risposta effimera con il nuovo embed di selezione del gioco
             event.replyEmbeds(gameEmbed.build())
-                    .addActionRow(gameMenu) // Aggiungi il menu per la selezione del gioco
-                    .setEphemeral(true) // Risposta effimera
+                    .addActionRow(gameMenu)
+                    .setEphemeral(true)
                     .queue();
         }
 
         if (event.getComponentId().equals("select_game")) {
-            String selectedGame = (String) event.getValues().get(0); // select the game chosen
-            gameSelections.put(event.getMember().getId(), selectedGame);
+            String selectedGame = (String) event.getValues().get(0); // Seleziona il gioco
+            gameSelections.put(event.getUser().getId(), selectedGame);
             event.getMessage().delete().queue();
-            System.out.println(selectedGame);
-            String userId = event.getUser().getId();
 
-            String selectedPlatform = platformSelections.get(userId);
-            String inputLabel = switch (selectedPlatform.toLowerCase()) {
-                case "pc" -> "Enter your Steam Name Or Id";
-                case "xbox" -> "Enter your Xbox Name Account";
-                case "psn" -> "Enter your PSN Name Account";
-                case "nintendo switch" -> "Enter your Nintendo Switch Name Account";
-                default -> "Enter your Player ID";
-            };
+            // Chiedi il tipo di connessione
+            EmbedBuilder connectionEmbed = new EmbedBuilder();
+            connectionEmbed.setTitle("▬▬▬▬▬▬▬▬▬ Connection Type ▬▬▬▬▬▬▬▬▬");
+            connectionEmbed.setDescription("Please select your internet connection type: \n\n" +
+                    "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
+            connectionEmbed.setColor(Color.decode("#252428"));
 
-            TextInput playerIdInput = TextInput.create("player_id", inputLabel, TextInputStyle.SHORT)
-                    .setPlaceholder("e.g. naruto123")
+            StringSelectMenu connectionMenu = StringSelectMenu.create("select_connection")
+                    .setPlaceholder("Select your connection type...")
+                    .addOption("Wi-Fi", "Wifi")
+                    .addOption("Ethernet (Cable)", "Ethernet")
+                    .build();
+
+            event.replyEmbeds(connectionEmbed.build())
+                    .addActionRow(connectionMenu)
+                    .setEphemeral(true)
+                    .queue();
+        }
+
+        if (event.getComponentId().equals("select_connection")) {
+            String selectedConnection = (String) event.getValues().get(0); // Seleziona la connessione
+            connectionTypeSelections.put(event.getUser().getId(), selectedConnection);
+            event.getMessage().delete().queue();
+
+            // Chiedi l'ID del giocatore tramite un modulo (Modal)
+            TextInput playerIdInput = TextInput.create("player_id", "Enter your Player ID", TextInputStyle.SHORT)
                     .setRequired(true)
                     .build();
 
@@ -164,7 +175,7 @@ public class ForumMatchmaking extends ListenerAdapter {
                     .addActionRow(playerIdInput)
                     .build();
 
-            event.replyModal(modal).queue(); // Questo apre il modale all’utente
+            event.replyModal(modal).queue(); // Apre il modale all’utente
         }
     }
 

@@ -49,8 +49,8 @@ public class AddInfoCardCommand extends ListenerAdapter {
                                 .addOption("Storm Connections", "Storm Connections")
                                 .addOption("Storm Evolution", "Storm Evolution")
                                 .addOption("Storm 4", "Storm 4")
-                                .addOption("Storm Trilogy", "Storm Trilogy")
                                 .addOption("Storm Revolution", "Storm Revolution")
+                                .addOption("Storm Trilogy", "Storm Trilogy")
                                 .build()
                 ).queue();
     }

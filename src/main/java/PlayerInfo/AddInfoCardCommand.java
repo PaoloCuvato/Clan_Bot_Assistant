@@ -49,8 +49,8 @@ public class AddInfoCardCommand extends ListenerAdapter {
                                 .addOption("Storm Connections", "Storm Connections")
                                 .addOption("Storm Evolution", "Storm Evolution")
                                 .addOption("Storm 4", "Storm 4")
-                                .addOption("Storm Revolution", "Storm Revolution")
                                 .addOption("Storm Trilogy", "Storm Trilogy")
+                                .addOption("Storm Revolution", "Storm Revolution")
                                 .build()
                 ).queue();
     }
@@ -83,11 +83,11 @@ public class AddInfoCardCommand extends ListenerAdapter {
             }
             case "select_languages" -> {
                 player.setSpokenLanguages(event.getValues().toArray(new String[0]));
-                askFinalModal(event); // replyModal può essere chiamato qui e questa linea manda il modal alla fine dei vari menu
+                askFinalModal(event); // replyModal può essere chiamato qui
             }
         }
     }
-    // vari embeded da chiamare
+
     private void askConnectionType(StringSelectInteractionEvent event) {
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("▬▬▬▬▬▬▬ Connection Type ▬▬▬▬▬▬▬")
@@ -99,7 +99,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
                 .setActionRow(
                         StringSelectMenu.create("select_connection")
                                 .addOption("WiFi", "WiFi")
-                                .addOption("Ethernet", "Ethernet")
+                                .addOption("Wired", "Wired")
                                 .build()
                 ).queue();
     }
@@ -161,7 +161,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
                                 .build()
                 ).queue();
     }
-   // modal finale emebeded
+
     private void askFinalModal(StringSelectInteractionEvent event) {
         TextInput playerName = TextInput.create("player_name", "In-Game Name", TextInputStyle.SHORT)
                 .setRequired(true)

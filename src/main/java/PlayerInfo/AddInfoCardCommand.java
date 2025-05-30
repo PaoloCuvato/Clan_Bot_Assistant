@@ -12,13 +12,9 @@ import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
 
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 public class AddInfoCardCommand extends ListenerAdapter {
-
-    private final Map<Long, PlayerInfo> sessions = new HashMap<>();
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
@@ -32,7 +28,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
         player.setDiscordUsername(user.getName());
         player.setLobbyCounter(0);
 
-        sessions.put(discordId, player);
+        PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
 
         System.out.println("New player Discord ID: " + discordId);
 
@@ -59,32 +55,43 @@ public class AddInfoCardCommand extends ListenerAdapter {
     @Override
     public void onStringSelectInteraction(StringSelectInteractionEvent event) {
         long discordId = event.getUser().getIdLong();
-        PlayerInfo player = sessions.get(discordId);
+        PlayerInfo player = PlayerInfoStorage.getPlayerInfo(discordId);
+
+        if (player == null) {
+            event.reply("❌ Player profile not found. Please use /add_info_card to create one.")
+                    .setEphemeral(true).queue();
+            return;
+        }
 
         switch (event.getComponentId()) {
             case "select_game" -> {
                 player.setGame(event.getValues().get(0));
+                PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
                 event.deferEdit().queue();
                 askConnectionType(event);
             }
             case "select_connection" -> {
                 player.setConnectionType(event.getValues().get(0));
+                PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
                 event.deferEdit().queue();
                 askCurrentRegion(event);
             }
             case "select_region" -> {
                 player.setCurrentRegion(event.getValues().get(0));
+                PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
                 event.deferEdit().queue();
                 askTargetRegion(event);
             }
             case "select_target_region" -> {
                 player.setTargetRegion(event.getValues().get(0));
+                PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
                 event.deferEdit().queue();
                 askLanguages(event);
             }
             case "select_languages" -> {
                 player.setSpokenLanguages(event.getValues().toArray(new String[0]));
-                askFinalModal(event); // replyModal può essere chiamato qui
+                PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
+                askFinalModal(event);
             }
         }
     }
@@ -164,10 +171,8 @@ public class AddInfoCardCommand extends ListenerAdapter {
     }
 
     private void askFinalModal(StringSelectInteractionEvent event) {
-        // Rimuovi i componenti dal messaggio per evitare interazioni extra
-        event.getHook().editOriginalComponents().queue(); // 🔴 Questo rimuove i dropdown
+        event.getHook().editOriginalComponents().queue(); // rimuove i componenti
 
-        // Crea i campi del modal
         TextInput playerName = TextInput.create("player_name", "In-Game Name", TextInputStyle.SHORT)
                 .setRequired(true)
                 .setPlaceholder("e.g. User1234")
@@ -189,37 +194,46 @@ public class AddInfoCardCommand extends ListenerAdapter {
                 .addActionRow(availableTime)
                 .build();
 
-        // Mostra il modal
         event.replyModal(modal).queue();
     }
-
 
     @Override
     public void onModalInteraction(ModalInteractionEvent event) {
         if (!event.getModalId().equals("final_modal")) return;
 
         long discordId = event.getUser().getIdLong();
-        PlayerInfo player = sessions.get(discordId);
+        PlayerInfo player = PlayerInfoStorage.getPlayerInfo(discordId);
+
+        if (player == null) {
+            event.reply("❌ Player profile not found. Please use /add_info_card to create one.")
+                    .setEphemeral(true).queue();
+            return;
+        }
 
         player.setPlayerName(event.getValue("player_name").getAsString());
 
         String hoursInput = event.getValue("hours_played").getAsString();
         try {
             int hours = Integer.parseInt(hoursInput);
-            player.setInGamePlayTime(hours + "");
+            player.setInGamePlayTime(String.valueOf(hours));
         } catch (NumberFormatException e) {
-            event.reply("❌ Player ninja card failed to create, please enter a valid number for hours played.").setEphemeral(true).queue();
+            event.reply("❌ Player ninja card failed to create, please enter a valid number for hours played.")
+                    .setEphemeral(true).queue();
             return;
         }
 
         player.setAvailablePlayTime(event.getValue("available_time").getAsString());
 
+        PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
+
         System.out.println("✅ Player Profile Completed:");
         System.out.println("Discord ID: " + player.getDiscordId());
         System.out.println(player);
+        // map print test
+        PlayerInfoStorage.printAllPlayers();
 
         event.reply("✅ Your player profile has been saved successfully!").setEphemeral(true).queue();
-        player.sendPlayerInfoLog(Objects.requireNonNull(event.getGuild()));
 
+        player.sendPlayerInfoLog(Objects.requireNonNull(event.getGuild()));
     }
 }

@@ -38,7 +38,22 @@ public class PlayerInfoStorage {
         playerSessions.clear();
         playerSessions.putAll(loadedSessions);
     }
+    // Nuovo metodo per stampare tutto il contenuto della mappa
+    public static void printAllPlayers() {
+        if (playerSessions.isEmpty()) {
+            System.out.println("No player info stored.");
+            return;
+        }
+
+        System.out.println("=== All Player Info ===");
+        playerSessions.forEach((discordId, playerInfo) -> {
+            System.out.println("Discord ID: " + discordId);
+            System.out.println(playerInfo);
+            System.out.println("-----------------------");
+        });
+    }
 }
+
 
 
 /*

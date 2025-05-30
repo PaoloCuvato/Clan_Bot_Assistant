@@ -59,25 +59,27 @@ public class PlayerInfo extends ListenerAdapter {
         EmbedBuilder eb = new EmbedBuilder()
                 .setTitle("▬▬▬▬▬▬ Ninja Card Created ▬▬▬▬▬▬ ")
                 .setDescription(
-                        "**A new Ninja Card has been created!**\n\n" +
-                                "**User Info:**\n" +
-                                "> **Discord ID:** `" + this.discordId + "`\n" +
-                                "> **Username:** `" + this.discordUsername + "`\n\n" +
-                                "**Player Info:**\n" +
-                                "> **Game:** `" + this.game + "`\n" +
-                                "> **Platform:** `" + this.platform + "`\n" +
-                                "> **Player Name:** `" + this.playerName + "`\n" +
-                                "> **Connection:** `" + this.connectionType + "`\n" +
-                                "> **Hours Played:** `" + this.inGamePlayTime + "`\n" +
-                                "> **Current Region:** `" + this.currentRegion + "`\n" +
-                                "> **Target Region:** `" + this.targetRegion + "`\n" +
-                                "> **Languages:** `" + String.join(", ", this.spokenLanguages) + "`\n" +
-                                "> **Availability:** `" + this.availablePlayTime + "`\n" +
-                                "> **Lobbies Joined:** `" + this.lobbyCounter + "`\n\n" +
-                                "**Created At:** `" + creationTime + "`\n\n" +
+                        "**A new Ninja Card has been created!**\n" +
+                                "** # User Info:** " +
+                                "These are the stat about the user\n"+
+                                " * **Username:** " + this.discordUsername + "\n" +
+                                " * **Discord ID:** " + this.discordId + "\n" +
+                                "** # Player Info:** " +
+                                " These are all the stat about the player\n" +
+                                " * **Platform:** " + this.platform + "\n" +
+                                " * **Game:** " + this.game + "\n" +
+                                " * **Player Name:** " + this.playerName + "\n" +
+                                " * **Connection:** " + this.connectionType + "\n" +
+                                " * **Hours Played:** " + this.inGamePlayTime + "\n" +
+                                " * **Current Region:** " + this.currentRegion + "\n" +
+                                " * **Target Region:** " + this.targetRegion + "\n" +
+                                " * **Languages:** " + String.join(", ", this.spokenLanguages) + "\n" +
+                                " * **Availability:** " + this.availablePlayTime + "\n" +
+                                " * **Lobbies Joined:** " + this.lobbyCounter + "\n" +
+                                " * **Created At:** " + creationTime + "\n\n" +
                                 "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
                 )
-                .setColor(Color.WHITE)
+                .setColor(Color.decode( "#1c0b2e"))
 
                 .setTimestamp(Instant.now()); // 👈 footer automatico con orario
 
@@ -102,20 +104,20 @@ public class PlayerInfo extends ListenerAdapter {
                 .setDescription(
                         "**A new Ninja Card has been created!**\n\n" +
                                 "**User Info:**\n" +
-                                "> **Discord ID:** `" + this.discordId + "`\n" +
-                                "> **Username:** `" + this.discordUsername + "`\n\n" +
-                                "**Player Info:**\n" +
-                                "> **Game:** `" + this.game + "`\n" +
-                                "> **Platform:** `" + this.platform + "`\n" +
-                                "> **Player Name:** `" + this.playerName + "`\n" +
-                                "> **Connection:** `" + this.connectionType + "`\n" +
-                                "> **Hours Played:** `" + this.inGamePlayTime + "`\n" +
-                                "> **Current Region:** `" + this.currentRegion + "`\n" +
-                                "> **Target Region:** `" + this.targetRegion + "`\n" +
-                                "> **Languages:** `" + String.join(", ", this.spokenLanguages) + "`\n" +
-                                "> **Availability:** `" + this.availablePlayTime + "`\n" +
-                                "> **Lobbies Joined:** `" + this.lobbyCounter + "`\n\n" +
-                                "**Created At:** `" + creationTime + "`\n\n" +
+                                " * **Discord ID:** " + this.discordId + "\n" +
+                                " * **Username:** " + this.discordUsername + "\n\n" +
+                                "** # Player Info:**\n" +
+                                " * **Game:** " + this.game + "\n" +
+                                " * **Platform:** `" + this.platform + "`\n" +
+                                " * **Player Name:** " + this.playerName + "\n" +
+                                " * **Connection:** " + this.connectionType + "\n" +
+                                " * **Hours Played:**" + this.inGamePlayTime + "\n" +
+                                " * **Current Region:** " + this.currentRegion + "\n" +
+                                " * **Target Region:** " + this.targetRegion + "\n" +
+                                " * **Languages:** " + String.join(", ", this.spokenLanguages) + "\n" +
+                                " * **Availability:** " + this.availablePlayTime + "\n" +
+                                " *  **Lobbies Joined:** " + this.lobbyCounter + "\n\n" +
+                                "**Created At:** " + creationTime + "\n\n" +
                                 "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
                 )
                 .setColor(Color.WHITE)

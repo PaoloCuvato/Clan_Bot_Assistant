@@ -39,16 +39,18 @@ public class AddInfoCardCommand extends ListenerAdapter {
                 .setTitle("▬▬▬▬▬▬▬ Create Your Player info Ninja Card ▬▬▬▬▬▬▬▬")
                 .setDescription(" > This command helps you create your profile to join lobbies and participate in events.\n\n" +
                         "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
-                .setColor(Color.green);
+                .setColor(Color.white);
 
         event.deferReply(true).queue();
         event.getHook().editOriginalEmbeds(intro.build())
                 .setActionRow(
                         StringSelectMenu.create("select_game")
                                 .setPlaceholder("Choose your game")
+                                .addOption("Storm Connections", "Storm Connections")
+                                .addOption("Storm Evolution", "Storm Evolution")
                                 .addOption("Storm 4", "Storm 4")
-                                .addOption("Storm Trilogy", "Storm Trilogy")
                                 .addOption("Storm Revolution", "Storm Revolution")
+                                .addOption("Storm Trilogy", "Storm Trilogy")
                                 .build()
                 ).queue();
     }
@@ -81,23 +83,23 @@ public class AddInfoCardCommand extends ListenerAdapter {
             }
             case "select_languages" -> {
                 player.setSpokenLanguages(event.getValues().toArray(new String[0]));
-                askFinalModal(event); // replyModal può essere chiamato qui
+                askFinalModal(event); // replyModal può essere chiamato qui e questa linea manda il modal alla fine dei vari menu
             }
         }
     }
-
+    // vari embeded da chiamare
     private void askConnectionType(StringSelectInteractionEvent event) {
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("▬▬▬▬▬▬▬ Connection Type ▬▬▬▬▬▬▬")
                 .setDescription(" > Select the type of connection you use to play online." +
                         "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
-                .setColor(Color.ORANGE);
+                .setColor(Color.white);
 
         event.getHook().editOriginalEmbeds(embed.build())
                 .setActionRow(
                         StringSelectMenu.create("select_connection")
                                 .addOption("WiFi", "WiFi")
-                                .addOption("Wired", "Wired")
+                                .addOption("Ethernet", "Ethernet")
                                 .build()
                 ).queue();
     }
@@ -107,7 +109,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
                 .setTitle("▬▬▬▬▬ 🌍 Your Region ▬▬▬▬▬")
                 .setDescription(" > Where are you currently located?" +
                         "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
-                .setColor(Color.GREEN);
+                .setColor(Color.white);
 
         event.getHook().editOriginalEmbeds(embed.build())
                 .setActionRow(
@@ -125,7 +127,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
                 .setTitle("▬▬▬▬▬ 🎯 Target Region ▬▬▬▬▬")
                 .setDescription(" > Which region do you want to face?" +
                         "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
-                .setColor(Color.CYAN);
+                .setColor(Color.white);
 
         event.getHook().editOriginalEmbeds(embed.build())
                 .setActionRow(
@@ -143,7 +145,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
                 .setTitle("▬▬▬▬▬▬ 🗣️ Spoken Languages ▬▬▬▬▬▬▬")
                 .setDescription(" > Select the languages you speak (you can choose multiple)." +
                         "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
-                .setColor(Color.MAGENTA);
+                .setColor(Color.white);
 
         event.getHook().editOriginalEmbeds(embed.build())
                 .setActionRow(
@@ -159,7 +161,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
                                 .build()
                 ).queue();
     }
-
+   // modal finale emebeded
     private void askFinalModal(StringSelectInteractionEvent event) {
         TextInput playerName = TextInput.create("player_name", "In-Game Name", TextInputStyle.SHORT)
                 .setRequired(true)

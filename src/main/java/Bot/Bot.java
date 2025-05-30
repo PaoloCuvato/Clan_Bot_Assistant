@@ -2,9 +2,11 @@ package Bot;
 
 import ClanManager.ClanStorage;
 import Command.ManagerCommands;
+import Log.Logger;
 import MatchMaking.ForumMatchmaking;
 import MatchMaking.MatchMakingCommand;
 import MongoDB.MongoDBManager;
+import PlayerInfo.AddInfoCardCommand;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -26,10 +28,7 @@ public class Bot {
         manager.setActivity(Activity.customStatus("Helping The Admin to Manage Clan Related Things"));
         manager.setAutoReconnect(true);
         manager.setStatus(OnlineStatus.ONLINE);
-        manager.addEventListeners(
-                                    new ManagerCommands(),
-                                    new ForumMatchmaking()
-        ); // Aggiungi i comandi
+        manager.addEventListeners(new ManagerCommands(), new ForumMatchmaking(),new Logger(), new AddInfoCardCommand()); // Aggiungi i comandi
         manager.addEventListeners(new ClanStorage());
 
 

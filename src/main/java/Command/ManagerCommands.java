@@ -84,6 +84,7 @@ public class ManagerCommands extends ListenerAdapter {
                                 "\n\n > * **/info_user** -> __This command will provide info about a specific user__" +
                                 "\n\n > * **/add_user** -> __This command will add a user to a specific clan__" +
                                 "\n\n > * **/kick_user** -> __This command will kick a user from a specific clan__" +
+                                "\n\n > * **/matchmaking** -> __This command will  Opens a modal that asks for all necessary details to create the lobby, and then creates it__" +
                                 "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
                 builder.setImage("https://media1.tenor.com/m/R8CSlK2ys1AAAAAd/sasuke-scroll.gif");
                 builder.setColor(Color.white);
@@ -715,6 +716,8 @@ public class ManagerCommands extends ListenerAdapter {
 
         commands.add(Commands.slash("list_all_clan", "Get the list of all Clan Registrated on the Bot"));
 
+        commands.add(Commands.slash("add_info_card", "Command for the creation of the player info card"));
+
 
 
         // Register the commands to the guild
@@ -727,6 +730,7 @@ public class ManagerCommands extends ListenerAdapter {
         Long guildId = 856147888550969345L; // Replace with your server's ID
         Guild guild = event.getJDA().getGuildById(guildId);
         guild.upsertCommand("info", "Info about the bot").queue();
+
         guild.upsertCommand("commands", "Info about all the bot's commands").queue();
         guild.upsertCommand("register_clan", "Create a new clan in the bot")
                 .addOptions(
@@ -786,6 +790,9 @@ public class ManagerCommands extends ListenerAdapter {
                 .addOption(OptionType.STRING, "clan_name", "The name of your clan", true).queue();
 
         guild.upsertCommand("list_all_clan", "Get the list of all Clan Registrated on the Bot");
+
+        guild.upsertCommand("add_info_card", "Command for the creation of the player info card").queue();
+
 
     }
 

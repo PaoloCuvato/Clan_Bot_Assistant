@@ -54,6 +54,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 public class ForumMatchmaking extends ListenerAdapter {
+    /*
     private final Map<String, String> platformSelections = new HashMap<>();
     private final Map<String, String> gameSelections = new HashMap<>();
     private final Map<String, String> playerGameNameSelections = new HashMap<>();
@@ -214,7 +215,7 @@ public class ForumMatchmaking extends ListenerAdapter {
         );
 
         // Invia un riepilogo privato all'utente
-        sendLobbyRecap(uid, uname, game, pf, playerGameName);
+        sendLobbyRecap(uid, uname, game, pf, connection, playerGameName);
 
         // Risposta all'utente
         event.reply("✅ Lobby successfully created on the Lobby forum channel").setEphemeral(true).queue();
@@ -383,7 +384,7 @@ public class ForumMatchmaking extends ListenerAdapter {
         }
     }
 
-    public void sendLobbyRecap(String userId, String username, String game, String platform, String playerName) {
+    public void sendLobbyRecap(String userId, String username, String game, String platform,String connection,String playerName) {
 
         // ID del canale di log (sostituisci con il tuo)
         long logChannelId = 1366842485791526994L; // <-- Sostituisci con il tuo vero ID
@@ -406,6 +407,7 @@ public class ForumMatchmaking extends ListenerAdapter {
                                 "**Lobby Info:**\n" +
                                 "> **Game:** `" + game + "`\n" +
                                 "> **Platform:** `" + platform + "`\n" +
+                                "> **Connection:** `" + connection + "`\n" +
                                 "> **Player Name:** `" + playerName + "`\n\n" +
                                 "**Created At:** `" + creationTime + "` \n\n" +
                                 "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
@@ -434,4 +436,6 @@ public class ForumMatchmaking extends ListenerAdapter {
             deleteArchivedPosts(guild);
         }, 0, 24, TimeUnit.HOURS); // ⏰ Ogni 24 ore
     }
+    /*
+     */
 }

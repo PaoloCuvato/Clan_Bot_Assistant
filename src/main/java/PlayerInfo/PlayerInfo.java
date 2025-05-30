@@ -59,7 +59,7 @@ public class PlayerInfo extends ListenerAdapter {
         EmbedBuilder eb = new EmbedBuilder()
                 .setTitle("▬▬▬▬▬▬ Ninja Card Created ▬▬▬▬▬▬ ")
                 .setDescription(
-                        "**A new matchmaking lobby has been created!**\n\n" +
+                        "**A new Ninja Card has been created!**\n\n" +
                                 "**User Info:**\n" +
                                 "> **Discord ID:** `" + this.discordId + "`\n" +
                                 "> **Username:** `" + this.discordUsername + "`\n\n" +

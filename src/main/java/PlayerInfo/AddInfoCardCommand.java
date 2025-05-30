@@ -14,6 +14,7 @@ import net.dv8tion.jda.api.interactions.modals.Modal;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class AddInfoCardCommand extends ListenerAdapter {
 
@@ -218,5 +219,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
         System.out.println(player);
 
         event.reply("✅ Your player profile has been saved successfully!").setEphemeral(true).queue();
+        player.sendLobbyLog(Objects.requireNonNull(event.getGuild()));
+
     }
 }

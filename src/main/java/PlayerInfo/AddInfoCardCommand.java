@@ -6,13 +6,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
-import net.dv8tion.jda.api.interactions.components.text.TextInput;
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
-import net.dv8tion.jda.api.interactions.modals.Modal;
-import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
@@ -43,13 +37,13 @@ public class AddInfoCardCommand extends ListenerAdapter {
 
         EmbedBuilder intro = new EmbedBuilder()
                 .setTitle("▬▬▬▬▬▬▬ Create Your Player info Ninja Card ▬▬▬▬▬▬▬▬")
-                .setDescription(" > This command helps you create your profile to join lobbies and participate in events.Let's get started!\n\n" +
+                .setDescription(" > This command helps you create your profile to join lobbies and participate in events.\n\n" +
                         "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
                 .setColor(Color.green);
 
-        event.replyEmbeds(intro.build())
-                .setEphemeral(true)
-                .addActionRow(
+        event.deferReply(true).queue();
+        event.getHook().editOriginalEmbeds(intro.build())
+                .setActionRow(
                         StringSelectMenu.create("select_game")
                                 .setPlaceholder("Choose your game")
                                 .addOption("Storm 4", "Storm 4")
@@ -83,72 +77,76 @@ public class AddInfoCardCommand extends ListenerAdapter {
             case "select_target_region" -> {
                 player.setTargetRegion(event.getValues().get(0));
                 event.deferEdit().queue();
-                askLanguages(event); // ✅ FINE QUI
+                askLanguages(event);
             }
             case "select_languages" -> {
                 player.setSpokenLanguages(event.getValues().toArray(new String[0]));
-                askFinalModal(event); // ✅ SOLO QUI puoi chiamare replyModal
+                askFinalModal(event); // replyModal può essere chiamato qui
             }
         }
     }
 
     private void askConnectionType(StringSelectInteractionEvent event) {
-        event.getHook().sendMessageEmbeds(new EmbedBuilder()
-                        .setTitle("▬▬▬▬▬▬▬  Connection Type ▬▬▬▬▬▬▬")
-                        .setDescription(" > Select the type of connection you use to play online.\n\n" +
-                                        "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
-                        .setColor(Color.ORANGE)
-                        .build())
-                .addActionRow(
+        EmbedBuilder embed = new EmbedBuilder()
+                .setTitle("▬▬▬▬▬▬▬ Connection Type ▬▬▬▬▬▬▬")
+                .setDescription(" > Select the type of connection you use to play online." +
+                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                .setColor(Color.ORANGE);
+
+        event.getHook().editOriginalEmbeds(embed.build())
+                .setActionRow(
                         StringSelectMenu.create("select_connection")
                                 .addOption("WiFi", "WiFi")
                                 .addOption("Wired", "Wired")
                                 .build()
-                ).setEphemeral(true).queue();
+                ).queue();
     }
 
     private void askCurrentRegion(StringSelectInteractionEvent event) {
-        event.getHook().sendMessageEmbeds(new EmbedBuilder()
-                        .setTitle("▬▬▬▬▬ 🌍 Your Region ▬▬▬▬▬")
-                        .setDescription(" > Where are you currently located?\n\n" +
-                                        "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
-                        .setColor(Color.GREEN)
-                        .build())
-                .addActionRow(
+        EmbedBuilder embed = new EmbedBuilder()
+                .setTitle("▬▬▬▬▬ 🌍 Your Region ▬▬▬▬▬")
+                .setDescription(" > Where are you currently located?" +
+                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                .setColor(Color.GREEN);
+
+        event.getHook().editOriginalEmbeds(embed.build())
+                .setActionRow(
                         StringSelectMenu.create("select_region")
                                 .addOption("EU", "EU")
                                 .addOption("NA", "NA")
                                 .addOption("JP", "JP")
                                 .addOption("SA", "SA")
                                 .build()
-                ).setEphemeral(true).queue();
+                ).queue();
     }
 
     private void askTargetRegion(StringSelectInteractionEvent event) {
-        event.getHook().sendMessageEmbeds(new EmbedBuilder()
-                        .setTitle("▬▬▬▬▬ 🎯 Target Region ▬▬▬▬▬")
-                        .setDescription(" > Which region do you want to face?\n\n" +
-                                        "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
-                        .setColor(Color.CYAN)
-                        .build())
-                .addActionRow(
+        EmbedBuilder embed = new EmbedBuilder()
+                .setTitle("▬▬▬▬▬ 🎯 Target Region ▬▬▬▬▬")
+                .setDescription(" > Which region do you want to face?" +
+                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                .setColor(Color.CYAN);
+
+        event.getHook().editOriginalEmbeds(embed.build())
+                .setActionRow(
                         StringSelectMenu.create("select_target_region")
                                 .addOption("EU", "EU")
                                 .addOption("NA", "NA")
                                 .addOption("JP", "JP")
                                 .addOption("SA", "SA")
                                 .build()
-                ).setEphemeral(true).queue();
+                ).queue();
     }
 
     private void askLanguages(StringSelectInteractionEvent event) {
-        event.getHook().sendMessageEmbeds(new EmbedBuilder()
-                        .setTitle("▬▬▬▬▬▬ 🗣️ Spoken Languages ▬▬▬▬▬▬▬")
-                        .setDescription(" > Select the languages you speak (you can choose multiple).\n\n" +
-                                "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
-                        .setColor(Color.MAGENTA)
-                        .build())
-                .addActionRow(
+        EmbedBuilder embed = new EmbedBuilder()
+                .setTitle("▬▬▬▬▬▬ 🗣️ Spoken Languages ▬▬▬▬▬▬▬")
+                .setDescription(" > Select the languages you speak (you can choose multiple)." +
+                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                .setColor(Color.MAGENTA);
+
+        event.getHook().editOriginalEmbeds(embed.build())
+                .setActionRow(
                         StringSelectMenu.create("select_languages")
                                 .setPlaceholder("Choose languages")
                                 .setMaxValues(6)
@@ -158,9 +156,8 @@ public class AddInfoCardCommand extends ListenerAdapter {
                                 .addOption("Italian", "Italian")
                                 .addOption("Arabic", "Arabian")
                                 .addOption("Japanese", "Japanese")
-
                                 .build()
-                ).setEphemeral(true).queue();
+                ).queue();
     }
 
     private void askFinalModal(StringSelectInteractionEvent event) {
@@ -174,7 +171,6 @@ public class AddInfoCardCommand extends ListenerAdapter {
                 .setPlaceholder("e.g. 120")
                 .build();
 
-
         TextInput availableTime = TextInput.create("available_time", "When Do You Play?", TextInputStyle.PARAGRAPH)
                 .setRequired(true)
                 .setPlaceholder("e.g. Weekend, monday, 6 pm etc etc")
@@ -187,7 +183,6 @@ public class AddInfoCardCommand extends ListenerAdapter {
                 .build();
 
         event.replyModal(modal).queue();
-
     }
 
     @Override
@@ -199,13 +194,12 @@ public class AddInfoCardCommand extends ListenerAdapter {
 
         player.setPlayerName(event.getValue("player_name").getAsString());
 
-        // 🔢 VALIDAZIONE NUMERICA
         String hoursInput = event.getValue("hours_played").getAsString();
         try {
             int hours = Integer.parseInt(hoursInput);
-            player.setInGamePlayTime(hours + ""); // salva come stringa o int, come preferisci
+            player.setInGamePlayTime(hours + "");
         } catch (NumberFormatException e) {
-            event.reply("❌ Player ninja card failed to create,please enter a valid number for hours played.").setEphemeral(true).queue();
+            event.reply("❌ Player ninja card failed to create, please enter a valid number for hours played.").setEphemeral(true).queue();
             return;
         }
 
@@ -217,5 +211,4 @@ public class AddInfoCardCommand extends ListenerAdapter {
 
         event.reply("✅ Your player profile has been saved successfully!").setEphemeral(true).queue();
     }
-
 }

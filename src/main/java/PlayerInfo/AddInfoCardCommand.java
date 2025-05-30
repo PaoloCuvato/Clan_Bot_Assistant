@@ -163,6 +163,10 @@ public class AddInfoCardCommand extends ListenerAdapter {
     }
 
     private void askFinalModal(StringSelectInteractionEvent event) {
+        // Rimuovi i componenti dal messaggio per evitare interazioni extra
+        event.getHook().editOriginalComponents().queue(); // 🔴 Questo rimuove i dropdown
+
+        // Crea i campi del modal
         TextInput playerName = TextInput.create("player_name", "In-Game Name", TextInputStyle.SHORT)
                 .setRequired(true)
                 .setPlaceholder("e.g. User1234")
@@ -184,8 +188,10 @@ public class AddInfoCardCommand extends ListenerAdapter {
                 .addActionRow(availableTime)
                 .build();
 
+        // Mostra il modal
         event.replyModal(modal).queue();
     }
+
 
     @Override
     public void onModalInteraction(ModalInteractionEvent event) {

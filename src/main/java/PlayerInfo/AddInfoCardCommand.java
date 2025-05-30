@@ -219,7 +219,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
         System.out.println(player);
 
         event.reply("✅ Your player profile has been saved successfully!").setEphemeral(true).queue();
-        player.sendLobbyLog(Objects.requireNonNull(event.getGuild()));
+        player.sendPlayerInfoLog(Objects.requireNonNull(event.getGuild()));
 
     }
 }

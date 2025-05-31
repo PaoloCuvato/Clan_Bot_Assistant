@@ -94,7 +94,7 @@ public class ManagerCommands extends ListenerAdapter {
 
 
 
-// Handling the /register_clan command
+        // Handling the clan command
 
         if (command.equals("register_clan")) {
             if (event.getMember() != null && event.getMember().hasPermission(Permission.ADMINISTRATOR)) {
@@ -718,6 +718,7 @@ public class ManagerCommands extends ListenerAdapter {
 
         commands.add(Commands.slash("add_info_card", "Command for the creation of the player info card"));
 
+        commands.add(Commands.slash("add_info_card", "Command for the creation of the player info card"));
 
 
         // Register the commands to the guild
@@ -792,6 +793,9 @@ public class ManagerCommands extends ListenerAdapter {
         guild.upsertCommand("list_all_clan", "Get the list of all Clan Registrated on the Bot");
 
         guild.upsertCommand("add_info_card", "Command for the creation of the player info card").queue();
+
+        guild.upsertCommand("my_ninjacard", "The bot will send an embeded about the player ninja card").queue();
+
 
 
     }

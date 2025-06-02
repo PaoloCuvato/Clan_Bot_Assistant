@@ -718,8 +718,9 @@ public class ManagerCommands extends ListenerAdapter {
 
         commands.add(Commands.slash("add_info_card", "Command for the creation of the player info card"));
 
-        commands.add(Commands.slash("add_info_card", "Command for the creation of the player info card"));
+        commands.add(Commands.slash("my_ninjacard", "Command for the creation of the player info card"));
 
+        commands.add(Commands.slash("edit_ninja_card", "With this command you can edit your ninja card"));
 
         // Register the commands to the guild
         event.getJDA().updateCommands().addCommands(commands).queue();
@@ -790,13 +791,13 @@ public class ManagerCommands extends ListenerAdapter {
         guild.upsertCommand("ft_request", "Send a Clan Battle request")
                 .addOption(OptionType.STRING, "clan_name", "The name of your clan", true).queue();
 
-        guild.upsertCommand("list_all_clan", "Get the list of all Clan Registrated on the Bot");
+        guild.upsertCommand("list_all_clan", "Get the list of all Clan Regist rated on the Bot");
 
         guild.upsertCommand("add_info_card", "Command for the creation of the player info card").queue();
 
         guild.upsertCommand("my_ninjacard", "The bot will send an embeded about the player ninja card").queue();
 
-
+        guild.upsertCommand("edit_ninja_card", "With this command you can edit your ninja card").queue();
 
     }
 

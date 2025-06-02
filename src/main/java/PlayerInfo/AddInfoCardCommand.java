@@ -18,8 +18,13 @@ public class AddInfoCardCommand extends ListenerAdapter {
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
-        if (!event.getName().equals("add_info_card")) return;
+        switch (event.getName()) {
+            case "add_info_card" -> handleAddInfoCard(event);
+            case "edit_ninja_card" -> handleEditInfoCard(event);
+        }
+    }
 
+    private void handleAddInfoCard(SlashCommandInteractionEvent event) {
         User user = event.getUser();
         long discordId = user.getIdLong();
 
@@ -29,13 +34,29 @@ public class AddInfoCardCommand extends ListenerAdapter {
         player.setLobbyCounter(0);
 
         PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
-
         System.out.println("New player Discord ID: " + discordId);
 
+        sendIntroEmbed(event, "Create Your Ninja Info Card", "This command helps you set up your player profile to join lobbies and participate in events.");
+    }
+
+    private void handleEditInfoCard(SlashCommandInteractionEvent event) {
+        User user = event.getUser();
+        long discordId = user.getIdLong();
+
+        PlayerInfo player = PlayerInfoStorage.getPlayerInfo(discordId);
+        if (player == null) {
+            event.reply("❌ No profile found. Use `/add_info_card` to create one.").setEphemeral(true).queue();
+            return;
+        }
+
+        sendIntroEmbed(event, "Edit Your Ninja Info Card", "This command lets you update your existing player profile.");
+    }
+
+    private void sendIntroEmbed(SlashCommandInteractionEvent event, String title, String description) {
         EmbedBuilder intro = new EmbedBuilder()
-                .setTitle("▬▬▬▬▬▬▬ Create Your Player info Ninja Card ▬▬▬▬▬▬▬▬")
-                .setDescription(" > This command helps you create your profile to join lobbies and participate in events.\n\n" +
-                        "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                .setTitle("▬▬▬▬▬▬▬ " + title + " ▬▬▬▬▬▬▬▬")
+                .setDescription(" > " + description +
+                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
                 .setColor(Color.white);
 
         event.deferReply(true).queue();
@@ -133,8 +154,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
     private void askTargetRegion(StringSelectInteractionEvent event) {
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("▬▬▬▬▬ 🎯 Target Region ▬▬▬▬▬")
-                .setDescription(" > Which region do you want to face?" +
-                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                .setDescription(" > Which region do you want to play with?\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
                 .setColor(Color.white);
 
         event.getHook().editOriginalEmbeds(embed.build())
@@ -171,7 +191,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
     }
 
     private void askFinalModal(StringSelectInteractionEvent event) {
-        event.getHook().editOriginalComponents().queue(); // rimuove i componenti
+        event.getHook().editOriginalComponents().queue(); // Clear select menus
 
         TextInput playerName = TextInput.create("player_name", "In-Game Name", TextInputStyle.SHORT)
                 .setRequired(true)
@@ -185,7 +205,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
 
         TextInput availableTime = TextInput.create("available_time", "When Do You Play?", TextInputStyle.PARAGRAPH)
                 .setRequired(true)
-                .setPlaceholder("e.g. Weekend, monday, 6 pm etc etc")
+                .setPlaceholder("e.g. Weekends, Monday evenings, etc.")
                 .build();
 
         Modal modal = Modal.create("final_modal", "Final Profile Details")
@@ -217,7 +237,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
             int hours = Integer.parseInt(hoursInput);
             player.setInGamePlayTime(String.valueOf(hours));
         } catch (NumberFormatException e) {
-            event.reply("❌ Player ninja card failed to create, please enter a valid number for hours played.")
+            event.reply("❌ Please enter a valid number for hours played.")
                     .setEphemeral(true).queue();
             return;
         }
@@ -225,14 +245,9 @@ public class AddInfoCardCommand extends ListenerAdapter {
         player.setAvailablePlayTime(event.getValue("available_time").getAsString());
 
         PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
-
-        System.out.println("✅ Player Profile Completed:");
-        System.out.println("Discord ID: " + player.getDiscordId());
-        System.out.println(player);
-        // map print test
         PlayerInfoStorage.printAllPlayers();
 
-        event.reply("✅ Your player profile has been saved successfully!").setEphemeral(true).queue();
+        event.reply("✅ Your profile has been successfully updated!").setEphemeral(true).queue();
 
         player.sendPlayerInfoLog(Objects.requireNonNull(event.getGuild()));
     }

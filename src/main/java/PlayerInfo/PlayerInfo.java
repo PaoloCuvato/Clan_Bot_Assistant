@@ -26,9 +26,9 @@ public class PlayerInfo extends ListenerAdapter {
 
     private String playerName; // Player's in-game name
 
-    private String game; // Game name (Storm 3,4,evo)
+    private String[] game  = new String[0];; // Game name (Storm 3,4,evo)
 
-    private String platform; // Gaming platform (e.g. PC, Xbox, PS5)
+    private String[] platforms  = new String[0];; // Gaming platform (e.g. PC, Xbox, PS5)
 
     private String connectionType; // e.g. "WiFi" or "Wired"
 
@@ -40,7 +40,7 @@ public class PlayerInfo extends ListenerAdapter {
 
     private String availablePlayTime; // e.g. "Evenings", "Weekends", or time range
 
-    private String[] spokenLanguages; // Languages spoken (e.g. ["English", "French"])
+    private String[] spokenLanguages = new String[0]; ; // Languages spoken (e.g. ["English", "French"])
 
     private int lobbyCounter; // Number of lobbies the player has joined
 
@@ -66,8 +66,8 @@ public class PlayerInfo extends ListenerAdapter {
                                 " * **Discord ID:** " + this.discordId + "\n" +
                                 "** # Player Info:** " +
                                 " These are all the stat about the player\n" +
-                                " * **Platform:** " + this.platform + "\n" +
-                                " * **Game:** " + this.game + "\n" +
+                                " * **Platform:** " + String.join(",",this.platforms) + "\n" +
+                                " * **Game:** " + String.join(",",this.game) + "\n" +
                                 " * **Player Name:** " + this.playerName + "\n" +
                                 " * **Connection:** " + this.connectionType + "\n" +
                                 " * **Hours Played:** " + this.inGamePlayTime + "\n" +
@@ -108,7 +108,7 @@ public class PlayerInfo extends ListenerAdapter {
                                 " * **Username:** " + this.discordUsername + "\n\n" +
                                 "** # Player Info:**\n" +
                                 " * **Game:** " + this.game + "\n" +
-                                " * **Platform:** `" + this.platform + "`\n" +
+                                " * **Platform:** " + String.join(",",this.platforms) + "\n" +
                                 " * **Player Name:** " + this.playerName + "\n" +
                                 " * **Connection:** " + this.connectionType + "\n" +
                                 " * **Hours Played:**" + this.inGamePlayTime + "\n" +

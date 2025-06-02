@@ -56,24 +56,27 @@ public class AddInfoCardCommand extends ListenerAdapter {
         EmbedBuilder intro = new EmbedBuilder()
                 .setTitle("▬▬▬▬▬▬▬ " + title + " ▬▬▬▬▬▬▬▬")
                 .setDescription(" > " + description +
-                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
                 .setColor(Color.white);
 
-        event.deferReply(true).queue();
-        event.getHook().editOriginalEmbeds(intro.build())
-                .setActionRow(
-                        StringSelectMenu.create("select_game")
-                                .setPlaceholder("Choose your game")
-                                .addOption("Storm Connections", "Storm Connections")
-                                .addOption("Storm Evolution", "Storm Evolution")
-                                .addOption("Storm 4", "Storm 4")
-                                .addOption("Storm Revolution", "Storm Revolution")
-                                .addOption("Storm Trilogy", "Storm Trilogy")
-                                .build()
-                ).queue();
+        event.deferReply(true).queue(hook -> {
+            hook.editOriginalEmbeds(intro.build())
+                    .setActionRow(
+                            StringSelectMenu.create("select_game")
+                                    .setPlaceholder("Choose your games")
+                                    .setMinValues(1)
+                                    .setMaxValues(5)
+                                    .addOption("Storm Connections", "Storm Connections")
+                                    .addOption("Storm Evolution", "Storm Evolution")
+                                    .addOption("Storm 4", "Storm 4")
+                                    .addOption("Storm Revolution", "Storm Revolution")
+                                    .addOption("Storm Trilogy", "Storm Trilogy")
+                                    .build()
+                    ).queue();
+        });
     }
 
-    @Override
+        @Override
     public void onStringSelectInteraction(StringSelectInteractionEvent event) {
         long discordId = event.getUser().getIdLong();
         PlayerInfo player = PlayerInfoStorage.getPlayerInfo(discordId);
@@ -86,7 +89,14 @@ public class AddInfoCardCommand extends ListenerAdapter {
 
         switch (event.getComponentId()) {
             case "select_game" -> {
-                player.setGame(event.getValues().get(0));
+                player.setGame(event.getValues().toArray(new String[0]));
+                PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
+                event.deferEdit().queue();
+                askPlatforms(event); // 👈 questa è la versione corretta
+            }
+
+            case "select_platforms" -> {
+                player.setPlatforms(event.getValues().toArray(new String[0])); // Aggiungi metodo `setPlatforms` in PlayerInfo
                 PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
                 event.deferEdit().queue();
                 askConnectionType(event);
@@ -132,6 +142,27 @@ public class AddInfoCardCommand extends ListenerAdapter {
                                 .build()
                 ).queue();
     }
+
+    private void askPlatforms(StringSelectInteractionEvent event) {
+        EmbedBuilder embed = new EmbedBuilder()
+                .setTitle("▬▬▬▬▬▬▬▬▬ 🎮 Platform ▬▬▬▬▬▬▬▬▬")
+                .setDescription(" > Select all platforms you play on (multiple selections allowed)." +
+                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                .setColor(Color.white);
+
+        event.getHook().editOriginalEmbeds(embed.build())
+                .setActionRow(
+                        StringSelectMenu.create("select_platforms")
+                                .setPlaceholder("Choose your platforms")
+                                .setMaxValues(4)
+                                .addOption("PlayStation (PSN)", "PSN")
+                                .addOption("PC (Steam/Epic)", "PC")
+                                .addOption("Xbox", "Xbox")
+                                .addOption("Nintendo Switch", "Switch")
+                                .build()
+                ).queue();
+    }
+
 
     private void askCurrentRegion(StringSelectInteractionEvent event) {
         EmbedBuilder embed = new EmbedBuilder()

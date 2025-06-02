@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 
 import java.awt.*;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Map;
 
 public class SlashPlayerInfoManager extends ListenerAdapter {
@@ -23,7 +24,7 @@ public class SlashPlayerInfoManager extends ListenerAdapter {
             PlayerInfo p = playerSessions.get(userId);
 
             if (p == null) {
-                event.reply("❌ No Ninja Card data found for you.")
+                event.reply("❌ No Ninja Card data found for you. Use `/add_info_card` to create one or contact an admin if the issue persists.")
                         .setEphemeral(true)
                         .queue();
                 return;
@@ -34,8 +35,8 @@ public class SlashPlayerInfoManager extends ListenerAdapter {
                     .setDescription(
                                     "** # Ninja Card Info:** " +
                                     "These are all the stat about you\n" +
-                                    " * **Platform:** " + p.getPlatform() + "\n" +
-                                    " * **Game:** " + p.getGame() + "\n" +
+                                    " * **Platform:** " + String.join(", ", p.getPlatforms()) + "\n" +
+                                    " * **Game:** " + String.join(", ", p.getGame()) + "\n" +
                                     " * **Player Name:** " + p.getPlayerName() + "\n" +
                                     " * **Connection:** " + p.getConnectionType() + "\n" +
                                     " * **My Region:** " + p.getCurrentRegion() + "\n" +
@@ -76,8 +77,8 @@ public class SlashPlayerInfoManager extends ListenerAdapter {
                     .setDescription(
                             "** # Ninja Card Info:** " +
                                     "These are all the stat about you\n" +
-                                    " * **Platform:** " + p.getPlatform() + "\n" +
-                                    " * **Game:** " + p.getGame() + "\n" +
+                                    " * **Platform:** " + String.join(", ", p.getPlatforms()) + "\n" +
+                                    " * **Game:** " + String.join(", ", p.getGame()) + "\n" +
                                     " * **Player Name:** " + p.getPlayerName() + "\n" +
                                     " * **Connection:** " + p.getConnectionType() + "\n" +
                                     " * **My Region:** " + p.getCurrentRegion() + "\n" +
@@ -91,7 +92,9 @@ public class SlashPlayerInfoManager extends ListenerAdapter {
                     .setColor(Color.decode("#1c0b2e"))
                     .setTimestamp(Instant.now());
 
-            event.replyEmbeds(eb.build()).queue();
+            event.replyEmbeds(eb.build())
+                    .setEphemeral(true)
+                    .queue();
         }
 
     }

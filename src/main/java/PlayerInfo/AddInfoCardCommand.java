@@ -2,6 +2,7 @@ package PlayerInfo;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
@@ -12,6 +13,7 @@ import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
 
 import java.awt.*;
+import java.util.Map;
 import java.util.Objects;
 
 public class AddInfoCardCommand extends ListenerAdapter {
@@ -282,4 +284,21 @@ public class AddInfoCardCommand extends ListenerAdapter {
 
         player.sendPlayerInfoLog(Objects.requireNonNull(event.getGuild()));
     }
+    @Override
+    public void onGuildReady(GuildReadyEvent event) {
+        Map<Long, PlayerInfo> playerInfoMap = PlayerInfoMongoDBManager.getAllPlayerInfosAsMap();
+
+        // Carica in memoria
+        PlayerInfoStorage.loadSessions(playerInfoMap);
+
+        // Stampa tutta la mappa
+        System.out.println("✅ NinjaCards loaded from MongoDB:");
+        for (Map.Entry<Long, PlayerInfo> entry : playerInfoMap.entrySet()) {
+            System.out.println("🔹 DiscordID: " + entry.getKey());
+            System.out.println("    " + entry.getValue()); // Assicurati che PlayerInfo abbia un buon toString()
+        }
+    }
+
+
+
 }

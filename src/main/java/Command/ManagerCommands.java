@@ -722,6 +722,10 @@ public class ManagerCommands extends ListenerAdapter {
 
         commands.add(Commands.slash("edit_ninja_card", "With this command you can edit your ninja card"));
 
+        commands.add(Commands.slash("search_ninjacard", "View the Ninja Card of a user")
+                .addOption(OptionType.USER, "target", "The user you want to view", true));
+
+
         // Register the commands to the guild
         event.getJDA().updateCommands().addCommands(commands).queue();
     }
@@ -799,6 +803,10 @@ public class ManagerCommands extends ListenerAdapter {
 
         guild.upsertCommand("edit_ninja_card", "With this command you can edit your ninja card").queue();
 
+        guild.upsertCommand("search_ninjacard", "View the Ninja Card of a user")
+                .addOptions(
+                        new OptionData(OptionType.USER, "target", "The user you want to view", true)
+                ).queue();
     }
 
 }

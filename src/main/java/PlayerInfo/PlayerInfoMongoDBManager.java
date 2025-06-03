@@ -25,6 +25,13 @@ public class PlayerInfoMongoDBManager {
         Document update = new Document("$set", playerInfoToDocument(info));
         collection.updateOne(query, update);
     }
+    // lobby update 
+    public static void incrementLobbyCounter(long discordId, int amount) {
+        MongoCollection<Document> collection = MongoDBManager.getDatabase().getCollection(COLLECTION_NAME);
+        Document query = new Document("discordId", discordId);
+        Document update = new Document("$inc", new Document("lobbyCounter", amount));
+        collection.updateOne(query, update);
+    }
 
     public static PlayerInfo getPlayerInfoById(long discordId) {
         MongoCollection<Document> collection = MongoDBManager.getDatabase().getCollection(COLLECTION_NAME);

@@ -807,6 +807,10 @@ public class ManagerCommands extends ListenerAdapter {
                 .addOptions(
                         new OptionData(OptionType.USER, "target", "The user you want to view", true)
                 ).queue();
+
+        guild.upsertCommand("freestyle", "The bot will send an embeded about the creation of the lobby").queue();
+
+
     }
 
 }

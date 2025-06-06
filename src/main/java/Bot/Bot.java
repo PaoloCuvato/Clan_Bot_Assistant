@@ -2,6 +2,7 @@ package Bot;
 
 import ClanManager.ClanStorage;
 import Command.ManagerCommands;
+import Lobby.Lobby;
 import Log.Logger;
 import MatchMaking.ForumMatchmaking;
 import MatchMaking.MatchMakingCommand;
@@ -16,6 +17,7 @@ import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import javax.security.auth.login.LoginException;
 import java.util.Arrays;
+import Lobby.*;
 import java.util.EnumSet;
 
 public class Bot {
@@ -26,12 +28,11 @@ public class Bot {
         MongoDBManager.getDatabase();  // Questo assicura che MongoDB sia inizializzato quando parte il bot.
 
         DefaultShardManagerBuilder manager = DefaultShardManagerBuilder.createDefault(token);
-        manager.setActivity(Activity.customStatus("Helping The Admin to Manage Clan Related Things"));
+        //manager.setActivity(Activity.customStatus("Helping The Admin to Manage Clan Related Things"));
         manager.setAutoReconnect(true);
         manager.setStatus(OnlineStatus.ONLINE);
         manager.addEventListeners(new ManagerCommands(), new ForumMatchmaking(),new Logger(), new AddInfoCardCommand(),new SlashPlayerInfoManager()); // Aggiungi i comandi
-        manager.addEventListeners(new ClanStorage());
-
+        manager.addEventListeners(new ClanStorage(), new LobbyCommand());
 
         // Abilita i permessi di intenti
         manager.enableIntents(EnumSet.allOf(GatewayIntent.class));

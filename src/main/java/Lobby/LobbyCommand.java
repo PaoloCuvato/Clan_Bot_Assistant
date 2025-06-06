@@ -1,0 +1,250 @@
+package Lobby;
+
+import Lobby.Lobby;  // Importa la classe Lobby dal package Lobby
+
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.components.ActionRow;
+import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
+import net.dv8tion.jda.api.interactions.components.text.TextInput;
+import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
+import net.dv8tion.jda.api.interactions.modals.Modal;
+
+import java.awt.*;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
+public class LobbyCommand extends ListenerAdapter {
+
+    private final Map<Long, Lobby> lobbySessions = new HashMap<>();
+
+    @Override
+    public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+        if (!event.getName().equals("freestyle")) return;
+
+        long discordId = event.getUser().getIdLong();
+
+        Lobby lobby = new Lobby();
+        lobby.setDiscordId(discordId);
+        lobby.setCreatedAt(LocalDateTime.now());
+
+        lobbySessions.put(discordId, lobby);
+
+        promptLobbyTypeStep(event);
+    }
+
+    private void promptLobbyTypeStep(SlashCommandInteractionEvent event) {
+        EmbedBuilder embed = new EmbedBuilder()
+                .setTitle("▬▬▬▬▬▬▬▬▬▬ Choose Lobby Type ▬▬▬▬▬▬▬▬▬")
+                .setDescription(" > Select the type of lobby you want to create.(Ranked and Endless will be implemented on the future)" +
+                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                .setColor(Color.white);
+
+        event.deferReply(true).queue(hook -> {
+            hook.editOriginalEmbeds(embed.build())
+                    .setComponents(
+                            ActionRow.of(
+                                    StringSelectMenu.create("lobby_type_select_lobby")
+                                            .addOption("Ranked", "Ranked")
+                                            .addOption("Player Match", "Player Match")
+                                            .addOption("Endless", "Endless")
+                                            .build()
+                            )
+                    )
+                    .queue();
+        });
+    }
+
+    @Override
+    public void onStringSelectInteraction(StringSelectInteractionEvent event) {
+        long discordId = event.getUser().getIdLong();
+        Lobby lobby = lobbySessions.get(discordId);
+        if (lobby == null) return;
+
+        switch (event.getComponentId()) {
+            case "lobby_type_select_lobby" -> {
+                lobby.setLobbyType(event.getValues().get(0));
+                promptGameSelection(event);
+            }
+            case "lobby_game_select_lobby" -> {
+                lobby.setGame(event.getValues().get(0));
+                promptPlatformSelection(event);
+            }
+            case "lobby_platform_select_lobby" -> {
+                lobby.setPlatform(event.getValues().get(0));
+                promptRegionSelection(event);
+            }
+            case "lobby_region_select_lobby" -> {
+                lobby.setRegion(event.getValues().get(0));
+                promptSkillLevelSelection(event);
+            }
+            case "lobby_skill_select_lobby" -> {
+                lobby.setSkillLevel(event.getValues().get(0));
+                promptConnectionTypeSelection(event);
+            }
+            case "lobby_connection_select_lobby" -> {
+                lobby.setConnectionType(event.getValues().get(0));
+                promptLobbyDetailsModal(event);
+            }
+        }
+    }
+
+    private void promptGameSelection(StringSelectInteractionEvent event) {
+        EmbedBuilder embed = new EmbedBuilder()
+                .setTitle("▬▬▬▬▬▬ 🎮 Select Game ▬▬▬▬▬▬")
+                .setDescription(" > Choose the game for your lobby." +
+                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                .setColor(Color.white);
+
+        event.deferEdit().queue();
+        event.getHook().editOriginalEmbeds(embed.build())
+                .setComponents(ActionRow.of(
+                        StringSelectMenu.create("lobby_game_select_lobby")
+                                .addOption("Storm Connections", "Storm Connections")
+                                .addOption("Storm Evolution", "Storm Evolution")
+                                .addOption("Storm 4", "Storm 4")
+                                .addOption("Storm Revolution", "Storm Revolution")
+                                .addOption("Storm Trilogy", "Storm Trilogy")
+                                .build()
+                ))
+                .queue();
+    }
+
+    private void promptPlatformSelection(StringSelectInteractionEvent event) {
+        EmbedBuilder embed = new EmbedBuilder()
+                .setTitle("▬▬▬▬▬▬ 🕹️ Select Platform ▬▬▬▬▬▬")
+                .setDescription(" > Choose your platform." +
+                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                .setColor(Color.white);
+
+        event.deferEdit().queue();
+        event.getHook().editOriginalEmbeds(embed.build())
+                .setComponents(ActionRow.of(
+                        StringSelectMenu.create("lobby_platform_select_lobby")
+                                .addOption("PC", "PC")
+                                .addOption("Xbox", "Xbox")
+                                .addOption("PlayStation", "PlayStation")
+                                .addOption("Switch", "Switch")
+                                .build()
+                ))
+                .queue();
+    }
+
+    private void promptRegionSelection(StringSelectInteractionEvent event) {
+        EmbedBuilder embed = new EmbedBuilder()
+                .setTitle("▬▬▬▬▬▬▬ 🌍 Select Region ▬▬▬▬▬▬▬")
+                .setDescription(" > Choose the region that you want to be matched against." +
+                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                .setColor(Color.white);
+
+        event.deferEdit().queue();
+        event.getHook().editOriginalEmbeds(embed.build())
+                .setComponents(ActionRow.of(
+                        StringSelectMenu.create("lobby_region_select_lobby")
+                                .addOption("NA", "NA")
+                                .addOption("EU", "EU")
+                                .addOption("SA", "SA")
+                                .addOption("JP", "JP")
+                                .addOption("Asia", "Asia")
+                                .build()
+                ))
+                .queue();
+    }
+
+    private void promptSkillLevelSelection(StringSelectInteractionEvent event) {
+        EmbedBuilder embed = new EmbedBuilder()
+                .setTitle("▬▬▬▬ 🎯 Select Skill Level ▬▬▬▬")
+                .setDescription(" > Choose The skill level that you want to fight." +
+                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                .setColor(Color.white);
+
+        event.deferEdit().queue();
+        event.getHook().editOriginalEmbeds(embed.build())
+                .setComponents(ActionRow.of(
+                        StringSelectMenu.create("lobby_skill_select_lobby")
+                                .addOption("Beginner", "Beginner")
+                                .addOption("Intermediate", "Intermediate")
+                                .addOption("Advanced", "Advanced")
+                                .build()
+                ))
+                .queue();
+    }
+
+    private void promptConnectionTypeSelection(StringSelectInteractionEvent event) {
+        EmbedBuilder embed = new EmbedBuilder()
+                .setTitle("▬▬▬▬▬ 📡 Select Connection Type ▬▬▬▬▬")
+                .setDescription(" > Choose your connection type." +
+                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                .setColor(Color.white);
+
+        event.deferEdit().queue();
+        event.getHook().editOriginalEmbeds(embed.build())
+                .setComponents(ActionRow.of(
+                        StringSelectMenu.create("lobby_connection_select_lobby")
+                                .addOption("WiFi", "WiFi")
+                                .addOption("Ethernet", "Ethernet")
+                                .build()
+                ))
+                .queue();
+    }
+
+    private void promptLobbyDetailsModal(StringSelectInteractionEvent event) {
+        // 🔴 Rimuove i componenti (es. dropdown) dal messaggio originale
+        event.getMessage().editMessageComponents().queue();
+
+        Modal modal = Modal.create("lobby_details_modal_lobby", "Complete Lobby Setup")
+                .addActionRow(
+                        TextInput.create("lobby_playername", "Your Nickname", TextInputStyle.PARAGRAPH)
+                                .setPlaceholder("e.g. User1234")
+                                .setRequired(true)
+                                .build()
+                )
+                .addActionRow(
+                        TextInput.create("lobby_availability", "Availability", TextInputStyle.PARAGRAPH)
+                                .setPlaceholder("Describe your availability, e.g. Mondays, Weekends...")
+                                .setRequired(true)
+                                .build()
+                )
+                .addActionRow(
+                        TextInput.create("lobby_rule", "Lobby Rules", TextInputStyle.PARAGRAPH)
+                                .setPlaceholder("Write the possible rules for the match, e.g. ban, character/stage selection, etc.")
+                                .setRequired(true)
+                                .build()
+                )
+                .build();
+
+        event.replyModal(modal).queue();
+    }
+
+    @Override
+    public void onModalInteraction(ModalInteractionEvent event) {
+        if (!event.getModalId().equals("lobby_details_modal_lobby")) return;
+
+        long discordId = event.getUser().getIdLong();
+        Lobby lobby = lobbySessions.get(discordId);
+
+        if (lobby == null) {
+            event.reply("❌ Lobby session expired. Please start over.")
+                    .setEphemeral(true)
+                    .queue();
+            return;
+        }
+
+        String playerName = event.getValue("lobby_playername").getAsString();
+        String availability = event.getValue("lobby_availability").getAsString();
+        String rules = event.getValue("lobby_rule").getAsString();
+
+        lobby.setPlayerName(playerName);
+        lobby.setAvailability(availability);
+        lobby.setRules(rules);
+        lobby.setCreatedAt(LocalDateTime.now());
+        System.out.println("lobby: \n"+lobby.toString());
+
+        event.reply("✅ Lobby created successfully!").setEphemeral(true).queue();
+        lobbySessions.remove(discordId);
+    }
+}

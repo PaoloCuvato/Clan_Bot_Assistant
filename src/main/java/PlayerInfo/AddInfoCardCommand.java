@@ -178,8 +178,8 @@ public class AddInfoCardCommand extends ListenerAdapter {
                         StringSelectMenu.create("select_region")
                                 .addOption("EU", "EU")
                                 .addOption("NA", "NA")
-                                .addOption("JP", "JP")
                                 .addOption("SA", "SA")
+                                .addOption("JP", "JP")
                                 .build()
                 ).queue();
     }

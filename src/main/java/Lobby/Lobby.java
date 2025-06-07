@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
@@ -17,6 +18,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 @Data
@@ -34,6 +36,8 @@ public class Lobby extends ListenerAdapter {
     private String availability;        // Es: "Mon 18-20, Wed 21-23"
     private String rules;               // Regole opzionali
     private LocalDateTime createdAt;
+    private long privateChannelId;  // ID del canale privato creato per questa lobby
+
 
     private int lobbiesCreated = 0;
     private int lobbiesAnswered = 0;
@@ -118,12 +122,11 @@ public class Lobby extends ListenerAdapter {
             }
         }
 
-        // Crea l'embed
         EmbedBuilder publicEmbed = new EmbedBuilder()
                 .setTitle("▬▬▬▬▬▬▬ " + playerName + " Lobby ▬▬▬▬▬▬▬")
                 .setColor(Color.decode("#1c0b2e"))
                 .setDescription(
-                                "** Player:** " + playerName + "\n" +
+                        "** Player:** " + playerName + "\n" +
                                 "** Game: ** " + game + "\n" +
                                 "** Platform: ** " + platform + "\n" +
                                 "** Region Target: ** " + region + "\n" +
@@ -132,19 +135,30 @@ public class Lobby extends ListenerAdapter {
                 )
                 .setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
 
-        // Pulsante Join
         Button joinButton = Button.success("join_lobby_" + discordId, "Join");
 
-        // Crea post nel forum con i tag e il messaggio incorporato
-        postChannel.createForumPost( playerName + " Lobby", new MessageCreateBuilder()
+        postChannel.createForumPost(playerName + " Lobby", new MessageCreateBuilder()
                         .setEmbeds(publicEmbed.build())
                         .setActionRow(joinButton)
-                        .build()
-                )
+                        .build())
                 .setTags(appliedTags)
                 .queue(post -> {
                     System.out.println("📣 Forum lobby post created! Thread ID: " + post.getThreadChannel().getIdLong());
+
+                    guild.createTextChannel(playerName.toLowerCase().replace(" ", "-") + "-lobby")
+                            .setParent(postChannel.getParentCategory())
+                            .addPermissionOverride(guild.getPublicRole(), null, EnumSet.of(Permission.VIEW_CHANNEL))
+                            .addPermissionOverride(guild.getMemberById(discordId),
+                                    EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND), null)
+                            .queue(privateChannel -> {
+                                this.privateChannelId = privateChannel.getIdLong();
+                                privateChannel.sendMessage("🔐 This is your private control channel.").queue();
+
+                                // Registra la lobby nel manager per accesso futuro
+                                LobbyManager.addLobby(discordId, this);
+                            });
                 });
     }
+
 
 }

@@ -247,6 +247,7 @@ public class LobbyCommand extends ListenerAdapter {
         event.reply("✅ Lobby created successfully!").setEphemeral(true).queue();
         lobby.sendLobbyLog(event.getGuild(),1380683537501519963L);
         lobby.sendLobbyAnnouncement(event.getGuild(), 1367186054045761616L);
+        LobbyManager.addLobby(lobby.getDiscordId(), lobby);
         lobbySessions.remove(discordId);
     }
 }

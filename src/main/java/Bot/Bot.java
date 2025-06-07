@@ -32,7 +32,7 @@ public class Bot {
         manager.setAutoReconnect(true);
         manager.setStatus(OnlineStatus.ONLINE);
         manager.addEventListeners(new ManagerCommands(), new ForumMatchmaking(),new Logger(), new AddInfoCardCommand(),new SlashPlayerInfoManager()); // Aggiungi i comandi
-        manager.addEventListeners(new ClanStorage(), new LobbyCommand());
+        manager.addEventListeners(new ClanStorage(), new LobbyCommand(), new ButtonLobbyManager());
 
         // Abilita i permessi di intenti
         manager.enableIntents(EnumSet.allOf(GatewayIntent.class));

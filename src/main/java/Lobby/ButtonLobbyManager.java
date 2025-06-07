@@ -50,6 +50,7 @@ public class ButtonLobbyManager extends ListenerAdapter {
                         .queue();
             }
 
+
         } else if (componentId.startsWith("accept_")) {
             String playerId = componentId.replace("accept_", "");
             User acceptedUser = event.getJDA().getUserById(playerId);

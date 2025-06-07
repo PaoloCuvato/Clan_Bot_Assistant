@@ -3,12 +3,26 @@ package Lobby;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.forums.ForumTag;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
+
+import java.awt.*;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Lobby {
+public class Lobby extends ListenerAdapter {
     private long discordId;             // Discord user ID
     private String playerName;
     private String game;
@@ -36,4 +50,101 @@ public class Lobby {
     public void incrementCompleted() {
         lobbiesCompleted++;
     }
+
+
+    public void sendLobbyLog(Guild guild, long logChannelId) {
+        TextChannel logChannel = guild.getTextChannelById(logChannelId);
+
+        if (logChannel == null) {
+            System.err.println("❌ Log channel not found!");
+            return;
+        }
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+        String creationTimeFormatted = createdAt != null ? createdAt.format(formatter) : "N/A";
+
+        EmbedBuilder eb = new EmbedBuilder()
+                .setTitle("▬▬▬▬▬▬▬ Lobby Created ▬▬▬▬▬▬▬")
+                .setDescription(
+                        "**A new lobby has been created!**\n" +
+                                "** # Lobby: **" +
+                                "Info About The lobby\n"+
+                                " * **Discord ID:** " + discordId + "\n" +
+                                " * **Player Name:** " + playerName + "\n" +
+                                " * **Game:** " + game + "\n" +
+                                " * **Platform:** " + platform + "\n" +
+                                " * **Region:** " + region + "\n" +
+                                " * **Skill Level:** " + skillLevel + "\n" +
+                                " * **Connection:** " + connectionType + "\n" +
+                                " * **Lobby Type:** " + lobbyType + "\n" +
+                                " * **Availability:** " + availability + "\n" +
+                                " * **Rules:** " + (rules != null && !rules.isEmpty() ? rules : "N/A") + "\n" +
+                                " * **Created At:** " + creationTimeFormatted + "\n" +
+
+                                "** # Lobby Stats:**" +
+                                "interaction that the user have with the lobby's\n"+
+                                " * **Created:** " + lobbiesCreated + "\n" +
+                                " * **Answered:** " + lobbiesAnswered + "\n" +
+                                " * **Completed:** " + lobbiesCompleted + "\n" +
+
+                                "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+                )
+                .setColor(Color.decode("#1c0b2e"))
+                .setTimestamp(Instant.now());
+
+        // Invia l'embed e ottiene l'ID del messaggio
+        logChannel.sendMessageEmbeds(eb.build()).queue(message -> {
+            long messageId = message.getIdLong();
+            System.out.println("✅ Log sent! Message ID: " + messageId);
+            // Puoi salvare o usare messageId come vuoi
+        });
+    }
+
+    public void sendLobbyAnnouncement(Guild guild, long postChannelId) {
+        ForumChannel postChannel = guild.getForumChannelById(postChannelId);
+        if (postChannel == null) {
+            System.err.println("❌ Forum post channel not found!");
+            return;
+        }
+
+        // Trova i tag disponibili e seleziona quelli corretti
+        List<ForumTag> appliedTags = new ArrayList<>();
+        for (ForumTag tag : postChannel.getAvailableTags()) {
+            if (tag.getName().equalsIgnoreCase("Opened")) {
+                appliedTags.add(tag);
+            }
+            if (tag.getName().equalsIgnoreCase(skillLevel)) { // es: "Beginner", "Intermediate", "Advanced"
+                appliedTags.add(tag);
+            }
+        }
+
+        // Crea l'embed
+        EmbedBuilder publicEmbed = new EmbedBuilder()
+                .setTitle("▬▬▬▬▬▬▬ " + playerName + " Lobby ▬▬▬▬▬▬▬")
+                .setColor(Color.decode("#1c0b2e"))
+                .setDescription(
+                                "** Player:** " + playerName + "\n" +
+                                "** Game: ** " + game + "\n" +
+                                "** Platform: ** " + platform + "\n" +
+                                "** Region Target: ** " + region + "\n" +
+                                "** Wants to face: ** " + skillLevel + " players\n\n" +
+                                "Lobby is open - Click to join"
+                )
+                .setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
+
+        // Pulsante Join
+        Button joinButton = Button.success("join_lobby_" + discordId, "Join");
+
+        // Crea post nel forum con i tag e il messaggio incorporato
+        postChannel.createForumPost( playerName + " Lobby", new MessageCreateBuilder()
+                        .setEmbeds(publicEmbed.build())
+                        .setActionRow(joinButton)
+                        .build()
+                )
+                .setTags(appliedTags)
+                .queue(post -> {
+                    System.out.println("📣 Forum lobby post created! Thread ID: " + post.getThreadChannel().getIdLong());
+                });
+    }
+
 }

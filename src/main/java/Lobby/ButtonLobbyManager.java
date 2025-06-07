@@ -42,7 +42,7 @@ public class ButtonLobbyManager extends ListenerAdapter {
 
             TextChannel privateChannel = guild.getTextChannelById(lobby.getPrivateChannelId());
             if (privateChannel != null) {
-                privateChannel.sendMessage("🎮 Player **" + joiner.getEffectiveName() + "** wants to join your lobby.")
+                privateChannel.sendMessage("🎮 The player **" + joiner.getEffectiveName() + "**, wants to join your lobby, " + creator.getAsMention() + ".")
                         .addActionRow(
                                 Button.success("accept_" + joiner.getId(), "✅ Accept"),
                                 Button.danger("decline_" + joiner.getId(), "❌ Decline")

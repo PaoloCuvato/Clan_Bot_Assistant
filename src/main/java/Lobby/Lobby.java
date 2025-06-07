@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.forums.ForumTag;
@@ -152,7 +153,7 @@ public class Lobby extends ListenerAdapter {
                                     EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND), null)
                             .queue(privateChannel -> {
                                 this.privateChannelId = privateChannel.getIdLong();
-                                privateChannel.sendMessage("🔐 This is your private control channel.").queue();
+                                privateChannel.sendMessage("🔐 " + guild.getMember(UserSnowflake.fromId(discordId)).getUser().getAsMention() + ", this is your private lobby channel where you can accept or decline players.").queue();
 
                                 // Registra la lobby nel manager per accesso futuro
                                 LobbyManager.addLobby(discordId, this);

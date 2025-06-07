@@ -11,8 +11,6 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 
 import java.awt.*;
 import java.util.EnumSet;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class ButtonLobbyManager extends ListenerAdapter {
     @Override
@@ -32,15 +30,12 @@ public class ButtonLobbyManager extends ListenerAdapter {
             }
 
             if (creatorId.equals(joiner.getId())) {
-                event.reply("❌ You cannot join your own lobby.")
-                        .setEphemeral(true)
-                        .queue();
+                event.reply("❌ You cannot join your own lobby.").setEphemeral(true).queue();
                 return;
             }
 
             event.reply("✅ Request sent to the lobby owner. Please wait for approval.")
-                    .setEphemeral(true)
-                    .queue();
+                    .setEphemeral(true).queue();
 
             Lobby lobby = LobbyManager.getLobby(Long.parseLong(creatorId));
             if (lobby == null) return;
@@ -83,20 +78,17 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 return;
             }
 
-            // Aggiungi i permessi
+            // Aggiungi i permessi al canale
             privateChannel.getManager().putPermissionOverride(acceptedMember,
                     EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND), null).queue();
 
-            // Disattiva i bottoni nel messaggio
-            List<Button> disabledButtons = event.getMessage().getButtons().stream()
-                    .map(Button::asDisabled)
-                    .collect(Collectors.toList());
-
-            event.editMessage("✅ " + acceptedMember.getAsMention() + " has been accepted by " + creator.getAsMention() + ".")
-                    .setComponents(ActionRow.of(disabledButtons))
-                    .queue();
-
-            privateChannel.sendMessage("🎉 " + acceptedMember.getAsMention() + " has joined the lobby. Approved by " + creator.getAsMention() + "!").queue();
+            // Riconosci l’interazione senza messaggi temporanei
+            event.deferEdit().queue(success -> {
+                // Elimina il messaggio con i bottoni
+                event.getMessage().delete().queue();
+                // Messaggio di conferma nella lobby
+                privateChannel.sendMessage("✅ " + acceptedMember.getAsMention() + " has been accepted by " + creator.getAsMention() + ".").queue();
+            });
 
         } else if (componentId.startsWith("decline_")) {
             String playerId = componentId.replace("decline_", "");
@@ -112,16 +104,13 @@ public class ButtonLobbyManager extends ListenerAdapter {
                     .setDescription("Player " + declinedUser.getAsMention() + " has been declined by " + creator.getAsMention() + ".")
                     .setColor(Color.RED);
 
-            // Disattiva i bottoni nel messaggio
-            List<Button> disabledButtons = event.getMessage().getButtons().stream()
-                    .map(Button::asDisabled)
-                    .collect(Collectors.toList());
-
-            event.editMessage("❌ Request declined.")
-                    .setComponents(ActionRow.of(disabledButtons))
-                    .queue();
-
-            event.getChannel().sendMessageEmbeds(embed.build()).queue();
+            // Riconosci l’interazione senza messaggi temporanei
+            event.deferEdit().queue(success -> {
+                // Elimina il messaggio con i bottoni
+                event.getMessage().delete().queue();
+                // Invia messaggio embed di declino
+                event.getChannel().sendMessageEmbeds(embed.build()).queue();
+            });
         }
     }
 }

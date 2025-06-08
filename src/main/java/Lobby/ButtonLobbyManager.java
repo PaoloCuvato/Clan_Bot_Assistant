@@ -3,11 +3,14 @@ package Lobby;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 
 import java.awt.*;
 import java.util.EnumSet;
@@ -51,67 +54,44 @@ public class ButtonLobbyManager extends ListenerAdapter {
             }
 
 
-        } else if (componentId.startsWith("accept_")) {
-            String playerId = componentId.replace("accept_", "");
-            User acceptedUser = event.getJDA().getUserById(playerId);
-            Guild guild = event.getGuild();
-            Member creator = event.getMember();
-            if (acceptedUser == null || guild == null || creator == null) {
-                event.reply("❌ Missing information.").setEphemeral(true).queue();
-                return;
-            }
-
-            Lobby lobby = LobbyManager.getLobby(creator.getIdLong());
-            if (lobby == null) {
-                event.reply("❌ Lobby not found.").setEphemeral(true).queue();
-                return;
-            }
-
-            TextChannel privateChannel = guild.getTextChannelById(lobby.getPrivateChannelId());
-            if (privateChannel == null) {
-                event.reply("❌ Private channel not found.").setEphemeral(true).queue();
-                return;
-            }
-
-            Member acceptedMember = guild.getMemberById(playerId);
-            if (acceptedMember == null) {
-                event.reply("❌ Player not found.").setEphemeral(true).queue();
-                return;
-            }
-
-            // Aggiungi i permessi al canale
-            privateChannel.getManager().putPermissionOverride(acceptedMember,
-                    EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND), null).queue();
-
-            // Riconosci l’interazione senza messaggi temporanei
-            event.deferEdit().queue(success -> {
-                // Elimina il messaggio con i bottoni
-                event.getMessage().delete().queue();
-                // Messaggio di conferma nella lobby
-                privateChannel.sendMessage("✅ " + acceptedMember.getAsMention() + " has been accepted by " + creator.getAsMention() + ".").queue();
-            });
-
+// Parte declino modificata correttamente
         } else if (componentId.startsWith("decline_")) {
             String playerId = componentId.replace("decline_", "");
             User declinedUser = event.getJDA().getUserById(playerId);
             Member creator = event.getMember();
-            if (declinedUser == null || creator == null) {
+            Guild guild = event.getGuild();
+
+            if (declinedUser == null || creator == null || guild == null) {
                 event.reply("❌ Could not process decline.").setEphemeral(true).queue();
                 return;
             }
 
-            EmbedBuilder embed = new EmbedBuilder()
-                    .setTitle("🚫 Join Request Declined")
-                    .setDescription("Player " + declinedUser.getAsMention() + " has been declined by " + creator.getAsMention() + ".")
-                    .setColor(Color.RED);
+            // Recupera la lobby del creator (o da chi gestisce il rifiuto)
+            Lobby lobby = LobbyManager.getLobby(creator.getIdLong());
+            if (lobby == null) {
+                event.reply("❌ Could not find the related lobby.").setEphemeral(true).queue();
+                return;
+            }
 
-            // Riconosci l’interazione senza messaggi temporanei
+            long threadPostId = lobby.getPostId(); // ✅ thread già esistente
+            ThreadChannel thread = guild.getThreadChannelById(threadPostId);
+            if (thread == null) {
+                event.reply("❌ Could not find the forum thread for this lobby.").setEphemeral(true).queue();
+                return;
+            }
+
+            EmbedBuilder embed = new EmbedBuilder()
+                    .setTitle("▬▬▬▬ Join Request Declined ▬▬▬▬")
+                    .setDescription("Player " + declinedUser.getAsMention()
+                            + " has been declined by " + creator.getAsMention() + ".")
+                    .setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                    .setColor(Color.decode("#1c0b2e"));
+
             event.deferEdit().queue(success -> {
-                // Elimina il messaggio con i bottoni
-                event.getMessage().delete().queue();
-                // Invia messaggio embed di declino
-                event.getChannel().sendMessageEmbeds(embed.build()).queue();
+                event.getMessage().delete().queue(); // elimina i bottoni
+                thread.sendMessageEmbeds(embed.build()).queue(); // ✅ manda embed nel thread corretto
             });
         }
+
     }
 }

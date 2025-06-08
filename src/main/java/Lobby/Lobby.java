@@ -38,6 +38,7 @@ public class Lobby extends ListenerAdapter {
     private String rules;               // Regole opzionali
     private LocalDateTime createdAt;
     private long privateChannelId;  // ID del canale privato creato per questa lobby
+    private long PostId;
 
 
     private int lobbiesCreated = 0;
@@ -145,6 +146,7 @@ public class Lobby extends ListenerAdapter {
                 .setTags(appliedTags)
                 .queue(post -> {
                     System.out.println("📣 Forum lobby post created! Thread ID: " + post.getThreadChannel().getIdLong());
+                    this.setPostId(post.getThreadChannel().getIdLong());
 
                     guild.createTextChannel(playerName.toLowerCase().replace(" ", "-") + "-lobby")
                             .setParent(postChannel.getParentCategory())

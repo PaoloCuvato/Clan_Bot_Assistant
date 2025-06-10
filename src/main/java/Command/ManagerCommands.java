@@ -725,6 +725,9 @@ public class ManagerCommands extends ListenerAdapter {
         commands.add(Commands.slash("search_ninjacard", "View the Ninja Card of a user")
                 .addOption(OptionType.USER, "target", "The user you want to view", true));
 
+        commands.add(Commands.slash("delete_lobby", "Permanently deletes the selected lobby post and its associated thread. "));
+
+        commands.add(Commands.slash("complete_lobby", "Archives a lobby post and marks it as completed "));
 
         // Register the commands to the guild
         event.getJDA().updateCommands().addCommands(commands).queue();
@@ -809,6 +812,10 @@ public class ManagerCommands extends ListenerAdapter {
                 ).queue();
 
         guild.upsertCommand("freestyle", "The bot will send an embeded about the creation of the lobby").queue();
+
+        guild.upsertCommand("delete_lobby", "Permanently deletes the selected lobby post and its associated thread. ").queue();
+
+        guild.upsertCommand("complete_lobby", "Archives a lobby post and marks it as completed ").queue();
 
 
     }

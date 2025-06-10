@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.entities.channel.forums.ForumTag;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
@@ -57,6 +58,41 @@ public class Lobby extends ListenerAdapter {
         lobbiesCompleted++;
     }
 
+    public void archivePost(Guild guild) {
+        // Ottieni il thread dalla `ThreadChannel`
+        ThreadChannel threadChannel = guild.getThreadChannels().stream()
+                .filter(thread -> thread.getIdLong() == this.PostId)
+                .findFirst()
+                .orElse(null);
+
+        if (threadChannel == null) {
+            System.err.println("❌ Thread del forum non trovato!");
+            return;
+        }
+
+        threadChannel.getManager().setArchived(true).queue(
+                success -> System.out.println("✅ Post archiviato con successo!"),
+                error -> System.err.println("❌ Impossibile archiviare il post!")
+        );
+    }
+
+    public void deletePost(Guild guild) {
+        // Ottieni il thread dalla `ThreadChannel`
+        ThreadChannel threadChannel = guild.getThreadChannels().stream()
+                .filter(thread -> thread.getIdLong() == this.PostId)
+                .findFirst()
+                .orElse(null);
+
+        if (threadChannel == null) {
+            System.err.println("❌ Thread del forum non trovato!");
+            return;
+        }
+
+        threadChannel.delete().queue(
+                success -> System.out.println("✅ Post eliminato con successo!"),
+                error -> System.err.println("❌ Impossibile eliminare il post!")
+        );
+    }
 
     public void sendLobbyLog(Guild guild, long logChannelId) {
         TextChannel logChannel = guild.getTextChannelById(logChannelId);

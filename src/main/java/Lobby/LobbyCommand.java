@@ -1,8 +1,12 @@
 package Lobby;
 
+import ClanManager.ClanStorage;
 import Lobby.Lobby;  // Importa la classe Lobby dal package Lobby
 
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
+import net.dv8tion.jda.api.entities.channel.forums.ForumTag;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
@@ -15,6 +19,7 @@ import net.dv8tion.jda.api.interactions.modals.Modal;
 
 import java.awt.*;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,18 +29,57 @@ public class LobbyCommand extends ListenerAdapter {
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
-        if (!event.getName().equals("freestyle")) return;
-
         long discordId = event.getUser().getIdLong();
 
-        Lobby lobby = new Lobby();
-        lobby.setDiscordId(discordId);
-        lobby.setCreatedAt(LocalDateTime.now());
+        if (event.getName().equals("freestyle")) {
+            Lobby lobby = new Lobby();
+            lobby.setDiscordId(discordId);
+            lobby.setCreatedAt(LocalDateTime.now());
 
-        lobbySessions.put(discordId, lobby);
+            lobbySessions.put(discordId, lobby);
+            promptLobbyTypeStep(event);
+        }
 
-        promptLobbyTypeStep(event);
+        if (event.getName().equals("delete_lobby")) {
+            System.out.println("on delete part");
+            // Puoi aggiungere logica per cancellare la lobby dal manager o database
+            Lobby lobby = LobbyManager.getLobby(discordId);
+            if (lobby != null) {
+                lobby.deletePost(event.getGuild());
+
+                event.reply(event.getUser().getAsMention() + " ✅ Lobby deleted successfully.")
+                        .setEphemeral(false)
+                        .queue();
+
+                LobbyManager.removeLobby(discordId); // Se hai un metodo del genere
+            } else {
+                event.reply("❌ No active lobby found to delete.")
+                        .setEphemeral(true)
+                        .queue();
+            }
+        }
+
+        if (event.getName().equals("complete_lobby")) {
+            System.out.println("on complete part");
+            Lobby lobby = LobbyManager.getLobby(discordId);
+
+            if (lobby != null) {
+                ThreadChannel channel = event.getGuild().getThreadChannelById(lobby.getPostId());
+                changeTagFromOpenedToClosed(channel);
+                lobby.archivePost(event.getGuild());
+                event.reply("✅ Lobby marked as complete.")
+                        .setEphemeral(false)
+                        .queue();
+
+                LobbyManager.removeLobby(discordId); // Se desideri rimuovere dopo il completamento
+            } else {
+                event.reply("❌ No active lobby found to complete.")
+                        .setEphemeral(true)
+                        .queue();
+            }
+        }
     }
+
 
     private void promptLobbyTypeStep(SlashCommandInteractionEvent event) {
         EmbedBuilder embed = new EmbedBuilder()
@@ -219,6 +263,39 @@ public class LobbyCommand extends ListenerAdapter {
 
         event.replyModal(modal).queue();
     }
+
+    public void changeTagFromOpenedToClosed(ThreadChannel threadChannel) {
+        if (threadChannel == null) {
+            System.err.println("❌ ThreadChannel is null.");
+            return;
+        }
+
+        ForumChannel forum = (ForumChannel) threadChannel.getParentChannel();
+        if (forum == null) {
+            System.err.println("❌ Thread is not in a forum channel.");
+            return;
+        }
+
+        // Trova il tag "closed"
+        ForumTag closedTag = forum.getAvailableTags().stream()
+                .filter(tag -> tag.getName().equalsIgnoreCase("Closed"))
+                .findFirst()
+                .orElse(null);
+
+        if (closedTag == null) {
+            System.err.println("❌ Tag 'closed' not found.");
+            return;
+        }
+
+        // Cambia i tag applicati: qui rimuoviamo tutti e mettiamo solo "closed"
+        threadChannel.getManager()
+                .setAppliedTags(Collections.singleton(closedTag))
+                .queue(
+                        success -> System.out.println("✅ Tag changed to 'closed' successfully."),
+                        error -> System.err.println("❌ Failed to change tag: " + error.getMessage())
+                );
+    }
+
 
     @Override
     public void onModalInteraction(ModalInteractionEvent event) {

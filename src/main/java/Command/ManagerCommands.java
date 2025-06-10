@@ -817,6 +817,10 @@ public class ManagerCommands extends ListenerAdapter {
 
         guild.upsertCommand("complete_lobby", "Archives a lobby post and marks it as completed ").queue();
 
+        guild.upsertCommand("block_user", "Blocks a specific user from your lobby.")
+                .addOptions(
+                        new OptionData(OptionType.USER, "user", "The name of the user that you want to block from your lobby", true)).queue();
+
 
     }
 

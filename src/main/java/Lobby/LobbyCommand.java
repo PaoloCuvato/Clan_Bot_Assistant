@@ -1,15 +1,13 @@
 package Lobby;
 
-import ClanManager.ClanStorage;
-import Lobby.Lobby;  // Importa la classe Lobby dal package Lobby
-
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.entities.channel.forums.ForumTag;
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
-import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
@@ -48,7 +46,7 @@ public class LobbyCommand extends ListenerAdapter {
                 lobby.deletePost(event.getGuild());
 
                 event.reply(event.getUser().getAsMention() + " ✅ Lobby deleted successfully.")
-                        .setEphemeral(false)
+                        .setEphemeral(true)
                         .queue();
 
                 LobbyManager.removeLobby(discordId); // Se hai un metodo del genere
@@ -68,7 +66,7 @@ public class LobbyCommand extends ListenerAdapter {
                 changeTagFromOpenedToClosed(channel);
                 lobby.archivePost(event.getGuild());
                 event.reply("✅ Lobby marked as complete.")
-                        .setEphemeral(false)
+                        .setEphemeral(true)
                         .queue();
 
                 LobbyManager.removeLobby(discordId); // Se desideri rimuovere dopo il completamento
@@ -78,7 +76,25 @@ public class LobbyCommand extends ListenerAdapter {
                         .queue();
             }
         }
-    }
+
+            if (event.getName().equals("block_user")) {
+                long ownerId = event.getUser().getIdLong();
+                Lobby lobby = LobbyManager.getLobby(ownerId); // Use your method to fetch the user's lobby
+
+                if (lobby == null) {
+                    event.reply("❌ You don't have an active lobby.").setEphemeral(true).queue();
+                    return;
+                }
+
+                User target = event.getOption("user").getAsUser();
+                long targetId = target.getIdLong();
+
+                lobby.blockUser(targetId);
+
+                event.reply("✅ " + target.getAsMention() + " has been blocked from your lobby.")
+                        .setEphemeral(true).queue();
+            }
+        }
 
 
     private void promptLobbyTypeStep(SlashCommandInteractionEvent event) {

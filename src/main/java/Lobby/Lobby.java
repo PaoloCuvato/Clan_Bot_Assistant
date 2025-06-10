@@ -19,8 +19,7 @@ import java.awt.*;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.EnumSet;
+import java.util.*;
 import java.util.List;
 
 @Data
@@ -46,6 +45,8 @@ public class Lobby extends ListenerAdapter {
     private int lobbiesAnswered = 0;
     private int lobbiesCompleted = 0;
 
+    private final Set<Long> blockedUsers = new HashSet<>();
+
     public void incrementCreated() {
         lobbiesCreated++;
     }
@@ -56,6 +57,14 @@ public class Lobby extends ListenerAdapter {
 
     public void incrementCompleted() {
         lobbiesCompleted++;
+    }
+
+    public void blockUser(long userId) {
+        blockedUsers.add(userId);
+    }
+
+    public boolean isUserBlocked(long userId) {
+        return blockedUsers.contains(userId);
     }
 
     public void archivePost(Guild guild) {

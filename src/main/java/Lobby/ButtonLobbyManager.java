@@ -36,12 +36,19 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 event.reply("❌ You cannot join your own lobby.").setEphemeral(true).queue();
                 return;
             }
+            Lobby lobby = LobbyManager.getLobby(Long.parseLong(creatorId));
+            if (lobby == null) return;
+
+            // ⛔️ Check if the user is blocked by the lobby creator
+            if (lobby.isUserBlocked(joiner.getIdLong())) {
+                event.reply("❌ You have been blocked by the lobby creator. You cannot join.")
+                        .setEphemeral(true)
+                        .queue();
+                return;
+            }
 
             event.reply("✅ Request sent to the lobby owner. Please wait for approval.")
                     .setEphemeral(true).queue();
-
-            Lobby lobby = LobbyManager.getLobby(Long.parseLong(creatorId));
-            if (lobby == null) return;
 
             TextChannel privateChannel = guild.getTextChannelById(lobby.getPrivateChannelId());
             if (privateChannel != null) {

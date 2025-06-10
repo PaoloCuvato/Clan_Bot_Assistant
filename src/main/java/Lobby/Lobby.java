@@ -149,7 +149,8 @@ public class Lobby extends ListenerAdapter {
                     this.setPostId(post.getThreadChannel().getIdLong());
 
                     guild.createTextChannel(playerName.toLowerCase().replace(" ", "-") + "-lobby")
-                            .setParent(postChannel.getParentCategory())
+                          //  .setParent(postChannel.getParentCategory())
+                            .setParent(guild.getCategoryById(1381025760231555077L)) // Categoria "lobby" corretta
                             .addPermissionOverride(guild.getPublicRole(), null, EnumSet.of(Permission.VIEW_CHANNEL))
                             .addPermissionOverride(guild.getMemberById(discordId),
                                     EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND), null)

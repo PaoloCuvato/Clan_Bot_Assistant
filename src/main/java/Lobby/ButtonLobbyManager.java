@@ -53,8 +53,6 @@ public class ButtonLobbyManager extends ListenerAdapter {
                         .queue();
             }
 
-
-// Parte declino modificata correttamente
         } else if (componentId.startsWith("decline_")) {
             String playerId = componentId.replace("decline_", "");
             User declinedUser = event.getJDA().getUserById(playerId);
@@ -66,14 +64,13 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 return;
             }
 
-            // Recupera la lobby del creator (o da chi gestisce il rifiuto)
             Lobby lobby = LobbyManager.getLobby(creator.getIdLong());
             if (lobby == null) {
                 event.reply("❌ Could not find the related lobby.").setEphemeral(true).queue();
                 return;
             }
 
-            long threadPostId = lobby.getPostId(); // ✅ thread già esistente
+            long threadPostId = lobby.getPostId();
             ThreadChannel thread = guild.getThreadChannelById(threadPostId);
             if (thread == null) {
                 event.reply("❌ Could not find the forum thread for this lobby.").setEphemeral(true).queue();
@@ -88,10 +85,49 @@ public class ButtonLobbyManager extends ListenerAdapter {
                     .setColor(Color.decode("#1c0b2e"));
 
             event.deferEdit().queue(success -> {
-                event.getMessage().delete().queue(); // elimina i bottoni
-                thread.sendMessageEmbeds(embed.build()).queue(); // ✅ manda embed nel thread corretto
+                event.getMessage().delete().queue();
+                thread.sendMessageEmbeds(embed.build()).queue();
+            });
+
+        } else if (componentId.startsWith("accept_")) {
+            String playerId = componentId.replace("accept_", "");
+            User acceptedUser = event.getJDA().getUserById(playerId);
+            Guild guild = event.getGuild();
+            Member creator = event.getMember();
+
+            if (acceptedUser == null || guild == null || creator == null) {
+                event.reply("❌ Missing information.").setEphemeral(true).queue();
+                return;
+            }
+
+            Lobby lobby = LobbyManager.getLobby(creator.getIdLong());
+            if (lobby == null) {
+                event.reply("❌ Lobby not found.").setEphemeral(true).queue();
+                return;
+            }
+
+            TextChannel privateChannel = guild.getTextChannelById(lobby.getPrivateChannelId());
+            if (privateChannel == null) {
+                event.reply("❌ Private channel not found.").setEphemeral(true).queue();
+                return;
+            }
+
+            Member acceptedMember = guild.getMemberById(playerId);
+            if (acceptedMember == null) {
+                event.reply("❌ Player not found.").setEphemeral(true).queue();
+                return;
+            }
+
+            privateChannel.getManager()
+                    .putPermissionOverride(acceptedMember,
+                            EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND), null)
+                    .queue();
+
+            event.deferEdit().queue(success -> {
+                event.getMessage().delete().queue();
+                privateChannel.sendMessage("✅ " + acceptedMember.getAsMention() +
+                        " has been accepted by " + creator.getAsMention() + ".").queue();
             });
         }
-
     }
 }

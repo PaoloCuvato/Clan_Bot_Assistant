@@ -26,6 +26,8 @@ public class Bot {
     public Bot() throws LoginException {
         // Inizializza MongoDB
         MongoDBManager.getDatabase();  // Questo assicura che MongoDB sia inizializzato quando parte il bot.
+        long categoryId = 1381025760231555077L; // metti l'ID della tua categoria dei canali temporanei
+
 
         DefaultShardManagerBuilder manager = DefaultShardManagerBuilder.createDefault(token);
         //manager.setActivity(Activity.customStatus("Helping The Admin to Manage Clan Related Things"));
@@ -33,6 +35,7 @@ public class Bot {
         manager.setStatus(OnlineStatus.ONLINE);
         manager.addEventListeners(new ManagerCommands(), new ForumMatchmaking(),new Logger(), new AddInfoCardCommand(),new SlashPlayerInfoManager()); // Aggiungi i comandi
         manager.addEventListeners(new ClanStorage(), new LobbyCommand(), new ButtonLobbyManager(), new Lobby());
+        manager.addEventListeners(new InactivityInitializer(categoryId));
 
         // Abilita i permessi di intenti
         manager.enableIntents(EnumSet.allOf(GatewayIntent.class));

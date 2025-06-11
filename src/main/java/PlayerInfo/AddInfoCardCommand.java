@@ -283,6 +283,17 @@ public class AddInfoCardCommand extends ListenerAdapter {
         event.reply("✅ Your profile has been successfully updated!").setEphemeral(true).queue();
 
         player.sendPlayerInfoLog(Objects.requireNonNull(event.getGuild()));
+
+        // 👉 Here you assign the player info role
+        long roleId = 1382385471300304946L; // ID del ruolo
+        event.getGuild().retrieveMemberById(discordId).queue(member -> {
+            event.getGuild().addRoleToMember(member, event.getGuild().getRoleById(roleId)).queue(
+                    success -> System.out.println("✅ Ruolo assegnato a " + member.getEffectiveName()),
+                    error -> System.err.println("❌ Impossibile assegnare il ruolo: " + error.getMessage())
+            );
+        }, error -> {
+            System.err.println("❌ Utente non trovato: " + error.getMessage());
+        });
     }
     @Override
     public void onGuildReady(GuildReadyEvent event) {

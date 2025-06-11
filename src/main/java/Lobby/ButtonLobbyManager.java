@@ -25,6 +25,19 @@ public class ButtonLobbyManager extends ListenerAdapter {
             Guild guild = event.getGuild();
             if (joiner == null || guild == null) return;
 
+            // Aggiunta controllo ruolo
+            long playerInfoRoleId = 1382385471300304946L;
+            Role playerInfoRole = guild.getRoleById(playerInfoRoleId);
+            if (playerInfoRole == null) {
+                event.reply("❌ Configuration error: required role not found.").setEphemeral(true).queue();
+                return;
+            }
+
+            if (!joiner.getRoles().contains(playerInfoRole)) {
+                event.reply("❌ To use this system, you must create your **Player Ninja Card** first using `/add_info_card`.").setEphemeral(true).queue();
+                return;
+            }
+
             String creatorId = componentId.replace("join_lobby_", "");
             Member creator = guild.getMemberById(creatorId);
             if (creator == null) {

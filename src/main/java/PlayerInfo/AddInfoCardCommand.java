@@ -288,8 +288,8 @@ public class AddInfoCardCommand extends ListenerAdapter {
         long roleId = 1382385471300304946L; // ID del ruolo
         event.getGuild().retrieveMemberById(discordId).queue(member -> {
             event.getGuild().addRoleToMember(member, event.getGuild().getRoleById(roleId)).queue(
-                    success -> System.out.println("✅ Ruolo assegnato a " + member.getEffectiveName()),
-                    error -> System.err.println("❌ Impossibile assegnare il ruolo: " + error.getMessage())
+                    success -> System.out.println("✅ Ruolo Player Info assegnato a " + member.getEffectiveName()),
+                    error -> System.err.println("❌ Impossibile assegnare il ruolo Player Info: " + error.getMessage())
             );
         }, error -> {
             System.err.println("❌ Utente non trovato: " + error.getMessage());

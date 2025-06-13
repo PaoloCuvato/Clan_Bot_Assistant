@@ -821,6 +821,7 @@ public class ManagerCommands extends ListenerAdapter {
                 .addOptions(
                         new OptionData(OptionType.USER, "user", "The name of the user that you want to block from your lobby", true)).queue();
 
+        guild.upsertCommand("lobby_stats", "Show the lobby stats").queue();
 
     }
 

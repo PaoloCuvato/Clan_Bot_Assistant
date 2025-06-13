@@ -60,6 +60,8 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 return;
             }
 
+// da mettere answared
+
             event.reply("✅ Request sent to the lobby owner. Please wait for approval.")
                     .setEphemeral(true).queue();
 

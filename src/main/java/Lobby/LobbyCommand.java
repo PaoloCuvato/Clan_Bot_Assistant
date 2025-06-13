@@ -92,24 +92,24 @@ public class LobbyCommand extends ListenerAdapter {
             }
         }
 
-            if (event.getName().equals("block_user")) {
-                long ownerId = event.getUser().getIdLong();
-                Lobby lobby = LobbyManager.getLobby(ownerId); // Use your method to fetch the user's lobby
+        if (event.getName().equals("block_user")) {
+            long ownerId = event.getUser().getIdLong();
+            Lobby lobby = LobbyManager.getLobby(ownerId); // Use your method to fetch the user's lobby
 
-                if (lobby == null) {
-                    event.reply("❌ You don't have an active lobby.").setEphemeral(true).queue();
-                    return;
-                }
-
-                User target = event.getOption("user").getAsUser();
-                long targetId = target.getIdLong();
-
-                lobby.blockUser(targetId);
-
-                event.reply("✅ " + target.getAsMention() + " has been blocked from your lobby.")
-                        .setEphemeral(true).queue();
+            if (lobby == null) {
+                event.reply("❌ You don't have an active lobby.").setEphemeral(true).queue();
+                return;
             }
+
+            User target = event.getOption("user").getAsUser();
+            long targetId = target.getIdLong();
+
+            lobby.blockUser(targetId);
+
+            event.reply("✅ " + target.getAsMention() + " has been blocked from your lobby.")
+                    .setEphemeral(true).queue();
         }
+    }
 
 
     private void promptLobbyTypeStep(SlashCommandInteractionEvent event) {
@@ -357,6 +357,8 @@ public class LobbyCommand extends ListenerAdapter {
         lobby.sendLobbyAnnouncement(event.getGuild(), 1367186054045761616L);
         LobbyManager.addLobby(lobby.getDiscordId(), lobby);
         lobby.incrementCreated();
+        System.out.println(" lobby crated: "+ lobby.getLobbiesCreated());
+
         lobbySessions.remove(discordId);
     }
     @Override
@@ -391,6 +393,9 @@ public class LobbyCommand extends ListenerAdapter {
                     lobby.archivePost(event.getGuild());
                     threadChannel.sendMessage("✅ Lobby completed and archived.").queue();
                     LobbyManager.removeLobbyByCompletionMessageId(event.getMessageId());
+                    lobby.incrementCompleted();
+                    System.out.println(" lobby completed: "+ lobby.getLobbiesCompleted());
+
                 }
             });
         }

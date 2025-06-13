@@ -3,6 +3,7 @@ package Lobby;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
@@ -25,6 +26,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Slf4j
 public class Lobby extends ListenerAdapter {
     private long discordId;             // Discord user ID
     private String playerName;
@@ -211,6 +213,15 @@ public class Lobby extends ListenerAdapter {
                             });
                 });
     }
+
+    public void printStats() {
+        System.out.println("Discord ID: " + this.discordId);
+        System.out.println("Lobbies Created: " + this.lobbiesCreated);
+        System.out.println("Lobbies Answered: " + this.lobbiesAnswered);
+        System.out.println("Lobbies Completed: " + this.lobbiesCompleted);
+    }
+
+
 
 
 }

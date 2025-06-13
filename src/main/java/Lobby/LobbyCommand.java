@@ -1,13 +1,18 @@
 package Lobby;
 
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.MessageReaction;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.entities.channel.forums.ForumTag;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
+import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
@@ -62,14 +67,24 @@ public class LobbyCommand extends ListenerAdapter {
             Lobby lobby = LobbyManager.getLobby(discordId);
 
             if (lobby != null) {
-                ThreadChannel channel = event.getGuild().getThreadChannelById(lobby.getPostId());
-                changeTagFromOpenedToClosed(channel);
-                lobby.archivePost(event.getGuild());
-                event.reply("✅ Lobby marked as complete.")
-                        .setEphemeral(true)
-                        .queue();
+                event.reply("✅ All participants need to react to this message to complete the lobby and archive.")
+                        .setEphemeral(false)
+                        .queue(messageHook -> {
+                            messageHook.retrieveOriginal().queue(message -> {
+                                // Crea l'oggetto Emoji per la spunta
+                                Emoji checkEmoji = Emoji.fromUnicode("✅");
 
-                LobbyManager.removeLobby(discordId); // Se desideri rimuovere dopo il completamento
+                                // Aggiunge la reazione ✅
+                                message.addReaction(checkEmoji).queue();
+
+                                // Salva l'ID del messaggio nella lobby per monitorare le reazioni
+                                lobby.setCompletionMessageId(message.getId());
+
+                                // Salva anche la lobby nel manager per il completamento
+                                LobbyManager.saveLobbyCompletionMessage(lobby);
+                                lobby.incrementCompleted();
+                            });
+                        });
             } else {
                 event.reply("❌ No active lobby found to complete.")
                         .setEphemeral(true)
@@ -341,6 +356,45 @@ public class LobbyCommand extends ListenerAdapter {
         lobby.sendLobbyLog(event.getGuild(),1380683537501519963L);
         lobby.sendLobbyAnnouncement(event.getGuild(), 1367186054045761616L);
         LobbyManager.addLobby(lobby.getDiscordId(), lobby);
+        lobby.incrementCreated();
         lobbySessions.remove(discordId);
     }
+    @Override
+    public void onMessageReactionAdd(MessageReactionAddEvent event) {
+        // Ignora se è un bot
+        if (event.getUser().isBot()) return;
+
+        // Recuperiamo il canale come GuildChannel per poter accedere alla categoria
+        GuildChannel guildChannel = event.getGuild().getGuildChannelById(event.getChannel().getId());
+
+        // Verifica la categoria (sostituisci con il tuo ID categoria)
+        Category category = guildChannel.getJDA().getCategoryById("1381025760231555077");
+        if (category == null || !category.getId().equals("1381025760231555077")) {
+            return;
+        }
+
+        // Controlla se il messaggio corrisponde a una lobby in attesa di completamento
+        Lobby lobby = LobbyManager.getLobbyByCompletionMessageId(event.getMessageId());
+        if (lobby != null) {
+            event.retrieveMessage().queue(message -> {
+                // Creiamo l'emoji ✅ come oggetto Emoji
+                Emoji checkEmoji = Emoji.fromUnicode("✅");
+
+                // Recuperiamo la reazione corrispondente
+                MessageReaction reaction = message.getReaction(checkEmoji);
+                int reactionCount = reaction != null ? reaction.getCount() : 0;
+
+                // Se ci sono almeno 3 reazioni, completiamo e archiviamo la lobby
+                if (reactionCount >= 3) {
+                    ThreadChannel threadChannel = event.getGuild().getThreadChannelById(lobby.getPostId());
+                    changeTagFromOpenedToClosed(threadChannel);
+                    lobby.archivePost(event.getGuild());
+                    threadChannel.sendMessage("✅ Lobby completed and archived.").queue();
+                    LobbyManager.removeLobbyByCompletionMessageId(event.getMessageId());
+                }
+            });
+        }
+    }
+
+
 }

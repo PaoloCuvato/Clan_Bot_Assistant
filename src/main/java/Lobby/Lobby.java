@@ -38,7 +38,10 @@ public class Lobby extends ListenerAdapter {
     private String rules;               // Regole opzionali
     private LocalDateTime createdAt;
     private long privateChannelId;  // ID del canale privato creato per questa lobby
+
+    // other stuff not on lobby stat
     private long PostId;
+    private String completionMessageId;
 
 
     private int lobbiesCreated = 0;

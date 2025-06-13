@@ -376,7 +376,7 @@ public class LobbyCommand extends ListenerAdapter {
         }
 
         // Controlla se il messaggio corrisponde a una lobby in attesa di completamento
-        Lobby lobby = LobbyManager.getLobbyByCompletionMessageId(event.getMessageId());
+        Lobby lobby = LobbyManager.getLobbyByCompletionMessageId(Long.valueOf(event.getMessageId()));
         if (lobby != null) {
             event.retrieveMessage().queue(message -> {
                 // Creiamo l'emoji ✅ come oggetto Emoji
@@ -392,8 +392,7 @@ public class LobbyCommand extends ListenerAdapter {
                     changeTagFromOpenedToClosed(threadChannel);
                     lobby.archivePost(event.getGuild());
                     threadChannel.sendMessage("✅ Lobby completed and archived.").queue();
-                    LobbyManager.removeLobbyByCompletionMessageId(event.getMessageId());
-                    lobby.incrementCompleted();
+                    LobbyManager.removeLobbyByCompletionMessageId(Long.valueOf(event.getMessageId()));
                     System.out.println(" lobby completed: "+ lobby.getLobbiesCompleted());
 
                 }

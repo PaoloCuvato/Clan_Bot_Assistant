@@ -88,6 +88,8 @@ public class Lobby extends ListenerAdapter {
                 success -> System.out.println("✅ Post archiviato con successo!"),
                 error -> System.err.println("❌ Impossibile archiviare il post!")
         );
+        incrementCompleted();
+        System.out.println("✅ Lobby completed stat incremented for player: " + this.getDiscordId());
     }
 
     public void deletePost(Guild guild) {
@@ -152,6 +154,8 @@ public class Lobby extends ListenerAdapter {
         logChannel.sendMessageEmbeds(eb.build()).queue(message -> {
             long messageId = message.getIdLong();
             System.out.println("✅ Log sent! Message ID: " + messageId);
+            incrementCreated();
+            System.out.println("✅ Lobby created incremented for player: " + this.getDiscordId());
             // Puoi salvare o usare messageId come vuoi
         });
     }
@@ -199,18 +203,33 @@ public class Lobby extends ListenerAdapter {
                     this.setPostId(post.getThreadChannel().getIdLong());
 
                     guild.createTextChannel(playerName.toLowerCase().replace(" ", "-") + "-lobby")
-                          //  .setParent(postChannel.getParentCategory())
                             .setParent(guild.getCategoryById(1381025760231555077L)) // Categoria "lobby" corretta
                             .addPermissionOverride(guild.getPublicRole(), null, EnumSet.of(Permission.VIEW_CHANNEL))
                             .addPermissionOverride(guild.getMemberById(discordId),
                                     EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND), null)
                             .queue(privateChannel -> {
                                 this.privateChannelId = privateChannel.getIdLong();
-                                privateChannel.sendMessage("🔐 " + guild.getMember(UserSnowflake.fromId(discordId)).getUser().getAsMention() + ", this is your private lobby channel where you can accept or decline players.").queue();
+
+                                // Primo messaggio classico
+                                privateChannel.sendMessage("🔐 " + guild.getMember(UserSnowflake.fromId(discordId)).getUser().getAsMention() +
+                                        ", this is your private lobby channel where you can accept or decline players.").queue();
+
+                                // Secondo messaggio con il cancelletto e regole
+                                StringBuilder secondMessage = new StringBuilder();
+                                secondMessage.append("# ").append(game).append(" - ").append(platform).append("\n\n");
+
+                                if (rules != null && !rules.isEmpty()) {
+                                    secondMessage.append("**Rules:** ").append(rules).append("\n");
+                                } else {
+                                    secondMessage.append("**Rules:** None\n");
+                                }
+
+                                privateChannel.sendMessage(secondMessage.toString()).queue();
 
                                 // Registra la lobby nel manager per accesso futuro
                                 LobbyManager.addLobby(discordId, this);
                             });
+
                 });
     }
 

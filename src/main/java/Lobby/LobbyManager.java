@@ -8,7 +8,7 @@ public class LobbyManager {
     private static final Map<Long, Lobby> lobbies = new ConcurrentHashMap<>();
 
     // Nuova mappa per tracciare le lobby per completionMessageId
-    private static final Map<String, Lobby> completionMessageLobbies = new ConcurrentHashMap<>();
+    private static final Map<Long, Lobby> completionMessageLobbies = new ConcurrentHashMap<>();
 
     // Aggiunge una lobby
     public static void addLobby(long creatorId, Lobby lobby) {
@@ -34,17 +34,17 @@ public class LobbyManager {
     // Salva la lobby associata a un messaggio di completamento
     public static void saveLobbyCompletionMessage(Lobby lobby) {
         if (lobby.getCompletionMessageId() != null) {
-            completionMessageLobbies.put(lobby.getCompletionMessageId(), lobby);
+            completionMessageLobbies.put(Long.valueOf(lobby.getCompletionMessageId()), lobby);
         }
     }
 
     // Recupera la lobby tramite messageId del messaggio di completamento
-    public static Lobby getLobbyByCompletionMessageId(String messageId) {
+    public static Lobby getLobbyByCompletionMessageId(Long messageId) {
         return completionMessageLobbies.get(messageId);
     }
 
     // Rimuove la lobby tramite messageId del messaggio di completamento
-    public static void removeLobbyByCompletionMessageId(String messageId) {
+    public static void removeLobbyByCompletionMessageId(Long messageId) {
         completionMessageLobbies.remove(messageId);
     }
 }

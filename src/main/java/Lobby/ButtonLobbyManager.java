@@ -60,7 +60,9 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 return;
             }
 
-// da mettere answared
+            // da mettere answared
+            lobby.incrementAnswered();
+            System.out.println("✅ Lobby answered incremented for player: " + lobby.getDiscordId());
 
             event.reply("✅ Request sent to the lobby owner. Please wait for approval.")
                     .setEphemeral(true).queue();

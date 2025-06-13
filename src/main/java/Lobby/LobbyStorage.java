@@ -1,24 +1,26 @@
 package Lobby;
 
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 
-public class LobbyStorage {
+public class LobbyStorage extends ListenerAdapter {
     // Static map holding all lobby sessions (lobbyId -> Lobby)
-    private static final Map<String, Lobby> lobbies = new ConcurrentHashMap<>();
+    private static final Map<Long, Lobby> lobbies = new ConcurrentHashMap<>();
 
     // Private constructor to prevent instantiation
     private LobbyStorage() {}
 
     // Method to add or update a Lobby in the map
-    public static void addOrUpdateLobby(String lobbyId, Lobby lobby) {
+    public static void addOrUpdateLobby(Long lobbyId, Lobby lobby) {
         lobbies.put(lobbyId, lobby);
         System.out.println("✅ Lobby added/updated with ID: " + lobbyId);
         System.out.println("Lobby Details:\n" + lobby);
     }
 
     // Method to get a lobby by its ID
-    public static Lobby getLobby(String lobbyId) {
+    public static Lobby getLobby(Long lobbyId) {
         return lobbies.get(lobbyId);
     }
 
@@ -32,17 +34,17 @@ public class LobbyStorage {
     }
 
     // Method to check if a lobby exists
-    public static boolean containsLobby(String lobbyId) {
+    public static boolean containsLobby(Long lobbyId) {
         return lobbies.containsKey(lobbyId);
     }
 
     // Method to get all lobbies
-    public static Map<String, Lobby> getAllLobbies() {
+    public static Map<Long, Lobby> getAllLobbies() {
         return lobbies;
     }
 
     // Method to load lobbies into memory (e.g. from a file or previous state)
-    public static void loadLobbies(Map<String, Lobby> loadedLobbies) {
+    public static void loadLobbies(Map<Long, Lobby> loadedLobbies) {
         lobbies.clear();
         lobbies.putAll(loadedLobbies);
         System.out.println("🔁 Lobbies loaded into memory.");

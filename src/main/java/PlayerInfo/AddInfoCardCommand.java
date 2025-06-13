@@ -278,6 +278,8 @@ public class AddInfoCardCommand extends ListenerAdapter {
         player.setAvailablePlayTime(event.getValue("available_time").getAsString());
 
         PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
+        // Qui salvi la lista aggiornata su file
+        PlayerInfoFileManager.savePlayerInfoList(PlayerInfoStorage.getAllSessions());
         PlayerInfoStorage.printAllPlayers();
 
         event.reply("✅ Your profile has been successfully updated!").setEphemeral(true).queue();

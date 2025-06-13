@@ -6,14 +6,17 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import net.dv8tion.jda.api.utils.FileUpload;
+
 
 import java.awt.*;
+import java.io.File;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Map;
 
 public class SlashPlayerInfoManager extends ListenerAdapter {
-    private static final Map<Long, PlayerInfo> playerSessions= PlayerInfoStorage.getAllSessions();
+    private static final Map<Long, PlayerInfo> playerSessions = PlayerInfoStorage.getAllSessions();
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
@@ -33,7 +36,7 @@ public class SlashPlayerInfoManager extends ListenerAdapter {
             EmbedBuilder eb = new EmbedBuilder()
                     .setTitle("▬▬▬▬▬▬ Ninja Card ▬▬▬▬▬▬")
                     .setDescription(
-                                    "** # Ninja Card Info:** " +
+                            "** # Ninja Card Info:** " +
                                     "These are all the stat about you\n" +
                                     " * **Platform:** " + String.join(", ", p.getPlatforms()) + "\n" +
                                     " * **Game:** " + String.join(", ", p.getGame()) + "\n" +
@@ -54,7 +57,7 @@ public class SlashPlayerInfoManager extends ListenerAdapter {
                     .setEphemeral(true)
                     .queue();
         }
-              // search part
+        // search part
         if (command.equals("search_ninjacard")) {
             OptionMapping targetOption = event.getOption("target");
             if (targetOption == null) {
@@ -97,6 +100,22 @@ public class SlashPlayerInfoManager extends ListenerAdapter {
                     .queue();
         }
 
-    }
+        if (!event.getName().equals("send_player_info_file")) return;
 
+        event.deferReply().queue(); // Defer in modo da poter inviare file dopo
+
+        File file = new File("playerinfolist.txt");
+
+        if (!file.exists()) {
+            event.getHook().sendMessage("❌ The file playerinfolist.txt was not found.").queue();
+            return;
+        }
+
+        event.getHook().sendMessage("📄 Here is a text file containing all the users with the Player Info role:")
+                .addFiles(FileUpload.fromData(file))
+                .queue();
+
+
+    }
 }
+

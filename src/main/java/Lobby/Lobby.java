@@ -47,6 +47,7 @@ public class Lobby extends ListenerAdapter {
     // other stuff not on lobby stat
     private long PostId;
     private String completionMessageId;
+    private boolean isCompleted = false;
 
 
     private int lobbiesCreated = 0;
@@ -287,9 +288,6 @@ public class Lobby extends ListenerAdapter {
         });
     }
 
-
-
-
     public void printStats() {
         System.out.println("Discord ID: " + this.discordId);
         System.out.println("Lobbies Created: " + this.lobbiesCreated);
@@ -297,7 +295,14 @@ public class Lobby extends ListenerAdapter {
         System.out.println("Lobbies Completed: " + this.lobbiesCompleted);
     }
 
+    public void completeLobby() {
+        if (!isCompleted) {
+            isCompleted = true;
+            incrementCompleted();
 
-
+            // eventualmente fai altre cose
+            System.out.println("✅ Lobby completed for player: " + this.discordId);
+        }
+    }
 
 }

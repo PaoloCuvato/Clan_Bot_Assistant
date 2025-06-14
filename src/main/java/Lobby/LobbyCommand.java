@@ -36,10 +36,20 @@ public class LobbyCommand extends ListenerAdapter {
         long discordId = event.getUser().getIdLong();
 
         if (event.getName().equals("freestyle")) {
+
+            Lobby existingLobby = LobbyManager.getLobby(discordId);
+            if (existingLobby != null && !existingLobby.isCompleted()) {
+                // L'utente ha già una lobby attiva non completata, blocca la creazione
+                event.reply("❌ You already have an active lobby. Please complete the existing lobby before creating a new one.")
+                        .setEphemeral(true)
+                        .queue();
+                return;
+            }
+
+            // Se non c'è lobby o è completata, puoi crearne una nuova
             Lobby lobby = new Lobby();
             lobby.setDiscordId(discordId);
             lobby.setCreatedAt(LocalDateTime.now());
-
             lobbySessions.put(discordId, lobby);
             promptLobbyTypeStep(event);
         }
@@ -414,6 +424,7 @@ public class LobbyCommand extends ListenerAdapter {
 
         // Recuperiamo il canale come GuildChannel per poter accedere alla categoria
         GuildChannel guildChannel = event.getGuild().getGuildChannelById(event.getChannel().getId());
+        if (guildChannel == null) return;
 
         // Verifica la categoria (sostituisci con il tuo ID categoria)
         Category category = guildChannel.getJDA().getCategoryById("1381025760231555077");
@@ -422,29 +433,44 @@ public class LobbyCommand extends ListenerAdapter {
         }
 
         // Controlla se il messaggio corrisponde a una lobby in attesa di completamento
-        Lobby lobby = LobbyManager.getLobbyByCompletionMessageId(Long.valueOf(event.getMessageId()));
-        if (lobby != null) {
-            event.retrieveMessage().queue(message -> {
-                // Creiamo l'emoji ✅ come oggetto Emoji
-                Emoji checkEmoji = Emoji.fromUnicode("✅");
+        Lobby lobby = LobbyManager.getLobbyByCompletionMessageId(event.getMessageIdLong());
+        if (lobby == null) return;
 
-                // Recuperiamo la reazione corrispondente
-                MessageReaction reaction = message.getReaction(checkEmoji);
-                int reactionCount = reaction != null ? reaction.getCount() : 0;
+        // Recuperiamo il messaggio completo
+        event.retrieveMessage().queue(message -> {
+            // Creiamo l'emoji ✅ come oggetto Emoji
+            Emoji checkEmoji = Emoji.fromUnicode("✅");
 
-                // Se ci sono almeno 3 reazioni, completiamo e archiviamo la lobby
-                if (reactionCount >= 3) {
-                    ThreadChannel threadChannel = event.getGuild().getThreadChannelById(lobby.getPostId());
+            // Recuperiamo la reazione corrispondente
+            MessageReaction reaction = message.getReaction(checkEmoji);
+            int reactionCount = (reaction != null) ? reaction.getCount() : 0;
+
+            // Se ci sono almeno 3 reazioni e la lobby non è già completata
+            if (reactionCount >= 3 && !lobby.isCompleted()) {
+                // Archivia il thread
+                ThreadChannel threadChannel = event.getGuild().getThreadChannelById(lobby.getPostId());
+                if (threadChannel != null) {
                     changeTagFromOpenedToClosed(threadChannel);
                     lobby.archivePost(event.getGuild());
                     threadChannel.sendMessage("✅ Lobby completed and archived.").queue();
-                    LobbyManager.removeLobbyByCompletionMessageId(Long.valueOf(event.getMessageId()));
-                    System.out.println(" lobby completed: "+ lobby.getLobbiesCompleted());
-
+                } else {
+                    System.err.println("❌ ThreadChannel non trovato per PostId: " + lobby.getPostId());
                 }
-            });
-        }
+
+                // Segna come completata
+                lobby.completeLobby();
+
+                // Rimuoviamo la lobby dal manager (sia dalla mappa generale che dalla completion)
+                LobbyManager.removeLobbyByCompletionMessageId(event.getMessageIdLong());
+                LobbyManager.removeLobby(lobby.getDiscordId());
+
+                System.out.println("✅ Lobby completata. Statistiche aggiornate: " + lobby.getLobbiesCompleted());
+            }
+        }, error -> {
+            System.err.println("❌ Errore nel recupero del messaggio: " + error.getMessage());
+        });
     }
+
 /*
     @Override
     public void onModalInteraction(ModalInteractionEvent event) {

@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LobbyManager {
 
     private static final Map<Long, Lobby> lobbies = new ConcurrentHashMap<>();
+    private static final Map<Long, Boolean> userCompletedLobby = new ConcurrentHashMap<>();
 
     // Nuova mappa per tracciare le lobby per completionMessageId
     private static final Map<Long, Lobby> completionMessageLobbies = new ConcurrentHashMap<>();
@@ -46,5 +47,12 @@ public class LobbyManager {
     // Rimuove la lobby tramite messageId del messaggio di completamento
     public static void removeLobbyByCompletionMessageId(Long messageId) {
         completionMessageLobbies.remove(messageId);
+    }
+    public static boolean hasCompletedLobby(long userId) {
+        return userCompletedLobby.getOrDefault(userId, false);
+    }
+
+    public static void setLobbyCompleted(long userId, boolean completed) {
+        userCompletedLobby.put(userId, completed);
     }
 }

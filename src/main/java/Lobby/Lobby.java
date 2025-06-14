@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
@@ -40,6 +41,8 @@ public class Lobby extends ListenerAdapter {
     private String rules;               // Regole opzionali
     private LocalDateTime createdAt;
     private long privateChannelId;  // ID del canale privato creato per questa lobby
+    private long EmbededMessageId;     // id of the embeded message with the join button
+    private long announcementChannelId;  // nuovo campo
 
     // other stuff not on lobby stat
     private long PostId;
@@ -167,6 +170,9 @@ public class Lobby extends ListenerAdapter {
             return;
         }
 
+        // Salvo l'ID del canale forum per poter aggiornare il messaggio in futuro
+        this.announcementChannelId = postChannelId;
+
         // Trova i tag disponibili e seleziona quelli corretti
         List<ForumTag> appliedTags = new ArrayList<>();
         for (ForumTag tag : postChannel.getAvailableTags()) {
@@ -178,18 +184,7 @@ public class Lobby extends ListenerAdapter {
             }
         }
 
-        EmbedBuilder publicEmbed = new EmbedBuilder()
-                .setTitle("▬▬▬▬▬▬▬ " + playerName + " Lobby ▬▬▬▬▬▬▬")
-                .setColor(Color.decode("#1c0b2e"))
-                .setDescription(
-                        "** Player:** " + playerName + "\n" +
-                                "** Game: ** " + game + "\n" +
-                                "** Platform: ** " + platform + "\n" +
-                                "** Region Target: ** " + region + "\n" +
-                                "** Wants to face: ** " + skillLevel + " players\n\n" +
-                                "Lobby is open - Click to join"
-                )
-                .setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
+        EmbedBuilder publicEmbed = buildLobbyEmbed();
 
         Button joinButton = Button.success("join_lobby_" + discordId, "Join");
 
@@ -199,8 +194,24 @@ public class Lobby extends ListenerAdapter {
                         .build())
                 .setTags(appliedTags)
                 .queue(post -> {
-                    System.out.println("📣 Forum lobby post created! Thread ID: " + post.getThreadChannel().getIdLong());
-                    this.setPostId(post.getThreadChannel().getIdLong());
+                    // Recupera il thread creato
+                    ThreadChannel threadChannel = post.getThreadChannel();
+
+                    // Prendi fino a 100 messaggi per trovare il più vecchio (il primo del thread)
+                    threadChannel.getHistory().retrievePast(100).queue(messages -> {
+                        Message firstMessage = messages.stream()
+                                .min(Comparator.comparing(Message::getTimeCreated))
+                                .orElse(null);
+
+                        if (firstMessage != null) {
+                            this.setEmbededMessageId(firstMessage.getIdLong());
+                        } else {
+                            System.err.println("⚠️ Impossibile trovare il messaggio embedded nel thread");
+                        }
+                    });
+
+                    System.out.println("📣 Forum lobby post created! Thread ID: " + threadChannel.getIdLong());
+                    this.setPostId(threadChannel.getIdLong());
 
                     guild.createTextChannel(playerName.toLowerCase().replace(" ", "-") + "-lobby")
                             .setParent(guild.getCategoryById(1381025760231555077L)) // Categoria "lobby" corretta
@@ -229,9 +240,55 @@ public class Lobby extends ListenerAdapter {
                                 // Registra la lobby nel manager per accesso futuro
                                 LobbyManager.addLobby(discordId, this);
                             });
-
                 });
     }
+
+    public EmbedBuilder buildLobbyEmbed() {
+        EmbedBuilder embed = new EmbedBuilder()
+                .setTitle("▬▬▬▬▬▬▬ " + playerName + " Lobby ▬▬▬▬▬▬▬")
+                .setColor(Color.decode("#1c0b2e"))
+                .setDescription(
+                        "**Player:** " + playerName + "\n" +
+                                "**Game:** " + game + "\n" +
+                                "**Platform:** " + platform + "\n" +
+                                "**Region Target:** " + region + "\n" +
+                                "**Wants to face:** " + skillLevel + " players\n\n" +
+                                "Lobby is open - Click to join"
+                )
+                .setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
+        return embed;
+    }
+    public void updateLobbyPost(Guild guild) {
+        if (this.privateChannelId == 0 || this.PostId == 0) {
+            System.err.println("❌ Cannot update post: missing privateChannelId or PostId");
+            return;
+        }
+
+        ThreadChannel threadChannel = guild.getThreadChannelById(this.PostId);
+        if (threadChannel == null) {
+            System.err.println("❌ Thread channel not found for PostId: " + this.PostId);
+            return;
+        }
+
+        threadChannel.retrieveMessageById(this.EmbededMessageId).queue(message -> {
+            EmbedBuilder updatedEmbed = buildLobbyEmbed();
+
+            Button joinButton = Button.success("join_lobby_" + discordId, "Join");
+
+            message.editMessageEmbeds(updatedEmbed.build())
+                    .setActionRow(joinButton)
+                    .queue(
+                            success -> System.out.println("✅ Forum post updated successfully"),
+                            error -> System.err.println("❌ Failed to update forum post: " + error.getMessage())
+                    );
+
+        }, error -> {
+            System.err.println("❌ Could not retrieve message to update: " + error.getMessage());
+        });
+    }
+
+
+
 
     public void printStats() {
         System.out.println("Discord ID: " + this.discordId);

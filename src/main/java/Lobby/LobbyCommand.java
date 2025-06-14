@@ -19,7 +19,8 @@ import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
-
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Message;
 import java.awt.*;
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -42,6 +43,25 @@ public class LobbyCommand extends ListenerAdapter {
             lobbySessions.put(discordId, lobby);
             promptLobbyTypeStep(event);
         }
+
+        if (event.getName().equals("edit_lobby")) {
+            Lobby lobby = LobbyManager.getLobby(discordId);
+
+            if (lobby == null) {
+                event.reply("❌ You don't have an active lobby to edit.")
+                        .setEphemeral(true)
+                        .queue();
+                return;
+            }
+
+            // Salvo la lobby nella sessione di modifica per questo utente
+            lobbySessions.put(discordId, lobby);
+
+            // Avvio il primo step per modificare la lobby
+            promptLobbyTypeStep(event);
+        }
+
+
 
         if (event.getName().equals("delete_lobby")) {
             System.out.println("on delete part");
@@ -342,25 +362,51 @@ public class LobbyCommand extends ListenerAdapter {
             return;
         }
 
+        // Prendi i dati inseriti dal modal
         String playerName = event.getValue("lobby_playername").getAsString();
         String availability = event.getValue("lobby_availability").getAsString();
         String rules = event.getValue("lobby_rule").getAsString();
 
+        // Aggiorna la lobby con i nuovi valori
         lobby.setPlayerName(playerName);
         lobby.setAvailability(availability);
         lobby.setRules(rules);
         lobby.setCreatedAt(LocalDateTime.now());
-        System.out.println("lobby: \n"+lobby.toString());
+        System.out.println("lobby: \n" + lobby.toString());
 
-        event.reply("✅ Lobby created successfully!").setEphemeral(true).queue();
-        lobby.sendLobbyLog(event.getGuild(),1380683537501519963L);
-        lobby.sendLobbyAnnouncement(event.getGuild(), 1367186054045761616L);
-        LobbyManager.addLobby(lobby.getDiscordId(), lobby);
-        lobby.incrementCreated();
-        System.out.println(" lobby crated: "+ lobby.getLobbiesCreated());
+        // Controllo: se esiste già in LobbyManager è un edit
+        if (LobbyManager.getLobby(discordId) != null) {
+            // E' un edit → aggiorniamo il messaggio embedded usando il metodo dedicato
+            try {
+                lobby.updateLobbyPost(event.getGuild());
+                event.reply("✅ Lobby updated successfully!").setEphemeral(true).queue();
 
+                // aggiorna log se vuoi
+                lobby.sendLobbyLog(event.getGuild(), 1380683537501519963L);
+
+                // aggiorna lobby nel manager
+                LobbyManager.addLobby(discordId, lobby);
+
+            } catch (Exception e) {
+                event.reply("❌ Failed to update lobby embed.").setEphemeral(true).queue();
+                e.printStackTrace();
+            }
+
+        } else {
+            // E' una nuova creazione
+            event.reply("✅ Lobby created successfully!").setEphemeral(true).queue();
+            lobby.sendLobbyLog(event.getGuild(), 1380683537501519963L);
+            lobby.sendLobbyAnnouncement(event.getGuild(), 1367186054045761616L);
+            LobbyManager.addLobby(lobby.getDiscordId(), lobby);
+            lobby.incrementCreated();
+            System.out.println(" lobby created: " + lobby.getLobbiesCreated());
+        }
+
+        // in ogni caso rimuovo dalla sessione temporanea
         lobbySessions.remove(discordId);
     }
+
+
     @Override
     public void onMessageReactionAdd(MessageReactionAddEvent event) {
         // Ignora se è un bot
@@ -399,6 +445,40 @@ public class LobbyCommand extends ListenerAdapter {
             });
         }
     }
+/*
+    @Override
+    public void onModalInteraction(ModalInteractionEvent event) {
+        if (!event.getModalId().equals("lobby_details_modal_lobby")) return;
 
+        long discordId = event.getUser().getIdLong();
+        Lobby lobby = lobbySessions.get(discordId);
+
+        if (lobby == null) {
+            event.reply("❌ Lobby session expired. Please start over.")
+                    .setEphemeral(true)
+                    .queue();
+            return;
+        }
+
+        String playerName = event.getValue("lobby_playername").getAsString();
+        String availability = event.getValue("lobby_availability").getAsString();
+        String rules = event.getValue("lobby_rule").getAsString();
+
+        lobby.setPlayerName(playerName);
+        lobby.setAvailability(availability);
+        lobby.setRules(rules);
+        lobby.setCreatedAt(LocalDateTime.now());
+        System.out.println("lobby: \n"+lobby.toString());
+
+        event.reply("✅ Lobby created successfully!").setEphemeral(true).queue();
+        lobby.sendLobbyLog(event.getGuild(),1380683537501519963L);
+        lobby.sendLobbyAnnouncement(event.getGuild(), 1367186054045761616L);
+        LobbyManager.addLobby(lobby.getDiscordId(), lobby);
+        lobby.incrementCreated();
+        System.out.println(" lobby crated: "+ lobby.getLobbiesCreated());
+
+        lobbySessions.remove(discordId);
+    }
+ */
 
 }

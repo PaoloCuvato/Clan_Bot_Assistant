@@ -825,6 +825,9 @@ public class ManagerCommands extends ListenerAdapter {
 
         guild.upsertCommand("send_player_info_file", "Send a .txt with each player that have the player Info role").queue();
 
+        guild.upsertCommand("edit_lobby", "Edit the lobby embeded").queue();
+
+
     }
 
 }

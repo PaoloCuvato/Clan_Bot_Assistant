@@ -1,8 +1,6 @@
 package Lobby;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
@@ -47,9 +45,16 @@ public class Lobby extends ListenerAdapter {
     // other stuff not on lobby stat
     private long PostId;
     private String completionMessageId;
+
+    //check
     private boolean isCompleted = false;
+    @Setter
+    @Getter
+    private boolean ownerEligibleToCreateNewLobby = false;
+    private final Set<Long> partecipants = new HashSet<>();
 
 
+    //stats
     private int lobbiesCreated = 0;
     private int lobbiesAnswered = 0;
     private int lobbiesCompleted = 0;
@@ -94,6 +99,8 @@ public class Lobby extends ListenerAdapter {
         );
         incrementCompleted();
         System.out.println("✅ Lobby completed stat incremented for player: " + this.getDiscordId());
+        LobbyManager.removeLobbyByCompletionMessageId(this.discordId);
+        LobbyManager.removeLobby(this.getDiscordId());
     }
 
     public void deletePost(Guild guild) {
@@ -240,6 +247,8 @@ public class Lobby extends ListenerAdapter {
 
                                 // Registra la lobby nel manager per accesso futuro
                                 LobbyManager.addLobby(discordId, this);
+                                this.getPartecipants().add(discordId);
+
                             });
                 });
     }
@@ -304,5 +313,6 @@ public class Lobby extends ListenerAdapter {
             System.out.println("✅ Lobby completed for player: " + this.discordId);
         }
     }
+
 
 }

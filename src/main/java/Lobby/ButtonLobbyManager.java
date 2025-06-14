@@ -130,6 +130,19 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 return;
             }
 
+            long userIdLong = Long.parseLong(playerId);
+
+            // Controlla se il player è già nella lista
+            if (lobby.getPartecipants().contains(userIdLong)) {
+                event.reply("⚠️ This player is already accepted in the lobby.")
+                        .setEphemeral(true)
+                        .queue();
+                return;
+            }
+
+            // Aggiungi il partecipante
+            lobby.getPartecipants().add(userIdLong);
+
             TextChannel privateChannel = guild.getTextChannelById(lobby.getPrivateChannelId());
             if (privateChannel == null) {
                 event.reply("❌ Private channel not found.").setEphemeral(true).queue();

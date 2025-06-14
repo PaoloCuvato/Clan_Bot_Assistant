@@ -55,4 +55,9 @@ public class LobbyManager {
     public static void setLobbyCompleted(long userId, boolean completed) {
         userCompletedLobby.put(userId, completed);
     }
+    public static boolean isLobbyActive(long creatorId) {
+        Lobby lobby = lobbies.get(creatorId);
+        return lobby != null && !lobby.isCompleted();
+    }
+
 }

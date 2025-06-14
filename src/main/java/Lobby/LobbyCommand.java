@@ -5,6 +5,7 @@ import net.dv8tion.jda.api.entities.MessageReaction;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.entities.channel.forums.ForumTag;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
@@ -35,40 +36,10 @@ public class LobbyCommand extends ListenerAdapter {
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         long discordId = event.getUser().getIdLong();
 
-        if (event.getName().equals("freestyle")) {
-
-            Lobby existingLobby = LobbyManager.getLobby(discordId);
-            if (existingLobby != null && !existingLobby.isCompleted()) {
-                // L'utente ha già una lobby attiva non completata, blocca la creazione
-                event.reply("❌ You already have an active lobby. Please complete the existing lobby before creating a new one.")
-                        .setEphemeral(true)
-                        .queue();
-                return;
-            }
-
-            // Se non c'è lobby o è completata, puoi crearne una nuova
-            Lobby lobby = new Lobby();
-            lobby.setDiscordId(discordId);
-            lobby.setCreatedAt(LocalDateTime.now());
-            lobbySessions.put(discordId, lobby);
-            promptLobbyTypeStep(event);
-        }
-
-        if (event.getName().equals("edit_lobby")) {
-            Lobby lobby = LobbyManager.getLobby(discordId);
-
-            if (lobby == null) {
-                event.reply("❌ You don't have an active lobby to edit.")
-                        .setEphemeral(true)
-                        .queue();
-                return;
-            }
-
-            // Salvo la lobby nella sessione di modifica per questo utente
-            lobbySessions.put(discordId, lobby);
-
-            // Avvio il primo step per modificare la lobby
-            promptLobbyTypeStep(event);
+        switch (event.getName()) {
+            case "freestyle" -> handleFreestyle(event);
+            case "edit_lobby" -> handleEditLobby(event);
+            // altri comandi...
         }
 
 
@@ -112,7 +83,8 @@ public class LobbyCommand extends ListenerAdapter {
 
                                 // Salva anche la lobby nel manager per il completamento
                                 LobbyManager.saveLobbyCompletionMessage(lobby);
-                                lobby.incrementCompleted();
+
+                                // NON incrementiamo qui i completed. Lo faremo solo a completamento avvenuto
                             });
                         });
             } else {
@@ -121,6 +93,7 @@ public class LobbyCommand extends ListenerAdapter {
                         .queue();
             }
         }
+
 
         if (event.getName().equals("block_user")) {
             long ownerId = event.getUser().getIdLong();
@@ -140,7 +113,40 @@ public class LobbyCommand extends ListenerAdapter {
                     .setEphemeral(true).queue();
         }
     }
+    private void handleFreestyle(SlashCommandInteractionEvent event) {
+        long discordId = event.getUser().getIdLong();
+        Lobby existingLobby = LobbyManager.getLobby(discordId);
 
+        if (existingLobby != null && !existingLobby.isCompleted()) {
+            if (!existingLobby.isOwnerEligibleToCreateNewLobby()) {
+                event.reply("❌ You already have an active lobby. Please complete it or wait for another participant to react before creating a new one.")
+                        .setEphemeral(true)
+                        .queue();
+                return;
+            }
+        }
+
+        Lobby lobby = new Lobby();
+        lobby.setDiscordId(discordId);
+        lobby.setCreatedAt(LocalDateTime.now());
+        lobbySessions.put(discordId, lobby);
+        promptLobbyTypeStep(event);
+    }
+
+    private void handleEditLobby(SlashCommandInteractionEvent event) {
+        long discordId = event.getUser().getIdLong();
+        Lobby lobby = LobbyManager.getLobby(discordId);
+
+        if (lobby == null) {
+            event.reply("❌ You don't have an active lobby to edit.")
+                    .setEphemeral(true)
+                    .queue();
+            return;
+        }
+
+        lobbySessions.put(discordId, lobby);
+        promptLobbyTypeStep(event);
+    }
 
     private void promptLobbyTypeStep(SlashCommandInteractionEvent event) {
         EmbedBuilder embed = new EmbedBuilder()
@@ -419,57 +425,69 @@ public class LobbyCommand extends ListenerAdapter {
 
     @Override
     public void onMessageReactionAdd(MessageReactionAddEvent event) {
-        // Ignora se è un bot
+        // Ignora i bot
         if (event.getUser().isBot()) return;
 
-        // Recuperiamo il canale come GuildChannel per poter accedere alla categoria
+        // Verifica che siamo nella categoria lobby
         GuildChannel guildChannel = event.getGuild().getGuildChannelById(event.getChannel().getId());
         if (guildChannel == null) return;
 
-        // Verifica la categoria (sostituisci con il tuo ID categoria)
         Category category = guildChannel.getJDA().getCategoryById("1381025760231555077");
-        if (category == null || !category.getId().equals("1381025760231555077")) {
-            return;
-        }
+        if (category == null || !category.getId().equals("1381025760231555077")) return;
 
-        // Controlla se il messaggio corrisponde a una lobby in attesa di completamento
+        // Recupera la lobby tramite il completionMessageId
         Lobby lobby = LobbyManager.getLobbyByCompletionMessageId(event.getMessageIdLong());
         if (lobby == null) return;
 
-        // Recuperiamo il messaggio completo
-        event.retrieveMessage().queue(message -> {
-            // Creiamo l'emoji ✅ come oggetto Emoji
-            Emoji checkEmoji = Emoji.fromUnicode("✅");
+        // Controlliamo se a reagire è il creator della lobby
+        if (event.getUser().getIdLong() != lobby.getDiscordId()) {
+            System.out.println("❌ Solo il creatore della lobby può completarla.");
+            return;
+        }
 
-            // Recuperiamo la reazione corrispondente
-            MessageReaction reaction = message.getReaction(checkEmoji);
-            int reactionCount = (reaction != null) ? reaction.getCount() : 0;
+        // Verifica che abbia reagito col ✅
+        if (!event.getEmoji().getName().equals("✅")) {
+            return;
+        }
 
-            // Se ci sono almeno 3 reazioni e la lobby non è già completata
-            if (reactionCount >= 3 && !lobby.isCompleted()) {
-                // Archivia il thread
-                ThreadChannel threadChannel = event.getGuild().getThreadChannelById(lobby.getPostId());
-                if (threadChannel != null) {
-                    changeTagFromOpenedToClosed(threadChannel);
-                    lobby.archivePost(event.getGuild());
-                    threadChannel.sendMessage("✅ Lobby completed and archived.").queue();
-                } else {
-                    System.err.println("❌ ThreadChannel non trovato per PostId: " + lobby.getPostId());
-                }
+        // Protezione: evitiamo che venga completata due volte
+        if (lobby.isCompleted()) {
+            System.out.println("⚠️ La lobby è già completata.");
+            return;
+        }
 
-                // Segna come completata
-                lobby.completeLobby();
+        // Archiviazione thread forum
+        ThreadChannel threadChannel = event.getGuild().getThreadChannelById(lobby.getPostId());
+        if (threadChannel != null) {
+            changeTagFromOpenedToClosed(threadChannel);  // aggiorna i tag forum
+            lobby.archivePost(event.getGuild());
+            threadChannel.sendMessage("✅ Lobby completed and archived.").queue();
+        } else {
+            System.err.println("❌ ThreadChannel not found for PostId: " + lobby.getPostId());
+        }
 
-                // Rimuoviamo la lobby dal manager (sia dalla mappa generale che dalla completion)
-                LobbyManager.removeLobbyByCompletionMessageId(event.getMessageIdLong());
-                LobbyManager.removeLobby(lobby.getDiscordId());
+        // Aggiorna lo stato
+        lobby.completeLobby();
 
-                System.out.println("✅ Lobby completata. Statistiche aggiornate: " + lobby.getLobbiesCompleted());
-            }
-        }, error -> {
-            System.err.println("❌ Errore nel recupero del messaggio: " + error.getMessage());
-        });
+        // Rimuove la lobby dalle mappe
+        LobbyManager.removeLobbyByCompletionMessageId(event.getMessageIdLong());
+        LobbyManager.removeLobby(lobby.getDiscordId());
+
+        // Rimuove i permessi al creator nel canale privato
+        TextChannel privateChannel = event.getGuild().getTextChannelById(lobby.getPrivateChannelId());
+        if (privateChannel != null) {
+            privateChannel.getPermissionOverride(event.getGuild().getMemberById(lobby.getDiscordId()))
+                    .delete().queue(
+                            success -> System.out.println("✅ Permessi rimossi dal canale privato."),
+                            error -> System.err.println("❌ Errore rimuovendo permessi: " + error.getMessage())
+                    );
+        }
+
+        System.out.println("✅ Lobby completata e pulita correttamente.");
     }
+
+
+
 
 /*
     @Override

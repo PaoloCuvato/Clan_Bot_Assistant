@@ -93,8 +93,8 @@ public class Lobby extends ListenerAdapter {
             return;
         }
 
-        threadChannel.getManager().setArchived(true).queue(
-                success -> System.out.println("✅ Post archiviato con successo!"),
+        threadChannel.getManager().setArchived(true).setLocked(true).queue(
+                success -> System.out.println("✅ Post archiviato e lockato con successo!"),
                 error -> System.err.println("❌ Impossibile archiviare il post!")
         );
         incrementCompleted();

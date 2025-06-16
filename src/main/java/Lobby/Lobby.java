@@ -61,6 +61,11 @@ public class Lobby extends ListenerAdapter {
 
     private final Set<Long> blockedUsers = new HashSet<>();
 
+    @Setter
+    @Getter
+    private boolean directLobby = false;
+
+
     public void incrementCreated() {
         lobbiesCreated++;
     }

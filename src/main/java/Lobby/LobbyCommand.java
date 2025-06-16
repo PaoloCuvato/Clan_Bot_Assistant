@@ -15,6 +15,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
@@ -25,12 +26,21 @@ import net.dv8tion.jda.api.entities.Message;
 import java.awt.*;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 
 public class LobbyCommand extends ListenerAdapter {
 
     private final Map<Long, Lobby> lobbySessions = new HashMap<>();
+    private final long categoryId = 1381025760231555077L; // Categoria per le lobby
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
@@ -39,9 +49,10 @@ public class LobbyCommand extends ListenerAdapter {
         switch (event.getName()) {
             case "freestyle" -> handleFreestyle(event);
             case "edit_lobby" -> handleEditLobby(event);
+            case "direct" -> handleDirect(event);
+
             // altri comandi...
         }
-
 
 
         if (event.getName().equals("delete_lobby")) {
@@ -112,7 +123,11 @@ public class LobbyCommand extends ListenerAdapter {
             event.reply("✅ " + target.getAsMention() + " has been blocked from your lobby.")
                     .setEphemeral(true).queue();
         }
+
+        if (!event.getName().equals("direct")) return;
+
     }
+
     private void handleFreestyle(SlashCommandInteractionEvent event) {
         long discordId = event.getUser().getIdLong();
         Lobby existingLobby = LobbyManager.getLobby(discordId);
@@ -132,6 +147,29 @@ public class LobbyCommand extends ListenerAdapter {
         lobbySessions.put(discordId, lobby);
         promptLobbyTypeStep(event);
     }
+
+    private void handleDirect(SlashCommandInteractionEvent event) {
+        long discordId = event.getUser().getIdLong();
+        Lobby existingLobby = LobbyManager.getLobby(discordId);
+
+        if (existingLobby != null && !existingLobby.isCompleted()) {
+            if (!existingLobby.isOwnerEligibleToCreateNewLobby()) {
+                event.reply("❌ You already have an active lobby. Please complete it first.")
+                        .setEphemeral(true)
+                        .queue();
+                return;
+            }
+        }
+
+        Lobby lobby = new Lobby();
+        lobby.setDiscordId(discordId);
+        lobby.setCreatedAt(LocalDateTime.now());
+        lobby.setDirectLobby(true);  // <-- Indichiamo che è una lobby direct
+        lobbySessions.put(discordId, lobby);
+
+        promptLobbyTypeStep(event);
+    }
+
 
     private void handleEditLobby(SlashCommandInteractionEvent event) {
         long discordId = event.getUser().getIdLong();
@@ -187,8 +225,15 @@ public class LobbyCommand extends ListenerAdapter {
             }
             case "lobby_platform_select_lobby" -> {
                 lobby.setPlatform(event.getValues().get(0));
-                promptRegionSelection(event);
+
+                // Qui facciamo il salto:
+                if (lobby.isDirectLobby()) {
+                    promptConnectionTypeSelection(event);  // salto region e skill
+                } else {
+                    promptRegionSelection(event);
+                }
             }
+
             case "lobby_region_select_lobby" -> {
                 lobby.setRegion(event.getValues().get(0));
                 promptSkillLevelSelection(event);
@@ -203,6 +248,7 @@ public class LobbyCommand extends ListenerAdapter {
             }
         }
     }
+
 
     private void promptGameSelection(StringSelectInteractionEvent event) {
         EmbedBuilder embed = new EmbedBuilder()
@@ -489,6 +535,8 @@ public class LobbyCommand extends ListenerAdapter {
 
 
 
+
+
 /*
     @Override
     public void onModalInteraction(ModalInteractionEvent event) {
@@ -523,6 +571,126 @@ public class LobbyCommand extends ListenerAdapter {
 
         lobbySessions.remove(discordId);
     }
+
+
+
+    @Override
+    public void onButtonInteraction(ButtonInteractionEvent event) {
+        String buttonId = event.getButton().getId();
+        if (buttonId == null) return;
+
+        Guild guild = event.getGuild();
+        if (guild == null) {
+            event.reply("Guild not found.").setEphemeral(true).queue();
+            return;
+        }
+
+        if (buttonId.startsWith("accept_direct_")) {
+            String userIdStr = buttonId.replace("accept_direct_", "");
+            long invitedUserId;
+            try {
+                invitedUserId = Long.parseLong(userIdStr);
+            } catch (NumberFormatException e) {
+                event.reply("Invalid button ID format.").setEphemeral(true).queue();
+                return;
+            }
+
+            Member clickingMember = event.getMember();
+            if (clickingMember == null) {
+                event.reply("Member info not available.").setEphemeral(true).queue();
+                return;
+            }
+
+            // Controlla che chi clicca sia proprio l’utente invitato
+            if (clickingMember.getIdLong() != invitedUserId) {
+                event.reply("You are not authorized to accept this invitation.").setEphemeral(true).queue();
+                return;
+            }
+
+            Lobby lobby = LobbyManager.getLobby(invitedUserId);
+            if (lobby == null) {
+                event.reply("Lobby no longer exists or expired.").setEphemeral(true).queue();
+                return;
+            }
+
+            TextChannel privateChannel = guild.getTextChannelById(lobby.getPrivateChannelId());
+            if (privateChannel == null) {
+                event.reply("Lobby private channel not found.").setEphemeral(true).queue();
+                return;
+            }
+
+            // Dai i permessi per entrare nel canale privato
+            privateChannel.getPermissionContainer().upsertPermissionOverride(clickingMember)
+                    .setAllowed(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND)
+                    .queue(success -> {
+                        lobby.getPartecipants().add(invitedUserId);
+
+                        event.editMessage("You accepted the invitation! You can now chat in the lobby.")
+                                .setComponents() // rimuove i bottoni
+                                .queue();
+
+                        Member owner = guild.getMemberById(lobby.getDiscordId());
+                        if (owner != null) {
+                            privateChannel.sendMessage(owner.getAsMention() + ", " + clickingMember.getEffectiveName() + " joined your lobby!")
+                                    .queue();
+                        }
+                    }, failure -> {
+                        event.reply("Failed to update permissions.").setEphemeral(true).queue();
+                    });
+
+        } else if (buttonId.startsWith("decline_direct_")) {
+            String userIdStr = buttonId.replace("decline_direct_", "");
+            long invitedUserId;
+            try {
+                invitedUserId = Long.parseLong(userIdStr);
+            } catch (NumberFormatException e) {
+                event.reply("Invalid button ID format.").setEphemeral(true).queue();
+                return;
+            }
+
+            Member clickingMember = event.getMember();
+            if (clickingMember == null) {
+                event.reply("Member info not available.").setEphemeral(true).queue();
+                return;
+            }
+
+            if (clickingMember.getIdLong() != invitedUserId) {
+                event.reply("You are not authorized to decline this invitation.").setEphemeral(true).queue();
+                return;
+            }
+
+            Lobby lobby = LobbyManager.getLobby(invitedUserId);
+            if (lobby == null) {
+                event.reply("Lobby no longer exists or expired.").setEphemeral(true).queue();
+                return;
+            }
+
+            TextChannel privateChannel = guild.getTextChannelById(lobby.getPrivateChannelId());
+            if (privateChannel == null) {
+                event.reply("Lobby private channel not found.").setEphemeral(true).queue();
+                return;
+            }
+
+            privateChannel.delete().queue(success -> {
+                LobbyManager.removeLobby(lobby.getDiscordId());
+
+                event.editMessage("You declined the invitation. The lobby was deleted.")
+                        .setComponents()
+                        .queue();
+
+                Member owner = guild.getMemberById(lobby.getDiscordId());
+                if (owner != null) {
+                    owner.getUser().openPrivateChannel().queue(dm -> {
+                        dm.sendMessage("Your lobby invitation to " + clickingMember.getEffectiveName() + " was declined, lobby deleted.")
+                                .queue();
+                    });
+                }
+            }, failure -> {
+                event.reply("Failed to delete the lobby channel.").setEphemeral(true).queue();
+            });
+        }
+    }
+
  */
 
 }

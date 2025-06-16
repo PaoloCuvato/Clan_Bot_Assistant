@@ -827,6 +827,10 @@ public class ManagerCommands extends ListenerAdapter {
 
         guild.upsertCommand("edit_lobby", "Edit the lobby embeded").queue();
 
+        guild.updateCommands().addCommands(
+                Commands.slash("direct", "Send private lobby")
+                        .addOptions(new OptionData(OptionType.USER, "player", "The user you want to play with", true))
+        ).queue();
 
     }
 

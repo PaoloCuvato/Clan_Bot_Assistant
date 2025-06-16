@@ -25,7 +25,6 @@ public class ButtonLobbyManager extends ListenerAdapter {
             Guild guild = event.getGuild();
             if (joiner == null || guild == null) return;
 
-            // Aggiunta controllo ruolo
             long playerInfoRoleId = 1382385471300304946L;
             Role playerInfoRole = guild.getRoleById(playerInfoRoleId);
             if (playerInfoRole == null) {
@@ -49,32 +48,53 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 event.reply("❌ You cannot join your own lobby.").setEphemeral(true).queue();
                 return;
             }
+
             Lobby lobby = LobbyManager.getLobby(Long.parseLong(creatorId));
             if (lobby == null) return;
 
-            // ⛔️ Check if the user is blocked by the lobby creator
             if (lobby.isUserBlocked(joiner.getIdLong())) {
-                event.reply("❌ You have been blocked by the lobby creator. You cannot join.")
-                        .setEphemeral(true)
-                        .queue();
+                event.reply("❌ You have been blocked by the lobby creator. You cannot join.").setEphemeral(true).queue();
                 return;
             }
 
-            // da mettere answared
+            // PRIVATE LOBBY LOGIC
+            if (lobby.isDirectLobby()) {
+                if (lobby.getAllowedUserId() != joiner.getIdLong()) {
+                    event.reply("❌ You are not allowed to join this private lobby.").setEphemeral(true).queue();
+                    return;
+                }
+
+                // Add participant directly
+                lobby.getPartecipants().add(joiner.getIdLong());
+
+                TextChannel privateChannel = guild.getTextChannelById(lobby.getPrivateChannelId());
+                if (privateChannel != null) {
+                    privateChannel.getManager()
+                            .putPermissionOverride(joiner, EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND), null)
+                            .queue();
+
+                    event.reply("✅ You have successfully joined the private lobby.").setEphemeral(true).queue();
+
+                    privateChannel.sendMessage("✅ " + joiner.getAsMention() + " has joined the private lobby.").queue();
+                } else {
+                    event.reply("❌ Private channel not found.").setEphemeral(true).queue();
+                }
+                return;
+            }
+
+            // NORMAL LOBBY LOGIC
             lobby.incrementAnswered();
             System.out.println("✅ Lobby answered incremented for player: " + lobby.getDiscordId());
 
-            event.reply("✅ Request sent to the lobby owner. Please wait for approval.")
-                    .setEphemeral(true).queue();
+            event.reply("✅ Request sent to the lobby owner. Please wait for approval.").setEphemeral(true).queue();
 
             TextChannel privateChannel = guild.getTextChannelById(lobby.getPrivateChannelId());
             if (privateChannel != null) {
-                privateChannel.sendMessage("🎮 The player **" + joiner.getEffectiveName() + "**, wants to join your lobby, " + creator.getAsMention() + ".")
+                privateChannel.sendMessage("🎮 The player **" + joiner.getEffectiveName() + "** wants to join your lobby, " + creator.getAsMention() + ".")
                         .addActionRow(
                                 Button.success("accept_" + joiner.getId(), "✅ Accept"),
                                 Button.danger("decline_" + joiner.getId(), "❌ Decline")
-                        )
-                        .queue();
+                        ).queue();
             }
 
         } else if (componentId.startsWith("decline_")) {
@@ -103,8 +123,7 @@ public class ButtonLobbyManager extends ListenerAdapter {
 
             EmbedBuilder embed = new EmbedBuilder()
                     .setTitle("▬▬▬▬ Join Request Declined ▬▬▬▬")
-                    .setDescription("Player " + declinedUser.getAsMention()
-                            + " has been declined by " + creator.getAsMention() + ".")
+                    .setDescription("Player " + declinedUser.getAsMention() + " has been declined by " + creator.getAsMention() + ".")
                     .setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
                     .setColor(Color.decode("#1c0b2e"));
 
@@ -132,15 +151,11 @@ public class ButtonLobbyManager extends ListenerAdapter {
 
             long userIdLong = Long.parseLong(playerId);
 
-            // Controlla se il player è già nella lista
             if (lobby.getPartecipants().contains(userIdLong)) {
-                event.reply("⚠️ This player is already accepted in the lobby.")
-                        .setEphemeral(true)
-                        .queue();
+                event.reply("⚠️ This player is already accepted in the lobby.").setEphemeral(true).queue();
                 return;
             }
 
-            // Aggiungi il partecipante
             lobby.getPartecipants().add(userIdLong);
 
             TextChannel privateChannel = guild.getTextChannelById(lobby.getPrivateChannelId());
@@ -156,14 +171,12 @@ public class ButtonLobbyManager extends ListenerAdapter {
             }
 
             privateChannel.getManager()
-                    .putPermissionOverride(acceptedMember,
-                            EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND), null)
+                    .putPermissionOverride(acceptedMember, EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND), null)
                     .queue();
 
             event.deferEdit().queue(success -> {
                 event.getMessage().delete().queue();
-                privateChannel.sendMessage("✅ " + acceptedMember.getAsMention() +
-                        " has been accepted by " + creator.getAsMention() + ".").queue();
+                privateChannel.sendMessage("✅ " + acceptedMember.getAsMention() + " has been accepted by " + creator.getAsMention() + ".").queue();
             });
         }
     }

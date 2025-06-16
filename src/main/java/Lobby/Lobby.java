@@ -65,6 +65,11 @@ public class Lobby extends ListenerAdapter {
     @Getter
     private boolean directLobby = false;
 
+    @Setter
+    @Getter
+    private long allowedUserId;  // ID dell'utente autorizzato per lobby private
+
+
 
     public void incrementCreated() {
         lobbiesCreated++;
@@ -85,6 +90,14 @@ public class Lobby extends ListenerAdapter {
     public boolean isUserBlocked(long userId) {
         return blockedUsers.contains(userId);
     }
+
+    public boolean isUserAllowed(long userId) {
+        if (!this.isDirectLobby()) {
+            return true; // se non è lobby privata, tutti possono entrare
+        }
+        return this.allowedUserId == userId;
+    }
+
 
     public void archivePost(Guild guild) {
         // Ottieni il thread dalla `ThreadChannel`

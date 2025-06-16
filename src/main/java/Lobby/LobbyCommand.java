@@ -161,14 +161,27 @@ public class LobbyCommand extends ListenerAdapter {
             }
         }
 
+        // Check if user option exists (if you need it)
+        OptionMapping userOption = event.getOption("user");
+        if (userOption == null) {
+            event.reply("❌ You must specify a user for the direct lobby.")
+                    .setEphemeral(true)
+                    .queue();
+            return;
+        }
+        User target = userOption.getAsUser();
+
         Lobby lobby = new Lobby();
         lobby.setDiscordId(discordId);
         lobby.setCreatedAt(LocalDateTime.now());
-        lobby.setDirectLobby(true);  // <-- Indichiamo che è una lobby direct
+        lobby.setDirectLobby(true);
+        // Maybe you want to block the target user here? Example:
+        lobby.setAllowedUserId(target.getIdLong());
         lobbySessions.put(discordId, lobby);
-
         promptLobbyTypeStep(event);
     }
+
+
 
 
     private void handleEditLobby(SlashCommandInteractionEvent event) {

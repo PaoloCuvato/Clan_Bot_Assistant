@@ -730,6 +730,8 @@ public class ManagerCommands extends ListenerAdapter {
         commands.add(Commands.slash("complete_lobby", "Archives a lobby post and marks it as completed "));
 
         commands.add(Commands.slash("results", "Archives a lobby post and marks it as completed "));
+        commands.add(Commands.slash("freestyle", "The bot will send an embeded about the creation of the lobby"));
+
 
 
         // Register the commands to the guild

@@ -346,5 +346,22 @@ public class Lobby extends ListenerAdapter {
         }
     }
 
+    public void callRefereeInPrivateChannel(Guild guild) {
+        String adminRoleId = "1015310375094337656";
+        String message = "<@&" + adminRoleId + "> You have been requested to manage/oversee a dispute between the participants of this lobby.";
+
+        TextChannel privateChannel = guild.getTextChannelById(this.privateChannelId);
+        if (privateChannel == null) {
+            System.err.println("❌ Private lobby channel not found (ID: " + this.privateChannelId + ")");
+            return;
+        }
+
+        privateChannel.sendMessage(message).queue(
+                success -> System.out.println("✅ Referee alert sent to private channel."),
+                error -> System.err.println("❌ Failed to send referee alert: " + error.getMessage())
+        );
+    }
+
+
 
 }

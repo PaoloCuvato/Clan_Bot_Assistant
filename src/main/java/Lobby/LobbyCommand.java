@@ -280,9 +280,10 @@ public class LobbyCommand extends ListenerAdapter {
             }
 
             switch (selected) {
+                //to do completed and incompleted i need to do player stats
                 case "completed" -> event.reply("✅ Lobby marked as **completed**!").setEphemeral(true).queue();
                 case "lobby_incompleted" -> event.reply("⚠️ Lobby marked as **incomplete**.").setEphemeral(true).queue();
-                case "lobby_score" -> event.reply("📊 Please enter the score using the `/score` command.").setEphemeral(true).queue();
+                case "lobby_score" -> event.reply("📊 This command will added in the future, when will be added ranked mode and clan battle system").setEphemeral(true).queue();
                 case "report_to_referee" -> {
                     event.reply("🛡️ A referee has been notified.").setEphemeral(true).queue();
                     lobby.callRefereeInPrivateChannel(event.getGuild());

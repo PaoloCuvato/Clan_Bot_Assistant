@@ -41,6 +41,7 @@ public class Lobby extends ListenerAdapter {
     private long privateChannelId;  // ID del canale privato creato per questa lobby
     private long EmbededMessageId;     // id of the embeded message with the join button
     private long announcementChannelId;  // nuovo campo
+    private int maxPartecipants = 2;
 
     // other stuff not on lobby stat
     private long PostId;
@@ -52,7 +53,6 @@ public class Lobby extends ListenerAdapter {
     @Getter
     private boolean ownerEligibleToCreateNewLobby = false;
     private final Set<Long> partecipants = new HashSet<>();
-
 
     //stats
     private int lobbiesCreated = 0;
@@ -73,6 +73,20 @@ public class Lobby extends ListenerAdapter {
 
     public void incrementCreated() {
         lobbiesCreated++;
+    }
+
+    // this  method will set up the max people on the lobby
+    public void checkMaxpartecipants() {
+
+        if(this.lobbyType.equals("Player Match")){
+            this.maxPartecipants = 2;
+
+        } else if (this.lobbyType.equals("Ranked")) {
+            this.maxPartecipants = 2;
+
+        } else if (this.lobbyType.equals("Endless")) {
+            this.maxPartecipants = 8;
+        }
     }
 
     public void incrementAnswered() {

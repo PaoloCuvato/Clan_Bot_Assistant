@@ -220,7 +220,6 @@ public class LobbyCommand extends ListenerAdapter {
                     .queue();
         });
     }
-
     @Override
     public void onStringSelectInteraction(StringSelectInteractionEvent event) {
         long discordId = event.getUser().getIdLong();

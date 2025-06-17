@@ -6,18 +6,15 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.Filters;
 import lombok.Getter;
-import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.bson.Document;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,23 +64,6 @@ public class ClanStorage extends ListenerAdapter {
         clans.remove(name);
     }
 
-    // Aggiorna il nome di un clan in memoria
-//    public static boolean updateClanName(String oldName, String newName) {
-//        if (!hasClan(oldName)) {
-//            return false; // Il clan con il vecchio nome non esiste
-//        }
-//        if (newName == null || newName.trim().isEmpty() || hasClan(newName)) {
-//            throw new IllegalArgumentException("New clan name is invalid or already exists.");
-//        }
-//        // Recupera il clan e rimuove la vecchia entry
-//        Clan clan = clans.get(oldName);
-//        clans.remove(oldName);
-//
-//        // Aggiorna il nome del clan e reinseriscilo con il nuovo nome
-//        clan.updateClanName(newName);
-//        clans.put(newName, clan);
-//        return true;
-//    }
     public static boolean updateClanName(String oldName, String newName) {
         if (!hasClan(oldName)) {
             System.out.println("❌ Error: Clan " + oldName + " does not exist in memory.");
@@ -176,18 +156,6 @@ public class ClanStorage extends ListenerAdapter {
         return null; // Se non trovato
     }
 
-    // Metodo per deserializzare un documento MongoDB in un oggetto Clan
-//    private static Clan documentToClan(Document document) {
-//        // Supponiamo che il tuo oggetto Clan abbia un costruttore che accetta un documento o metodi di impostazione per i campi
-//        Clan clan = new Clan();
-//
-//        // Popola i campi del clan dalla documentazione MongoDB
-//        clan.setName(document.getString("name"));
-//        clan.setListClanMember((ArrayList<User>) document.getList("members", User.class));  // Assumendo che "members" sia una lista di oggetti User
-//        // Popola altri campi del Clan se necessario
-//
-//        return clan;
-//    }
 
     // Cambia il nome del clan nel database
     public static boolean updateClanNameInDatabase(String oldName, String newName) {
@@ -212,9 +180,6 @@ public class ClanStorage extends ListenerAdapter {
         }
         return false;
     }
-
-
-
 
     public static boolean updateClanWinsInDatabase(String clanName, int newWins) {
         MongoCollection<Document> collection = getDatabase().getCollection("clans");
@@ -322,83 +287,6 @@ public class ClanStorage extends ListenerAdapter {
         }
         return null;  // Restituisce null se qualcosa va storto
     }
-
-
-
-//    // Metodo per convertire un documento MongoDB in un oggetto Clan
-//    private static Clan documentToClan(Document document) {
-//        try {
-//            String name = document.getString("name");
-//            int wins = document.getInteger("wins", 0);
-//            int losses = document.getInteger("losses", 0);
-//            String creationDateStr = document.getString("creationDate");
-//            List<String> members = document.getList("members", String.class);
-//
-//            System.out.println("Document loaded: " + document.toJson());  // Log per visualizzare il documento
-//
-//            // Converte la data di creazione in un oggetto LocalDateTime
-//            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM:dd:yyyy HH:mm:ss");
-//            LocalDateTime creationDate = LocalDateTime.parse(creationDateStr, formatter);
-//
-//            // Crea il clan
-//            Clan clan = new Clan(name, null, wins, losses);  // Usa un membro fittizio per il momento
-//
-//            // Aggiungi i membri al clan
-//            for (String memberTag : members) {
-//                User user = getUserFromName(memberTag);  // Recupera l'utente tramite il tag
-//                if (user != null) {
-//                    clan.addUser(user);
-//                }
-//            }
-//
-//            return clan;
-//        } catch (Exception e) {
-//            System.out.println("Errore durante la conversione del documento in clan: " + e.getMessage());
-//        }
-//        return null;  // Restituisce null se qualcosa va storto
-//    }
-
-
-
-    // Metodo per ottenere un utente da Discord basandosi sul nome
-    public static User getUserFromName(String userName) {
-        if (guild == null) {
-            System.err.println("Guild is not initialized! Cannot find the user.");
-            return null;
-        }
-
-        for (Member member : guild.getMembers()) {
-            User user = member.getUser();
-            if (user.getName().equalsIgnoreCase(userName)) {
-                return user;  // Return the found user
-            }
-        }
-
-
-        System.out.println("User not found in guild: " + userName);  // Log se l'utente non viene trovato
-        return null;
-    }
-
-    public static User getUserFromTag(String tag) {
-        if (guild == null) {
-            System.err.println("Guild is not initialized! Cannot find the user.");
-            return null;
-        }
-
-        // Scorre i membri della guild per trovare l'utente con il tag
-        for (Member member : guild.getMembers()) {
-            User user = member.getUser();
-            if (user.getAsTag().equals(tag)) {  // Confronta il tag completo (username#1234)
-                return user;  // Restituisce l'utente trovato
-            }
-        }
-
-        // Se l'utente non è stato trovato
-        System.out.println("User with tag " + tag + " not found.");
-        return null;
-    }
-
-
 
 
     public static void loadAllClansFromDatabase() {

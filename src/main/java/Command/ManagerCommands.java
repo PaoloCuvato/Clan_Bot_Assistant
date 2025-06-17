@@ -729,6 +729,9 @@ public class ManagerCommands extends ListenerAdapter {
 
         commands.add(Commands.slash("complete_lobby", "Archives a lobby post and marks it as completed "));
 
+        commands.add(Commands.slash("results", "Archives a lobby post and marks it as completed "));
+
+
         // Register the commands to the guild
         event.getJDA().updateCommands().addCommands(commands).queue();
     }
@@ -813,9 +816,19 @@ public class ManagerCommands extends ListenerAdapter {
 
         guild.upsertCommand("freestyle", "The bot will send an embeded about the creation of the lobby").queue();
 
+        guild.upsertCommand("edit_lobby", "Edit the lobby embeded").queue();
+
+        guild.updateCommands().addCommands(
+                Commands.slash("direct", "Send private lobby")
+                        .addOptions(new OptionData(OptionType.USER, "user", "The user you want to play with", true))
+        ).queue();
+
         guild.upsertCommand("delete_lobby", "Permanently deletes the selected lobby post and its associated thread. ").queue();
 
         guild.upsertCommand("complete_lobby", "Archives a lobby post and marks it as completed ").queue();
+
+        guild.upsertCommand("leave_lobby", "This command will make you leave the current lobby").queue();
+
 
         guild.upsertCommand("block_user", "Blocks a specific user from your lobby.")
                 .addOptions(
@@ -825,12 +838,8 @@ public class ManagerCommands extends ListenerAdapter {
 
         guild.upsertCommand("send_player_info_file", "Send a .txt with each player that have the player Info role").queue();
 
-        guild.upsertCommand("edit_lobby", "Edit the lobby embeded").queue();
+        guild.upsertCommand("results", "Send an Embeded about the lobby to close it or do other stuff").queue();
 
-        guild.updateCommands().addCommands(
-                Commands.slash("direct", "Send private lobby")
-                        .addOptions(new OptionData(OptionType.USER, "user", "The user you want to play with", true))
-        ).queue();
 
     }
 

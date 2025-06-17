@@ -25,10 +25,8 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import java.awt.*;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
@@ -73,6 +71,46 @@ public class LobbyCommand extends ListenerAdapter {
                         .queue();
             }
         }
+
+        if (!event.getName().equals("results")) return;
+
+        // Ricava membro e utente che hanno invocato il comando
+        Member member = event.getMember();
+        User user = event.getUser();
+
+        // 1) Costruisci l'embed
+        EmbedBuilder eb = new EmbedBuilder()
+                //  .setTitle("▬▬▬▬▬▬▬▬▬▬▬ Report ▬▬▬▬▬▬▬▬▬▬▬")
+                .setDescription(
+                        "**Welcome to our lobby manage page.**\n" +
+                                "> Use this command to finalize the lobby. You can view a summary of what happened, report results, provide feedback, or notify an admin if needed.It’s the last step to close out the session properly\n\n" +
+                                "**Please choose one of the options below for your lobby:**\n" +
+                                "> * **Complete lobby:** this option will mark and complete the current lobby\n" +
+                                "> * **Report Lobby Score:** with this option you can report  the score of the lobby\n" +
+                                "> * **Incomplete lobby:** this option will mark your lobby as incompleted\n" +
+                                "> * **Referee:** This option will contact an admin to do as referee or to report something.\n"
+
+                        //                     "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+                )
+                .setImage("https://64.media.tumblr.com/87273056002f62ae5f1b6417c001170f/f4a7711e15cf7a55-f5/s1280x1920/ec0568cc634542254ba8908d2de2861fda4d171f.gif")
+                .setColor(Color.white);
+//- Report Lobby Score (Score option only shows up when match format is set to casual 1v1 or group FT sets, Clan Battle)
+        // 2) Costruisci il dropdown menu
+        StringSelectMenu menu = StringSelectMenu.create("result:menu")
+                .setPlaceholder("Choose an option for the lobby")
+                .setMinValues(1)
+                .setMaxValues(1)
+                .addOption("Complete lobby","completed")
+                .addOption("Incompleted Lobby","lobby_incompleted")
+                .addOption("Score Lobby","lobby_score")
+                .addOption("Referee","report_to_referee")
+                .build();
+
+        // 3) Invia embed + menu
+        event.replyEmbeds(eb.build())
+                .addActionRow(menu)
+                .setEphemeral(true)
+                .queue();
 
         if (event.getName().equals("complete_lobby")) {
             System.out.println("on complete part");
@@ -549,160 +587,6 @@ public class LobbyCommand extends ListenerAdapter {
 
 
 
-/*
-    @Override
-    public void onModalInteraction(ModalInteractionEvent event) {
-        if (!event.getModalId().equals("lobby_details_modal_lobby")) return;
 
-        long discordId = event.getUser().getIdLong();
-        Lobby lobby = lobbySessions.get(discordId);
-
-        if (lobby == null) {
-            event.reply("❌ Lobby session expired. Please start over.")
-                    .setEphemeral(true)
-                    .queue();
-            return;
-        }
-
-        String playerName = event.getValue("lobby_playername").getAsString();
-        String availability = event.getValue("lobby_availability").getAsString();
-        String rules = event.getValue("lobby_rule").getAsString();
-
-        lobby.setPlayerName(playerName);
-        lobby.setAvailability(availability);
-        lobby.setRules(rules);
-        lobby.setCreatedAt(LocalDateTime.now());
-        System.out.println("lobby: \n"+lobby.toString());
-
-        event.reply("✅ Lobby created successfully!").setEphemeral(true).queue();
-        lobby.sendLobbyLog(event.getGuild(),1380683537501519963L);
-        lobby.sendLobbyAnnouncement(event.getGuild(), 1367186054045761616L);
-        LobbyManager.addLobby(lobby.getDiscordId(), lobby);
-        lobby.incrementCreated();
-        System.out.println(" lobby crated: "+ lobby.getLobbiesCreated());
-
-        lobbySessions.remove(discordId);
-    }
-
-
-
-    @Override
-    public void onButtonInteraction(ButtonInteractionEvent event) {
-        String buttonId = event.getButton().getId();
-        if (buttonId == null) return;
-
-        Guild guild = event.getGuild();
-        if (guild == null) {
-            event.reply("Guild not found.").setEphemeral(true).queue();
-            return;
-        }
-
-        if (buttonId.startsWith("accept_direct_")) {
-            String userIdStr = buttonId.replace("accept_direct_", "");
-            long invitedUserId;
-            try {
-                invitedUserId = Long.parseLong(userIdStr);
-            } catch (NumberFormatException e) {
-                event.reply("Invalid button ID format.").setEphemeral(true).queue();
-                return;
-            }
-
-            Member clickingMember = event.getMember();
-            if (clickingMember == null) {
-                event.reply("Member info not available.").setEphemeral(true).queue();
-                return;
-            }
-
-            // Controlla che chi clicca sia proprio l’utente invitato
-            if (clickingMember.getIdLong() != invitedUserId) {
-                event.reply("You are not authorized to accept this invitation.").setEphemeral(true).queue();
-                return;
-            }
-
-            Lobby lobby = LobbyManager.getLobby(invitedUserId);
-            if (lobby == null) {
-                event.reply("Lobby no longer exists or expired.").setEphemeral(true).queue();
-                return;
-            }
-
-            TextChannel privateChannel = guild.getTextChannelById(lobby.getPrivateChannelId());
-            if (privateChannel == null) {
-                event.reply("Lobby private channel not found.").setEphemeral(true).queue();
-                return;
-            }
-
-            // Dai i permessi per entrare nel canale privato
-            privateChannel.getPermissionContainer().upsertPermissionOverride(clickingMember)
-                    .setAllowed(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND)
-                    .queue(success -> {
-                        lobby.getPartecipants().add(invitedUserId);
-
-                        event.editMessage("You accepted the invitation! You can now chat in the lobby.")
-                                .setComponents() // rimuove i bottoni
-                                .queue();
-
-                        Member owner = guild.getMemberById(lobby.getDiscordId());
-                        if (owner != null) {
-                            privateChannel.sendMessage(owner.getAsMention() + ", " + clickingMember.getEffectiveName() + " joined your lobby!")
-                                    .queue();
-                        }
-                    }, failure -> {
-                        event.reply("Failed to update permissions.").setEphemeral(true).queue();
-                    });
-
-        } else if (buttonId.startsWith("decline_direct_")) {
-            String userIdStr = buttonId.replace("decline_direct_", "");
-            long invitedUserId;
-            try {
-                invitedUserId = Long.parseLong(userIdStr);
-            } catch (NumberFormatException e) {
-                event.reply("Invalid button ID format.").setEphemeral(true).queue();
-                return;
-            }
-
-            Member clickingMember = event.getMember();
-            if (clickingMember == null) {
-                event.reply("Member info not available.").setEphemeral(true).queue();
-                return;
-            }
-
-            if (clickingMember.getIdLong() != invitedUserId) {
-                event.reply("You are not authorized to decline this invitation.").setEphemeral(true).queue();
-                return;
-            }
-
-            Lobby lobby = LobbyManager.getLobby(invitedUserId);
-            if (lobby == null) {
-                event.reply("Lobby no longer exists or expired.").setEphemeral(true).queue();
-                return;
-            }
-
-            TextChannel privateChannel = guild.getTextChannelById(lobby.getPrivateChannelId());
-            if (privateChannel == null) {
-                event.reply("Lobby private channel not found.").setEphemeral(true).queue();
-                return;
-            }
-
-            privateChannel.delete().queue(success -> {
-                LobbyManager.removeLobby(lobby.getDiscordId());
-
-                event.editMessage("You declined the invitation. The lobby was deleted.")
-                        .setComponents()
-                        .queue();
-
-                Member owner = guild.getMemberById(lobby.getDiscordId());
-                if (owner != null) {
-                    owner.getUser().openPrivateChannel().queue(dm -> {
-                        dm.sendMessage("Your lobby invitation to " + clickingMember.getEffectiveName() + " was declined, lobby deleted.")
-                                .queue();
-                    });
-                }
-            }, failure -> {
-                event.reply("Failed to delete the lobby channel.").setEphemeral(true).queue();
-            });
-        }
-    }
-
- */
 
 }

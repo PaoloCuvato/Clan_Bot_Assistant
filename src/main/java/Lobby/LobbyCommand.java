@@ -553,8 +553,8 @@ public class LobbyCommand extends ListenerAdapter {
             lobby.sendLobbyLog(event.getGuild(), 1380683537501519963L);
             lobby.sendLobbyAnnouncement(event.getGuild(), 1367186054045761616L);
             LobbyManager.addLobby(lobby.getDiscordId(), lobby);
-            lobby.incrementCreated();
-            System.out.println(" lobby created: " + lobby.getLobbiesCreated());
+        //    lobby.incrementCreated();
+           // System.out.println(" lobby created: " + lobby.getLobbiesCreated());
         }
 
         // in ogni caso rimuovo dalla sessione temporanea

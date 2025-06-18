@@ -55,9 +55,7 @@ public class Lobby extends ListenerAdapter {
     private final Set<Long> partecipants = new HashSet<>();
 
     //stats
-    private int lobbiesCreated = 0;
-    private int lobbiesAnswered = 0;
-    private int lobbiesCompleted = 0;
+
 
     private final Set<Long> blockedUsers = new HashSet<>();
 
@@ -71,9 +69,9 @@ public class Lobby extends ListenerAdapter {
 
 
 
-    public void incrementCreated() {
-        lobbiesCreated++;
-    }
+    // public void incrementCreated() {
+    //  lobbiesCreated++;
+    //   }
 
     // this  method will set up the max people on the lobby
     public void checkMaxpartecipants() {
@@ -88,7 +86,7 @@ public class Lobby extends ListenerAdapter {
             this.maxPartecipants = 8;
         }
     }
-
+/*
     public void incrementAnswered() {
         lobbiesAnswered++;
     }
@@ -97,6 +95,8 @@ public class Lobby extends ListenerAdapter {
         lobbiesCompleted++;
     }
 
+
+ */
     public void blockUser(long userId) {
         blockedUsers.add(userId);
     }
@@ -129,7 +129,7 @@ public class Lobby extends ListenerAdapter {
                 success -> System.out.println("✅ Post archiviato e lockato con successo!"),
                 error -> System.err.println("❌ Impossibile archiviare il post!")
         );
-        incrementCompleted();
+        //incrementCompleted();
         System.out.println("✅ Lobby completed stat incremented for player: " + this.getDiscordId());
         LobbyManager.removeLobbyByCompletionMessageId(this.discordId);
         LobbyManager.removeLobby(this.getDiscordId());
@@ -184,9 +184,10 @@ public class Lobby extends ListenerAdapter {
 
                                 "** # Lobby Stats:**" +
                                 "interaction that the user have with the lobby's\n"+
-                                " * **Created:** " + lobbiesCreated + "\n" +
-                                " * **Answered:** " + lobbiesAnswered + "\n" +
-                                " * **Completed:** " + lobbiesCompleted + "\n" +
+                                " * **Created:** " +  "\n" +
+                                " * **Answered:** " + "\n" +
+                                " * **Completed:** " + "\n" +
+                                "reworking this part" + "\n" +
 
                                 "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
                 )
@@ -197,7 +198,7 @@ public class Lobby extends ListenerAdapter {
         logChannel.sendMessageEmbeds(eb.build()).queue(message -> {
             long messageId = message.getIdLong();
             System.out.println("✅ Log sent! Message ID: " + messageId);
-            incrementCreated();
+          //  incrementCreated();
             System.out.println("✅ Lobby created incremented for player: " + this.getDiscordId());
             // Puoi salvare o usare messageId come vuoi
         });
@@ -329,17 +330,12 @@ public class Lobby extends ListenerAdapter {
         });
     }
 
-    public void printStats() {
-        System.out.println("Discord ID: " + this.discordId);
-        System.out.println("Lobbies Created: " + this.lobbiesCreated);
-        System.out.println("Lobbies Answered: " + this.lobbiesAnswered);
-        System.out.println("Lobbies Completed: " + this.lobbiesCompleted);
-    }
+
 
     public void completeLobby() {
         if (!isCompleted) {
             isCompleted = true;
-            incrementCompleted();
+           // incrementCompleted();
 
             // eventualmente fai altre cose
             System.out.println("✅ Lobby completed for player: " + this.discordId);

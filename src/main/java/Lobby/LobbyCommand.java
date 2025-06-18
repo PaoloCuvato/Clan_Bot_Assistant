@@ -1,5 +1,7 @@
 package Lobby;
 
+import Stat.PlayerStatMongoDBManager;
+import Stat.PlayerStats;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageReaction;
 import net.dv8tion.jda.api.entities.User;
@@ -181,6 +183,13 @@ public class LobbyCommand extends ListenerAdapter {
         }
 
         Lobby lobby = new Lobby();
+        // player stat updated when a general lobby is created
+        PlayerStats stats = new PlayerStats();
+        stats.incrementLobbiesCreatedGeneral();
+        Map<Long, PlayerStats> playerStatsMap = new HashMap<>();
+        playerStatsMap.put(discordId,stats);
+        PlayerStatMongoDBManager.updatePlayerStats(stats);
+
         lobby.setDiscordId(discordId);
         lobby.setCreatedAt(LocalDateTime.now());
         lobbySessions.put(discordId, lobby);
@@ -211,6 +220,13 @@ public class LobbyCommand extends ListenerAdapter {
         User target = userOption.getAsUser();
 
         Lobby lobby = new Lobby();
+        // player stat updated when a direct lobby is created
+        PlayerStats stats = new PlayerStats();
+        stats.incrementLobbiesCreatedDirect();
+        Map<Long, PlayerStats> playerStatsMap = new HashMap<>();
+        playerStatsMap.put(discordId,stats);
+        PlayerStatMongoDBManager.updatePlayerStats(stats);
+
         lobby.setDiscordId(discordId);
         lobby.setCreatedAt(LocalDateTime.now());
         lobby.setDirectLobby(true);

@@ -2,6 +2,7 @@ package Stat;
 
 import MongoDB.MongoDBManager;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.UpdateOptions;
 import org.bson.Document;
 
 import java.util.*;
@@ -22,7 +23,7 @@ public class PlayerStatMongoDBManager {
         MongoCollection<Document> collection = MongoDBManager.getDatabase().getCollection(COLLECTION_NAME);
         Document query = new Document("discordId", stats.getDiscordId());
         Document update = new Document("$set", playerStatsToDocument(stats));
-        collection.updateOne(query, update);
+        collection.updateOne(query, update, new UpdateOptions().upsert(true));
     }
 
     public static PlayerStats getPlayerStatsById(long discordId) {

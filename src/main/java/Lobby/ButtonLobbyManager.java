@@ -1,5 +1,8 @@
 package Lobby;
 
+import Stat.PlayerStatMongoDBManager;
+import Stat.PlayerStats;
+import Stat.PlayerStatsManager;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
@@ -14,6 +17,8 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 
 import java.awt.*;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ButtonLobbyManager extends ListenerAdapter {
     @Override
@@ -57,6 +62,21 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 return;
             }
 
+            // Get PlayerStatsManager and load stats
+            PlayerStatsManager pm = PlayerStatsManager.getInstance();
+
+            PlayerStats hostStats = pm.getPlayerStats(creator.getIdLong());
+            if (hostStats == null) {
+                hostStats = new PlayerStats();
+                hostStats.setDiscordId(creator.getIdLong());
+            }
+
+            PlayerStats joinerStats = pm.getPlayerStats(joiner.getIdLong());
+            if (joinerStats == null) {
+                joinerStats = new PlayerStats();
+                joinerStats.setDiscordId(joiner.getIdLong());
+            }
+
             // PRIVATE LOBBY LOGIC
             if (lobby.isDirectLobby()) {
                 if (lobby.getAllowedUserId() != joiner.getIdLong()) {
@@ -64,7 +84,17 @@ public class ButtonLobbyManager extends ListenerAdapter {
                     return;
                 }
 
-                // Add participant directly
+                // Update stats
+                hostStats.incrementIgnoredRequestDirect();       // 👈 Host può ignorare
+                joinerStats.incrementLobbiesJoinedDirect();       // 👈 Joiner ha tentato join direct
+
+                pm.addOrUpdatePlayerStats(hostStats);
+                pm.addOrUpdatePlayerStats(joinerStats);
+
+                PlayerStatMongoDBManager.updatePlayerStats(hostStats);
+                PlayerStatMongoDBManager.updatePlayerStats(joinerStats);
+
+                // Add participant
                 lobby.getPartecipants().add(joiner.getIdLong());
 
                 TextChannel privateChannel = guild.getTextChannelById(lobby.getPrivateChannelId());
@@ -74,7 +104,6 @@ public class ButtonLobbyManager extends ListenerAdapter {
                             .queue();
 
                     event.reply("✅ You have successfully joined the private lobby.").setEphemeral(true).queue();
-
                     privateChannel.sendMessage("✅ " + joiner.getAsMention() + " has joined the private lobby.").queue();
                 } else {
                     event.reply("❌ Private channel not found.").setEphemeral(true).queue();
@@ -83,7 +112,15 @@ public class ButtonLobbyManager extends ListenerAdapter {
             }
 
             // NORMAL LOBBY LOGIC
-       //     lobby.incrementAnswered();
+            hostStats.incrementIgnoredRequestGeneral();      // 👈 Host può ignorare
+            joinerStats.incrementLobbiesJoinedGeneral();     // 👈 Joiner ha tentato join general
+
+            pm.addOrUpdatePlayerStats(hostStats);
+            pm.addOrUpdatePlayerStats(joinerStats);
+
+            PlayerStatMongoDBManager.updatePlayerStats(hostStats);
+            PlayerStatMongoDBManager.updatePlayerStats(joinerStats);
+
             System.out.println("✅ Lobby answered incremented for player: " + lobby.getDiscordId());
 
             event.reply("✅ Request sent to the lobby owner. Please wait for approval.").setEphemeral(true).queue();
@@ -97,7 +134,8 @@ public class ButtonLobbyManager extends ListenerAdapter {
                         ).queue();
             }
 
-        } else if (componentId.startsWith("decline_")) {
+
+    } else if (componentId.startsWith("decline_")) {
             String playerId = componentId.replace("decline_", "");
             User declinedUser = event.getJDA().getUserById(playerId);
             Member creator = event.getMember();
@@ -121,6 +159,37 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 return;
             }
 
+            // ===== STATS UPDATE START =====
+            PlayerStatsManager statsManager = PlayerStatsManager.getInstance();
+
+            // Statistiche dell'host (chi rifiuta)
+            PlayerStats hostStats = statsManager.getPlayerStats(creator.getIdLong());
+            if (hostStats == null) {
+                hostStats = new PlayerStats();
+                hostStats.setDiscordId(creator.getIdLong());
+            }
+
+            // Statistiche dell'utente rifiutato
+            PlayerStats declinedStats = statsManager.getPlayerStats(declinedUser.getIdLong());
+            if (declinedStats == null) {
+                declinedStats = new PlayerStats();
+                declinedStats.setDiscordId(declinedUser.getIdLong());
+            }
+
+            // Incrementa i contatori corretti in base al tipo di lobby
+            if (lobby.isDirectLobby()) {
+                declinedStats.incrementDeclinedUserDirect();        // Chi ha cliccato "decline" ha rifiutato
+                hostStats.incrementWasDeclinedDirect();
+            } else {
+                hostStats.incrementDeclinedUserGeneral();
+                declinedStats.incrementWasDeclinedGeneral();
+            }
+
+            // Aggiorna le statistiche nel database
+            PlayerStatMongoDBManager.updatePlayerStats(hostStats);
+            PlayerStatMongoDBManager.updatePlayerStats(declinedStats);
+            // ===== STATS UPDATE END =====
+
             EmbedBuilder embed = new EmbedBuilder()
                     .setTitle("▬▬▬▬ Join Request Declined ▬▬▬▬")
                     .setDescription("Player " + declinedUser.getAsMention() + " has been declined by " + creator.getAsMention() + ".")
@@ -143,6 +212,7 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 return;
             }
 
+            // Lobby owner
             Lobby lobby = LobbyManager.getLobby(creator.getIdLong());
             if (lobby == null) {
                 event.reply("❌ Lobby not found.").setEphemeral(true).queue();
@@ -156,6 +226,39 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 return;
             }
 
+            // Stats update for host (creator) and accepted user
+            PlayerStatsManager pm = PlayerStatsManager.getInstance();
+
+            // Host stats
+            PlayerStats hostStats = pm.getPlayerStats(creator.getIdLong());
+            if (hostStats == null) {
+                hostStats = new PlayerStats();
+                hostStats.setDiscordId(creator.getIdLong());
+                pm.addOrUpdatePlayerStats(hostStats);
+            }
+
+            // Accepted user stats
+            PlayerStats acceptedStats = pm.getPlayerStats(userIdLong);
+            if (acceptedStats == null) {
+                acceptedStats = new PlayerStats();
+                acceptedStats.setDiscordId(userIdLong);
+                pm.addOrUpdatePlayerStats(acceptedStats);
+            }
+
+            // Increment correct stats based on lobby type
+            if (lobby.isDirectLobby()) {
+                acceptedStats.incrementWasAcceptedDirect();
+                hostStats.decrementIgnoredRequestDirect();
+            } else {
+                hostStats.incrementHostAcceptedUserGeneral();
+                hostStats.decrementIgnoredRequestGeneral();
+                acceptedStats.incrementWasAcceptedGeneral();
+            }
+
+            PlayerStatMongoDBManager.updatePlayerStats(hostStats);
+            PlayerStatMongoDBManager.updatePlayerStats(acceptedStats);
+
+            // Add user to lobby participants
             lobby.getPartecipants().add(userIdLong);
 
             TextChannel privateChannel = guild.getTextChannelById(lobby.getPrivateChannelId());
@@ -179,5 +282,6 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 privateChannel.sendMessage("✅ " + acceptedMember.getAsMention() + " has been accepted by " + creator.getAsMention() + ".").queue();
             });
         }
+
     }
 }

@@ -161,4 +161,15 @@ public class PlayerStats extends ListenerAdapter {
     public void printStats() {
         log.info("PlayerStats: {}", this);
     }
+
+    // decrement
+    public void decrementIgnoredRequestGeneral() {
+        ignoredRequestGeneral--;
+        log.info("Ignored Request (General) decremented to {}", ignoredRequestGeneral);
+    }
+
+    public void decrementIgnoredRequestDirect() {
+        ignoredRequestDirect--;
+        log.info("Ignored Request (Direct) decremented to {}", ignoredRequestDirect);
+    }
 }

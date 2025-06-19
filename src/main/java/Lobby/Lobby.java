@@ -1,5 +1,8 @@
 package Lobby;
 
+import Stat.PlayerStatMongoDBManager;
+import Stat.PlayerStats;
+import Stat.PlayerStatsManager;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -22,11 +25,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Slf4j
+@Data
+
 public class Lobby extends ListenerAdapter {
+
     private long discordId;             // Discord user ID
     private String playerName;
     private String game;
@@ -49,29 +54,13 @@ public class Lobby extends ListenerAdapter {
 
     //check
     private boolean isCompleted = false;
-    @Setter
-    @Getter
     private boolean ownerEligibleToCreateNewLobby = false;
+    private boolean directLobby = false; // if the lobby is direct or not
     private final Set<Long> partecipants = new HashSet<>();
 
     //stats
-
-
     private final Set<Long> blockedUsers = new HashSet<>();
-
-    @Setter
-    @Getter
-    private boolean directLobby = false;
-
-    @Setter
-    @Getter
-    private long allowedUserId;  // ID dell'utente autorizzato per lobby private
-
-
-
-    // public void incrementCreated() {
-    //  lobbiesCreated++;
-    //   }
+    private long allowedUserId;  // ID dell'utente autorizzato per lobby privat
 
     // this  method will set up the max people on the lobby
     public void checkMaxpartecipants() {
@@ -114,26 +103,44 @@ public class Lobby extends ListenerAdapter {
 
 
     public void archivePost(Guild guild) {
-        // Ottieni il thread dalla `ThreadChannel`
+        // Get the thread from the ThreadChannel
         ThreadChannel threadChannel = guild.getThreadChannels().stream()
                 .filter(thread -> thread.getIdLong() == this.PostId)
                 .findFirst()
                 .orElse(null);
 
         if (threadChannel == null) {
-            System.err.println("❌ Thread del forum non trovato!");
+            System.err.println("❌ Forum thread not found!");
             return;
         }
 
         threadChannel.getManager().setArchived(true).setLocked(true).queue(
-                success -> System.out.println("✅ Post archiviato e lockato con successo!"),
-                error -> System.err.println("❌ Impossibile archiviare il post!")
+                success -> System.out.println("✅ Post archived and locked successfully!"),
+                error -> System.err.println("❌ Unable to archive the post!")
         );
         //incrementCompleted();
         System.out.println("✅ Lobby completed stat incremented for player: " + this.getDiscordId());
         LobbyManager.removeLobbyByCompletionMessageId(this.discordId);
         LobbyManager.removeLobby(this.getDiscordId());
+        // stats update
+        PlayerStatsManager pm = PlayerStatsManager.getInstance();  // <-- using singleton here
+        PlayerStats stats = pm.getPlayerStats(discordId);
+        if (stats == null) {
+            stats = new PlayerStats();
+            stats.setDiscordId(discordId);
+            pm.addOrUpdatePlayerStats(stats);
+        }
+        // player stat when a direct lobby is created
+        if(this.directLobby == true){
+            stats.incrementLobbiesCompletedDirect();
+        } else if (this.directLobby == false) {
+            stats.incrementLobbiesCompletedGeneral();
+        }
+        Map<Long, PlayerStats> playerStatsMap = new HashMap<>();
+        playerStatsMap.put(discordId, stats);
+        PlayerStatMongoDBManager.updatePlayerStats(stats);
     }
+
 
     public void deletePost(Guild guild) {
         // Ottieni il thread dalla `ThreadChannel`
@@ -358,6 +365,60 @@ public class Lobby extends ListenerAdapter {
         );
     }
 
+    public void incompleteLobby() {
+        if (this.isCompleted) {
+            System.out.println("⚠️ Cannot mark an already completed lobby as incomplete.");
+            return;
+        }
+
+        // Mark lobby as incomplete
+        this.isCompleted = false;
+
+        PlayerStatsManager pm = PlayerStatsManager.getInstance();
+
+        // Update creator stats
+        PlayerStats creatorStats = pm.getPlayerStats(this.discordId);
+        if (creatorStats == null) {
+            creatorStats = new PlayerStats();
+            creatorStats.setDiscordId(this.discordId);
+            pm.addOrUpdatePlayerStats(creatorStats);
+        }
+
+        if (this.directLobby) {
+            creatorStats.incrementLobbiesIncompleteDirect();
+        } else {
+            creatorStats.incrementLobbiesIncompleteGeneral();
+        }
+        PlayerStatMongoDBManager.updatePlayerStats(creatorStats);
+
+        // Remove lobby for creator
+        LobbyManager.removeLobby(this.discordId);
+
+        // Update and remove lobby for each participant (excluding creator)
+        for (Long participantId : partecipants) {
+            if (!participantId.equals(this.discordId)) {
+                PlayerStats participantStats = pm.getPlayerStats(participantId);
+                if (participantStats == null) {
+                    participantStats = new PlayerStats();
+                    participantStats.setDiscordId(participantId);
+                    pm.addOrUpdatePlayerStats(participantStats);
+                }
+
+                if (this.directLobby) {
+                    participantStats.incrementLobbiesIncompleteDirect();
+                } else {
+                    participantStats.incrementLobbiesIncompleteGeneral();
+                }
+                PlayerStatMongoDBManager.updatePlayerStats(participantStats);
+
+                LobbyManager.removeLobby(participantId);
+            }
+        }
+
+        partecipants.clear();
+
+        System.out.println("✅ Lobby marked as incomplete and removed for all players in lobby: " + this.discordId);
+    }
 
 
 }

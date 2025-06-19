@@ -842,6 +842,9 @@ public class ManagerCommands extends ListenerAdapter {
 
         guild.upsertCommand("results", "Send an Embeded about the lobby to close it or do other stuff").queue();
 
+        guild.upsertCommand("cancel", "If you use this command, you will cancel the lobby you created or joined. v2").queue();
+
+        guild.updateCommands();
 
     }
 

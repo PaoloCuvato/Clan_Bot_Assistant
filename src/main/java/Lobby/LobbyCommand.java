@@ -2,6 +2,7 @@ package Lobby;
 
 import Stat.PlayerStatMongoDBManager;
 import Stat.PlayerStats;
+import Stat.PlayerStatsManager;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageReaction;
 import net.dv8tion.jda.api.entities.User;
@@ -12,6 +13,7 @@ import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.entities.channel.forums.ForumTag;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
+import net.dv8tion.jda.api.events.Event;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
@@ -144,6 +146,51 @@ public class LobbyCommand extends ListenerAdapter {
                         .setEphemeral(true)
                         .queue();
             }
+        }
+
+        if (event.getName().equals("cancel")) {
+            long userId = event.getUser().getIdLong();
+
+            // Verifica se l'utente ha una lobby attiva
+            if (!LobbyManager.hasLobby(userId)) {
+                event.reply("❌ You don't have an active lobby to cancel.").setEphemeral(true).queue();
+                return;
+            }
+
+            Lobby ownLobby = LobbyManager.getLobby(userId);
+            System.out.println("[DEBUG] Lobby partecipants size: " + ownLobby.getPartecipants().size());
+            // Controlla se la lobby ha altri partecipanti oltre all'owner
+            if (ownLobby.getPartecipants().size() > 1) {
+                event.reply("❌ You can't cancel a lobby that already has participants. Please complete it instead.")
+                        .setEphemeral(true).queue();
+                return;
+            }
+
+            // Cancella il post nel forum (thread)
+            ownLobby.deletePost(event.getGuild());
+
+            // Aggiorna statistiche di abbandono (disband)
+            PlayerStats stats = PlayerStatsManager.getInstance().getPlayerStats(userId);
+            if (stats == null) {
+                stats = new PlayerStats();
+                stats.setDiscordId(userId);
+                PlayerStatsManager.getInstance().addOrUpdatePlayerStats(stats);
+            }
+
+            if (ownLobby.isDirectLobby()) {
+                stats.incrementLobbiesDisbandedDirect();
+            } else {
+                stats.incrementLobbiesDisbandedGeneral();
+            }
+
+            PlayerStatMongoDBManager.updatePlayerStats(stats);
+
+            // Rimuove la lobby dal manager
+            LobbyManager.removeLobby(userId);
+            LobbyManager.removeLobbyByCompletionMessageId(userId);
+
+            // Risposta finale
+            event.reply("🗑️ Your lobby has been successfully cancelled.").setEphemeral(true).queue();
         }
 
 
@@ -297,12 +344,37 @@ public class LobbyCommand extends ListenerAdapter {
 
             switch (selected) {
                 //to do completed and incompleted i need to do player stats
-                case "completed" -> event.reply("✅ Lobby marked as **completed**!").setEphemeral(true).queue();
-                case "lobby_incompleted" -> event.reply("⚠️ Lobby marked as **incomplete**.").setEphemeral(true).queue();
-                case "lobby_score" -> event.reply("📊 This command will added in the future, when will be added ranked mode and clan battle system").setEphemeral(true).queue();
+                case "completed" ->{
+                    lobby.archivePost(event.getGuild());
+                    event.reply("✅ Lobby marked as **completed**!").setEphemeral(true).queue();
+                }
+                case "lobby_incompleted" ->{
+                    lobby.incompleteLobby();
+                    event.reply("⚠️ Lobby marked as **incomplete**.").setEphemeral(true).queue();
+                }
+                case "lobby_score" -> {
+                    event.getMessage().editMessageComponents().queue();
+                    event.reply("📊 This command should be used in rank/clan battles. It works on Player Match but is not recommended.")
+                            .setEphemeral(true)
+                            .queue();
+
+                    Modal modal = Modal.create("lobby_score_modal", "Enter Your Lobby Score")
+                            .addActionRow(
+                                    TextInput.create("score_input", "Score", TextInputStyle.SHORT)
+                                            .setPlaceholder("e.g. 2-1, W-L")
+                                            .setRequired(true)
+                                            .build()
+                            )
+                            .build();
+
+                    // Mostra il modal
+                    event.replyModal(modal).queue();
+                }
+
+
                 case "report_to_referee" -> {
-                    event.reply("🛡️ A referee has been notified.").setEphemeral(true).queue();
                     lobby.callRefereeInPrivateChannel(event.getGuild());
+                    event.reply("🛡️ A referee has been notified.").setEphemeral(true).queue();
                 }
                 default -> event.reply("❌ Unknown option selected.").setEphemeral(true).queue();
             }
@@ -569,12 +641,46 @@ public class LobbyCommand extends ListenerAdapter {
             lobby.sendLobbyLog(event.getGuild(), 1380683537501519963L);
             lobby.sendLobbyAnnouncement(event.getGuild(), 1367186054045761616L);
             LobbyManager.addLobby(lobby.getDiscordId(), lobby);
-        //    lobby.incrementCreated();
-           // System.out.println(" lobby created: " + lobby.getLobbiesCreated());
-        }
 
-        // in ogni caso rimuovo dalla sessione temporanea
-        lobbySessions.remove(discordId);
+            // ===== STATS UPDATE START =====
+            PlayerStatsManager statsManager = PlayerStatsManager.getInstance();
+            PlayerStats hostStats = statsManager.getPlayerStats(discordId);
+
+            if (hostStats == null) {
+                hostStats = new PlayerStats();
+                hostStats.setDiscordId(discordId);
+            }
+
+            if (lobby.isDirectLobby()) {
+                hostStats.incrementLobbiesCreatedDirect();
+            } else {
+                hostStats.incrementLobbiesCreatedGeneral();
+            }
+
+            statsManager.addOrUpdatePlayerStats(hostStats);
+            PlayerStatMongoDBManager.updatePlayerStats(hostStats);
+            // ===== STATS UPDATE END =====
+
+            // in ogni caso rimuovo dalla sessione temporanea
+            lobbySessions.remove(discordId);
+
+            // score modal update
+            if (event.getModalId().equals("lobby_score_modal")) {
+                String score = event.getValue("score_input").getAsString();
+
+                PlayerStatsManager manager = PlayerStatsManager.getInstance();
+                PlayerStats stats = manager.getPlayerStats(discordId);
+
+                if (stats == null) {
+                    stats = new PlayerStats();
+                    stats.setDiscordId(discordId);
+                }
+
+                stats.setScore(score);
+                manager.addOrUpdatePlayerStats(stats);
+                event.reply("✅ Score saved successfully: `" + score + "`").setEphemeral(true).queue();
+            }
+        }
     }
 
 

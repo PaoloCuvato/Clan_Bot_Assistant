@@ -1,11 +1,14 @@
 package Stat;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+
 import java.util.HashMap;
 import java.util.Map;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -14,6 +17,18 @@ public class PlayerStatsManager extends ListenerAdapter {
 
     // Map containing Discord user IDs and their corresponding PlayerStats
     private Map<Long, PlayerStats> playerStatsMap = new HashMap<>();
+
+    // --- Singleton implementation ---
+    private static PlayerStatsManager instance;
+
+    public static synchronized PlayerStatsManager getInstance() {
+        if (instance == null) {
+            instance = new PlayerStatsManager();
+            log.info("PlayerStatsManager instance created");
+        }
+        return instance;
+    }
+    // --- End Singleton ---
 
     public void addOrUpdatePlayerStats(PlayerStats stats) {
         playerStatsMap.put(stats.getDiscordId(), stats);

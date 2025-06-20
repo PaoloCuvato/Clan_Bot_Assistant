@@ -8,8 +8,10 @@ import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.UserSnowflake;
+import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
@@ -75,17 +77,17 @@ public class Lobby extends ListenerAdapter {
             this.maxPartecipants = 8;
         }
     }
-/*
-    public void incrementAnswered() {
-        lobbiesAnswered++;
-    }
+    /*
+        public void incrementAnswered() {
+            lobbiesAnswered++;
+        }
 
-    public void incrementCompleted() {
-        lobbiesCompleted++;
-    }
+        public void incrementCompleted() {
+            lobbiesCompleted++;
+        }
 
 
- */
+     */
     public void blockUser(long userId) {
         blockedUsers.add(userId);
     }
@@ -207,7 +209,7 @@ public class Lobby extends ListenerAdapter {
         logChannel.sendMessageEmbeds(eb.build()).queue(message -> {
             long messageId = message.getIdLong();
             System.out.println("✅ Log sent! Message ID: " + messageId);
-          //  incrementCreated();
+            //  incrementCreated();
             System.out.println("✅ Lobby created incremented for player: " + this.getDiscordId());
             // Puoi salvare o usare messageId come vuoi
         });
@@ -295,6 +297,63 @@ public class Lobby extends ListenerAdapter {
                 });
     }
 
+    public void sendDirectCreationLobbyLog(Guild guild, long logChannelId, long categoryId) {
+        TextChannel logChannel = guild.getTextChannelById(logChannelId);
+        if (logChannel == null) {
+            System.err.println("❌ Log channel not found with ID: " + logChannelId);
+            return;
+        }
+
+        Category category = guild.getCategoryById(categoryId);
+        if (category == null) {
+            System.err.println("❌ Category not found with ID: " + categoryId);
+            return;
+        }
+
+        Member creator = guild.getMemberById(discordId);
+        if (creator == null) {
+            System.err.println("❌ Creator member not found in guild");
+            return;
+        }
+
+        guild.createTextChannel("private-lobby-" + creator.getEffectiveName(), category)
+                .addPermissionOverride(guild.getPublicRole(), null, EnumSet.of(Permission.VIEW_CHANNEL))
+                .addPermissionOverride(creator, EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND), null)
+                .queue(privateChannel -> {
+                    this.privateChannelId = privateChannel.getIdLong();
+
+                    privateChannel.sendMessage("🔐 " + creator.getAsMention() + ", this is your private lobby channel where you can accept or decline players.\nUse `/add @user` to invite someone.")
+                            .queue();
+
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("**Game:** ").append(game).append("\n");
+                    sb.append("**Platform:** ").append(platform).append("\n");
+                    sb.append("**Rules:** ").append((rules == null || rules.isEmpty()) ? "None" : rules).append("\n");
+                    sb.append("**Availability:** ").append((availability == null || availability.isEmpty()) ? "N/A" : availability);
+
+                    privateChannel.sendMessage(sb.toString()).queue();
+
+                    EmbedBuilder logEmbed = new EmbedBuilder();
+                    logEmbed.setTitle("🔐 New Direct Lobby Created");
+                    logEmbed.setColor(Color.GREEN);
+                    logEmbed.addField("Creator",creator.getAsMention(), true);
+                    logEmbed.addField("Game", game, true);
+                    logEmbed.addField("Platform", platform, true);
+                    logEmbed.addField("Rules", (rules == null || rules.isEmpty()) ? "None" : rules, false);
+                    logEmbed.addField("Availability", (availability == null || availability.isEmpty()) ? "N/A" : availability, false);
+                    logEmbed.addField("Private Channel", privateChannel.getAsMention(), false);
+                    logEmbed.setTimestamp(Instant.now());
+
+                    logChannel.sendMessageEmbeds(logEmbed.build()).queue();
+
+                    LobbyManager.addLobby(discordId, this);
+                    this.getPartecipants().add(discordId);
+
+                    System.out.println("📢 Private lobby channel created: " + privateChannel.getName());
+                });
+    }
+
+
     public EmbedBuilder buildLobbyEmbed() {
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("▬▬▬▬▬▬▬ " + playerName + " Lobby ▬▬▬▬▬▬▬")
@@ -344,7 +403,7 @@ public class Lobby extends ListenerAdapter {
     public void completeLobby() {
         if (!isCompleted) {
             isCompleted = true;
-           // incrementCompleted();
+            // incrementCompleted();
 
             // eventualmente fai altre cose
             System.out.println("✅ Lobby completed for player: " + this.discordId);

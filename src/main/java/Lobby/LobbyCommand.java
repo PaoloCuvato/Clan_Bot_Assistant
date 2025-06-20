@@ -256,32 +256,14 @@ public class LobbyCommand extends ListenerAdapter {
             }
         }
 
-        // Check if user option exists (if you need it)
-        OptionMapping userOption = event.getOption("user");
-        if (userOption == null) {
-            event.reply("❌ You must specify a user for the direct lobby.")
-                    .setEphemeral(true)
-                    .queue();
-            return;
-        }
-        User target = userOption.getAsUser();
-
         Lobby lobby = new Lobby();
-        // player stat updated when a direct lobby is created
-        PlayerStats stats = new PlayerStats();
-        stats.incrementLobbiesCreatedDirect();
-        Map<Long, PlayerStats> playerStatsMap = new HashMap<>();
-        playerStatsMap.put(discordId,stats);
-        PlayerStatMongoDBManager.updatePlayerStats(stats);
-
         lobby.setDiscordId(discordId);
         lobby.setCreatedAt(LocalDateTime.now());
         lobby.setDirectLobby(true);
-        // Maybe you want to block the target user here? Example:
-        lobby.setAllowedUserId(target.getIdLong());
         lobbySessions.put(discordId, lobby);
-        promptLobbyTypeStep(event);
+        promptLobbyTypeStep(event); // Avvia il flow dei select menu
     }
+
 
 
 
@@ -590,95 +572,146 @@ public class LobbyCommand extends ListenerAdapter {
 
     @Override
     public void onModalInteraction(ModalInteractionEvent event) {
-        if (!event.getModalId().equals("lobby_details_modal_lobby")) return;
-
+        String modalId = event.getModalId();
         long discordId = event.getUser().getIdLong();
-        Lobby lobby = lobbySessions.get(discordId);
 
-        if (lobby == null) {
-            event.reply("❌ Lobby session expired. Please start over.")
-                    .setEphemeral(true)
-                    .queue();
+        // === Gestione modal punteggio ===
+        if (modalId.equals("lobby_score_modal")) {
+            String score = event.getValue("score_input").getAsString();
+            PlayerStatsManager manager = PlayerStatsManager.getInstance();
+            PlayerStats stats = manager.getPlayerStats(discordId);
+            if (stats == null) {
+                stats = new PlayerStats();
+                stats.setDiscordId(discordId);
+            }
+            stats.setScore(score);
+            manager.addOrUpdatePlayerStats(stats);
+            event.reply("✅ Score saved successfully: `" + score + "`")
+                    .setEphemeral(true).queue();
             return;
         }
 
-        // Prendi i dati inseriti dal modal
-        String playerName = event.getValue("lobby_playername").getAsString();
-        String availability = event.getValue("lobby_availability").getAsString();
-        String rules = event.getValue("lobby_rule").getAsString();
+        // === Gestione modal dettagli lobby ===
+        if (!modalId.equals("lobby_details_modal_lobby")) return;
 
-        // Aggiorna la lobby con i nuovi valori
+        Lobby lobby = lobbySessions.get(discordId);
+        if (lobby == null) {
+            event.reply("❌ Lobby session expired. Please start over.")
+                    .setEphemeral(true).queue();
+            return;
+        }
+
+        // Leggi i campi dal modal
+        String playerName   = event.getValue("lobby_playername").getAsString();
+        String availability = event.getValue("lobby_availability").getAsString();
+        String rules        = event.getValue("lobby_rule").getAsString();
+
+        // Aggiorna la lobby
         lobby.setPlayerName(playerName);
         lobby.setAvailability(availability);
         lobby.setRules(rules);
         lobby.setCreatedAt(LocalDateTime.now());
-        System.out.println("lobby: \n" + lobby.toString());
 
-        // Controllo: se esiste già in LobbyManager è un edit
-        if (LobbyManager.getLobby(discordId) != null) {
-            // E' un edit → aggiorniamo il messaggio embedded usando il metodo dedicato
+        Guild guild   = event.getGuild();
+        Member member = guild.getMember(event.getUser());
+        if (member == null) {
+            event.reply("❌ Could not find your member in this guild.")
+                    .setEphemeral(true).queue();
+            return;
+        }
+
+        boolean isEdit = LobbyManager.getLobby(discordId) != null;
+        if (isEdit) {
+            // === Edit di una lobby esistente ===
             try {
-                lobby.updateLobbyPost(event.getGuild());
+                lobby.updateLobbyPost(guild);
                 event.reply("✅ Lobby updated successfully!").setEphemeral(true).queue();
-
-                // aggiorna log se vuoi
-                lobby.sendLobbyLog(event.getGuild(), 1380683537501519963L);
-
-                // aggiorna lobby nel manager
+                lobby.sendLobbyLog(guild, 1380683537501519963L);
                 LobbyManager.addLobby(discordId, lobby);
-
             } catch (Exception e) {
                 event.reply("❌ Failed to update lobby embed.").setEphemeral(true).queue();
                 e.printStackTrace();
             }
+            return;
+        }
+
+        // === Nuova lobby ===
+        event.deferReply(true).queue();  // evitare reply doppie
+        lobby.sendLobbyLog(guild, 1380683537501519963L);
+
+        if (lobby.isDirectLobby()) {
+            // === Direct lobby: solo canale privato ===
+            Category category = guild.getCategoryById(1381025760231555077L);
+            if (category == null) {
+                event.getHook().sendMessage("❌ Private lobby category not found!")
+                        .setEphemeral(true).queue();
+                return;
+            }
+
+            // Costruisci nome canale da nickname
+            String safeName   = playerName.toLowerCase().replaceAll("[^a-z0-9\\-]", "-");
+            String channelName = safeName + "-lobby";
+
+            guild.createTextChannel(channelName, category)
+                    .addPermissionOverride(guild.getPublicRole(), null, EnumSet.of(Permission.VIEW_CHANNEL))
+                    .addPermissionOverride(member,           EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND), null)
+                    .addPermissionOverride(guild.getSelfMember(), EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND), null)
+                    .queue(privateChannel -> {
+                        // Salva ID canale
+                        lobby.setPrivateChannelId(privateChannel.getIdLong());
+                        LobbyManager.addLobby(discordId, lobby);
+
+                        // 1) Messaggio di benvenuto
+                        privateChannel.sendMessageFormat(
+                                "🔐 %s, this is your private lobby channel where you can accept or decline players. Use `/add @user` to invite someone.\n",
+                                member.getAsMention()
+                        ).queue();
+
+                        // 2) Messaggio con info
+                        String info = String.format("%s - %s\nRules: %s",
+                                lobby.getGame(),
+                                lobby.getPlatform(),
+                                (rules != null && !rules.isEmpty() ? rules : "None")
+                        );
+                        privateChannel.sendMessage(info).queue();
+
+                        // Conferma ephemerale
+                        event.getHook().sendMessage("✅ Private lobby channel created: " + privateChannel.getAsMention())
+                                .setEphemeral(true).queue();
+                    }, failure -> {
+                        event.getHook().sendMessage("❌ Failed to create private channel.")
+                                .setEphemeral(true).queue();
+                        failure.printStackTrace();
+                    });
 
         } else {
-            // E' una nuova creazione
-            event.reply("✅ Lobby created successfully!").setEphemeral(true).queue();
-            lobby.sendLobbyLog(event.getGuild(), 1380683537501519963L);
-            lobby.sendLobbyAnnouncement(event.getGuild(), 1367186054045761616L);
-            LobbyManager.addLobby(lobby.getDiscordId(), lobby);
-
-            // ===== STATS UPDATE START =====
-            PlayerStatsManager statsManager = PlayerStatsManager.getInstance();
-            PlayerStats hostStats = statsManager.getPlayerStats(discordId);
-
-            if (hostStats == null) {
-                hostStats = new PlayerStats();
-                hostStats.setDiscordId(discordId);
-            }
-
-            if (lobby.isDirectLobby()) {
-                hostStats.incrementLobbiesCreatedDirect();
-            } else {
-                hostStats.incrementLobbiesCreatedGeneral();
-            }
-
-            statsManager.addOrUpdatePlayerStats(hostStats);
-            PlayerStatMongoDBManager.updatePlayerStats(hostStats);
-            // ===== STATS UPDATE END =====
-
-            // in ogni caso rimuovo dalla sessione temporanea
-            lobbySessions.remove(discordId);
-
-            // score modal update
-            if (event.getModalId().equals("lobby_score_modal")) {
-                String score = event.getValue("score_input").getAsString();
-
-                PlayerStatsManager manager = PlayerStatsManager.getInstance();
-                PlayerStats stats = manager.getPlayerStats(discordId);
-
-                if (stats == null) {
-                    stats = new PlayerStats();
-                    stats.setDiscordId(discordId);
-                }
-
-                stats.setScore(score);
-                manager.addOrUpdatePlayerStats(stats);
-                event.reply("✅ Score saved successfully: `" + score + "`").setEphemeral(true).queue();
-            }
+            // === Lobby normale: forum post + log ===
+            lobby.sendLobbyAnnouncement(guild, 1367186054045761616L);
+            LobbyManager.addLobby(discordId, lobby);
+            event.getHook().sendMessage("✅ Lobby created successfully!").setEphemeral(true).queue();
         }
+
+        // === Aggiorna statistiche ===
+        PlayerStatsManager statsManager = PlayerStatsManager.getInstance();
+        PlayerStats hostStats = statsManager.getPlayerStats(discordId);
+        if (hostStats == null) {
+            hostStats = new PlayerStats();
+            hostStats.setDiscordId(discordId);
+        }
+        if (lobby.isDirectLobby()) {
+            hostStats.incrementLobbiesCreatedDirect();
+        } else {
+            hostStats.incrementLobbiesCreatedGeneral();
+        }
+        statsManager.addOrUpdatePlayerStats(hostStats);
+        PlayerStatMongoDBManager.updatePlayerStats(hostStats);
+
+        // Rimuovi sessione temporanea
+        lobbySessions.remove(discordId);
     }
+
+
+
 
 
     @Override

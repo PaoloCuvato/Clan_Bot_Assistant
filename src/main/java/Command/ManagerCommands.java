@@ -821,9 +821,7 @@ public class ManagerCommands extends ListenerAdapter {
         guild.upsertCommand("edit_lobby", "Edit the lobby embeded").queue();
 
         guild.updateCommands().addCommands(
-                Commands.slash("direct", "Send private lobby")
-                        .addOptions(new OptionData(OptionType.USER, "user", "The user you want to play with", true))
-        ).queue();
+                Commands.slash("direct", "Send private lobby")).queue();
 
         guild.upsertCommand("delete_lobby", "Permanently deletes the selected lobby post and its associated thread. ").queue();
 

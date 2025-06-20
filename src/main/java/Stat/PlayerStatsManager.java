@@ -36,8 +36,19 @@ public class PlayerStatsManager extends ListenerAdapter {
     }
 
     public PlayerStats getPlayerStats(long discordId) {
-        return playerStatsMap.get(discordId);
+        PlayerStats stats = playerStatsMap.get(discordId);
+
+        if (stats == null) {
+            stats = PlayerStatMongoDBManager.getPlayerStatsById(discordId);
+
+            if (stats != null) {
+                playerStatsMap.put(discordId, stats);
+            }
+        }
+
+        return stats;
     }
+
 
     public void removePlayerStats(long discordId) {
         playerStatsMap.remove(discordId);

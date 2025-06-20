@@ -103,7 +103,6 @@ public class Lobby extends ListenerAdapter {
 
 
     public void archivePost(Guild guild) {
-        // Get the thread from the ThreadChannel
         ThreadChannel threadChannel = guild.getThreadChannels().stream()
                 .filter(thread -> thread.getIdLong() == this.PostId)
                 .findFirst()
@@ -118,28 +117,31 @@ public class Lobby extends ListenerAdapter {
                 success -> System.out.println("✅ Post archived and locked successfully!"),
                 error -> System.err.println("❌ Unable to archive the post!")
         );
-        //incrementCompleted();
+
         System.out.println("✅ Lobby completed stat incremented for player: " + this.getDiscordId());
-        LobbyManager.removeLobbyByCompletionMessageId(this.discordId);
-        LobbyManager.removeLobby(this.getDiscordId());
-        // stats update
-        PlayerStatsManager pm = PlayerStatsManager.getInstance();  // <-- using singleton here
+
+        // Aggiorna le statistiche
+        PlayerStatsManager pm = PlayerStatsManager.getInstance();
         PlayerStats stats = pm.getPlayerStats(discordId);
         if (stats == null) {
             stats = new PlayerStats();
             stats.setDiscordId(discordId);
             pm.addOrUpdatePlayerStats(stats);
         }
-        // player stat when a direct lobby is created
-        if(this.directLobby == true){
+
+        if(this.directLobby) {
             stats.incrementLobbiesCompletedDirect();
-        } else if (this.directLobby == false) {
+        } else {
             stats.incrementLobbiesCompletedGeneral();
         }
-        Map<Long, PlayerStats> playerStatsMap = new HashMap<>();
-        playerStatsMap.put(discordId, stats);
+
         PlayerStatMongoDBManager.updatePlayerStats(stats);
+
+        // Solo DOPO aver aggiornato tutto, rimuovi la lobby
+        LobbyManager.removeLobbyByCompletionMessageId(this.discordId);
+        LobbyManager.removeLobby(this.getDiscordId());
     }
+
 
 
     public void deletePost(Guild guild) {

@@ -353,10 +353,7 @@ public class LobbyCommand extends ListenerAdapter {
                     event.reply("⚠️ Lobby marked as **incomplete**.").setEphemeral(true).queue();
                 }
                 case "lobby_score" -> {
-                    event.getMessage().editMessageComponents().queue();
-                    event.reply("📊 This command should be used in rank/clan battles. It works on Player Match but is not recommended.")
-                            .setEphemeral(true)
-                            .queue();
+                    event.getMessage().editMessageComponents().queue();  // ok, è un'azione separata
 
                     Modal modal = Modal.create("lobby_score_modal", "Enter Your Lobby Score")
                             .addActionRow(
@@ -367,9 +364,9 @@ public class LobbyCommand extends ListenerAdapter {
                             )
                             .build();
 
-                    // Mostra il modal
                     event.replyModal(modal).queue();
                 }
+
 
 
                 case "report_to_referee" -> {

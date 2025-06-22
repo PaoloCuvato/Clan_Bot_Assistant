@@ -278,7 +278,32 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 return;
             }
 
+            PlayerStatsManager pm = PlayerStatsManager.getInstance();
+
+            // Stats creatore
+            PlayerStats creatorStats = pm.getPlayerStats(ownerId);
+            if (creatorStats == null) {
+                creatorStats = new PlayerStats();
+                creatorStats.setDiscordId(ownerId);
+                pm.addOrUpdatePlayerStats(creatorStats);
+            }
+
+            // Stats invitato
+            PlayerStats invitedStats = pm.getPlayerStats(userId);
+            if (invitedStats == null) {
+                invitedStats = new PlayerStats();
+                invitedStats.setDiscordId(userId);
+                pm.addOrUpdatePlayerStats(invitedStats);
+            }
+
             if (accepted) {
+                // ✅ Incrementa accepted per creatore e joined per invitato
+                creatorStats.incrementWasAcceptedDirect();
+                invitedStats.incrementLobbiesJoinedDirect();
+
+                PlayerStatMongoDBManager.updatePlayerStats(creatorStats);
+                PlayerStatMongoDBManager.updatePlayerStats(invitedStats);
+
                 priv.getManager()
                         .putPermissionOverride(invited,
                                 EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND),
@@ -289,6 +314,11 @@ public class ButtonLobbyManager extends ListenerAdapter {
                             priv.sendMessage(invited.getAsMention() + " has joined the lobby.").queue();
                         }, failure -> event.reply("❌ Failed to grant permissions.").setEphemeral(true).queue());
             } else {
+                // ✅ Incrementa declined per creatore
+                creatorStats.incrementWasDeclinedDirect();
+                invitedStats.incrementDeclinedUserDirect();
+                PlayerStatMongoDBManager.updatePlayerStats(creatorStats);
+
                 priv.getManager()
                         .putPermissionOverride(invited,
                                 EnumSet.noneOf(Permission.class),
@@ -300,5 +330,6 @@ public class ButtonLobbyManager extends ListenerAdapter {
                         }, failure -> event.reply("❌ Failed to update permissions.").setEphemeral(true).queue());
             }
         }
+
     }
 }

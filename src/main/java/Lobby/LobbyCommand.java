@@ -28,6 +28,7 @@ import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import java.awt.*;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -52,6 +53,8 @@ public class LobbyCommand extends ListenerAdapter {
             case "freestyle" -> handleFreestyle(event);
             case "edit_lobby" -> handleEditLobby(event);
             case "direct" -> handleDirect(event);
+            case "add_user_lobby" -> handleAddUserLobby(event, discordId);
+            case "kick_user_lobby" -> handleKickUserLobby(event, discordId);
 
             // altri comandi...
         }
@@ -215,6 +218,89 @@ public class LobbyCommand extends ListenerAdapter {
         if (!event.getName().equals("direct")) return;
 
     }
+    private void handleKickUserLobby(SlashCommandInteractionEvent event, long ownerId) {
+        User toKick = event.getOption("player").getAsUser();
+        long toKickId = toKick.getIdLong();
+
+        Lobby lobby = LobbyManager.getLobby(ownerId);
+        if (lobby == null || !lobby.isDirectLobby() || lobby.getDiscordId() != ownerId) {
+            event.reply("❌ No direct lobby.").setEphemeral(true).queue();
+            return;
+        }
+        if (!lobby.getPartecipants().contains(toKickId)) {
+            event.reply("❌ User not in lobby.").setEphemeral(true).queue();
+            return;
+        }
+
+        TextChannel priv = event.getGuild().getTextChannelById(lobby.getPrivateChannelId());
+        Member member = event.getGuild().getMember(toKick);
+        if (priv == null || member == null) {
+            event.reply("❌ Channel or member missing.").setEphemeral(true).queue();
+            return;
+        }
+
+        priv.getManager()
+                .removePermissionOverride(member)
+                .queue();
+
+        lobby.getPartecipants().remove(toKickId);
+        event.reply("✅ Kicked " + toKick.getAsMention()).setEphemeral(true).queue();
+        priv.sendMessage(toKick.getAsMention() + " has been kicked from the lobby.").queue();
+    }
+
+    private void handleAddUserLobby(SlashCommandInteractionEvent event, long ownerId) {
+        User toInvite = event.getOption("player").getAsUser();
+        long toInviteId = toInvite.getIdLong();
+
+        Lobby lobby = LobbyManager.getLobby(ownerId);
+        if (lobby == null || !lobby.isDirectLobby() || lobby.getDiscordId() != ownerId) {
+            event.reply("❌ You don’t have an active direct lobby.").setEphemeral(true).queue();
+            return;
+        }
+
+        lobby.checkMaxpartecipants();
+        if (lobby.getPartecipants().size() >= lobby.getMaxPartecipants()) {
+            event.reply("❌ Your lobby is full (max " + lobby.getMaxPartecipants() + ").")
+                    .setEphemeral(true).queue();
+            return;
+        }
+        if (lobby.getPartecipants().contains(toInviteId) || lobby.isUserBlocked(toInviteId)) {
+            event.reply("❌ User already in or blocked.").setEphemeral(true).queue();
+            return;
+        }
+
+        Guild guild = event.getGuild();
+        TextChannel priv = guild.getTextChannelById(lobby.getPrivateChannelId());
+        Member member = guild.getMember(toInvite);
+        if (priv == null || member == null) {
+            event.reply("❌ Cannot find channel or member.").setEphemeral(true).queue();
+            return;
+        }
+
+        // 1) Concedi VIEW ma nega esplicitamente SEND (read-only)
+        priv.getManager()
+                .putPermissionOverride(
+                        member,
+                        /* allow */ EnumSet.of(Permission.VIEW_CHANNEL),
+                        /* deny  */ EnumSet.of(Permission.MESSAGE_SEND)
+                )
+                .queue(v -> {
+                    // 2) Messaggio con bottoni Yes/No
+                    Button yes = Button.success("lobby_add_yes:" + ownerId + ":" + toInviteId, "Yes");
+                    Button no  = Button.danger ("lobby_add_no:"  + ownerId + ":" + toInviteId, "No");
+
+                    priv.sendMessage(toInvite.getAsMention() + ", do you want to join this lobby?")
+                            .setActionRow(yes, no)
+                            .queue();
+
+                    event.reply("✅ Invitation sent to " + toInvite.getAsMention())
+                            .setEphemeral(true).queue();
+                }, failure -> {
+                    event.reply("❌ Failed to set view permission.").setEphemeral(true).queue();
+                });
+    }
+
+
 
     private void handleFreestyle(SlashCommandInteractionEvent event) {
         long discordId = event.getUser().getIdLong();
@@ -256,13 +342,18 @@ public class LobbyCommand extends ListenerAdapter {
             }
         }
 
+        // 1) Crea solo in sessione temporanea, **senza** aggiungere al Manager
         Lobby lobby = new Lobby();
+        lobby.setDirectLobby(true);
         lobby.setDiscordId(discordId);
         lobby.setCreatedAt(LocalDateTime.now());
-        lobby.setDirectLobby(true);
         lobbySessions.put(discordId, lobby);
-        promptLobbyTypeStep(event); // Avvia il flow dei select menu
+
+        // 2) Avvia il flow (es. promptLobbyTypeStep che mostrerà il Modal)
+        promptLobbyTypeStep(event);
     }
+
+
 
 
 
@@ -569,13 +660,12 @@ public class LobbyCommand extends ListenerAdapter {
                 );
     }
 
-
     @Override
     public void onModalInteraction(ModalInteractionEvent event) {
         String modalId = event.getModalId();
         long discordId = event.getUser().getIdLong();
 
-        // === Gestione modal punteggio ===
+        // === 1) Modal punteggio ===
         if (modalId.equals("lobby_score_modal")) {
             String score = event.getValue("score_input").getAsString();
             PlayerStatsManager manager = PlayerStatsManager.getInstance();
@@ -587,21 +677,25 @@ public class LobbyCommand extends ListenerAdapter {
             stats.setScore(score);
             manager.addOrUpdatePlayerStats(stats);
             event.reply("✅ Score saved successfully: `" + score + "`")
-                    .setEphemeral(true).queue();
+                    .setEphemeral(true)
+                    .queue();
             return;
         }
 
-        // === Gestione modal dettagli lobby ===
-        if (!modalId.equals("lobby_details_modal_lobby")) return;
+        // === 2) Modal dettagli lobby ===
+        if (!modalId.equals("lobby_details_modal_lobby")) {
+            return;
+        }
 
         Lobby lobby = lobbySessions.get(discordId);
         if (lobby == null) {
             event.reply("❌ Lobby session expired. Please start over.")
-                    .setEphemeral(true).queue();
+                    .setEphemeral(true)
+                    .queue();
             return;
         }
 
-        // Leggi i campi dal modal
+        // Leggi i campi
         String playerName   = event.getValue("lobby_playername").getAsString();
         String availability = event.getValue("lobby_availability").getAsString();
         String rules        = event.getValue("lobby_rule").getAsString();
@@ -612,17 +706,18 @@ public class LobbyCommand extends ListenerAdapter {
         lobby.setRules(rules);
         lobby.setCreatedAt(LocalDateTime.now());
 
-        Guild guild   = event.getGuild();
+        Guild guild = event.getGuild();
         Member member = guild.getMember(event.getUser());
         if (member == null) {
             event.reply("❌ Could not find your member in this guild.")
-                    .setEphemeral(true).queue();
+                    .setEphemeral(true)
+                    .queue();
             return;
         }
 
+        // === 3) Edit vs Nuova ===
         boolean isEdit = LobbyManager.getLobby(discordId) != null;
         if (isEdit) {
-            // === Edit di una lobby esistente ===
             try {
                 lobby.updateLobbyPost(guild);
                 event.reply("✅ Lobby updated successfully!").setEphemeral(true).queue();
@@ -635,63 +730,33 @@ public class LobbyCommand extends ListenerAdapter {
             return;
         }
 
-        // === Nuova lobby ===
-        event.deferReply(true).queue();  // evitare reply doppie
-        lobby.sendLobbyLog(guild, 1380683537501519963L);
+        // === 4) Nuova lobby ===
+        event.deferReply(true).queue(); // ephemerale risposta
 
         if (lobby.isDirectLobby()) {
-            // === Direct lobby: solo canale privato ===
-            Category category = guild.getCategoryById(1381025760231555077L);
-            if (category == null) {
-                event.getHook().sendMessage("❌ Private lobby category not found!")
-                        .setEphemeral(true).queue();
-                return;
-            }
+            // --- Direct (privata) ---
+            long directLogChannelId = 1380683537501519963L;
+            long directCategoryId   = 1381025760231555077L;
 
-            // Costruisci nome canale da nickname
-            String safeName   = playerName.toLowerCase().replaceAll("[^a-z0-9\\-]", "-");
-            String channelName = safeName + "-lobby";
+            // ✅ Nuovo metodo compatto
+            lobby.sendDirectCreationLobbyLog(guild, directLogChannelId, directCategoryId);
 
-            guild.createTextChannel(channelName, category)
-                    .addPermissionOverride(guild.getPublicRole(), null, EnumSet.of(Permission.VIEW_CHANNEL))
-                    .addPermissionOverride(member,           EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND), null)
-                    .addPermissionOverride(guild.getSelfMember(), EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND), null)
-                    .queue(privateChannel -> {
-                        // Salva ID canale
-                        lobby.setPrivateChannelId(privateChannel.getIdLong());
-                        LobbyManager.addLobby(discordId, lobby);
-
-                        // 1) Messaggio di benvenuto
-                        privateChannel.sendMessageFormat(
-                                "🔐 %s, this is your private lobby channel where you can accept or decline players. Use `/add @user` to invite someone.\n",
-                                member.getAsMention()
-                        ).queue();
-
-                        // 2) Messaggio con info
-                        String info = String.format("%s - %s\nRules: %s",
-                                lobby.getGame(),
-                                lobby.getPlatform(),
-                                (rules != null && !rules.isEmpty() ? rules : "None")
-                        );
-                        privateChannel.sendMessage(info).queue();
-
-                        // Conferma ephemerale
-                        event.getHook().sendMessage("✅ Private lobby channel created: " + privateChannel.getAsMention())
-                                .setEphemeral(true).queue();
-                    }, failure -> {
-                        event.getHook().sendMessage("❌ Failed to create private channel.")
-                                .setEphemeral(true).queue();
-                        failure.printStackTrace();
-                    });
+            // ✅ Conferma ephemerale (opzionale: può stare nel metodo anche)
+            event.getHook().sendMessage("✅ Private lobby channel creation in progress...").setEphemeral(true).queue();
 
         } else {
-            // === Lobby normale: forum post + log ===
-            lobby.sendLobbyAnnouncement(guild, 1367186054045761616L);
-            LobbyManager.addLobby(discordId, lobby);
-            event.getHook().sendMessage("✅ Lobby created successfully!").setEphemeral(true).queue();
+            // --- Generale (forum post + log) ---
+            try {
+                lobby.sendLobbyAnnouncement(guild, 1367186054045761616L);
+                LobbyManager.addLobby(discordId, lobby);
+                event.getHook().sendMessage("✅ Lobby created successfully!").setEphemeral(true).queue();
+            } catch (Exception e) {
+                e.printStackTrace();
+                event.getHook().sendMessage("❌ Failed to create lobby post.").setEphemeral(true).queue();
+            }
         }
 
-        // === Aggiorna statistiche ===
+        // === 5) Aggiorna statistiche ===
         PlayerStatsManager statsManager = PlayerStatsManager.getInstance();
         PlayerStats hostStats = statsManager.getPlayerStats(discordId);
         if (hostStats == null) {
@@ -706,9 +771,10 @@ public class LobbyCommand extends ListenerAdapter {
         statsManager.addOrUpdatePlayerStats(hostStats);
         PlayerStatMongoDBManager.updatePlayerStats(hostStats);
 
-        // Rimuovi sessione temporanea
+        // === 6) Rimuovi sessione temporanea ===
         lobbySessions.remove(discordId);
     }
+
 
 
 

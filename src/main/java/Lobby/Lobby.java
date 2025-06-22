@@ -316,40 +316,69 @@ public class Lobby extends ListenerAdapter {
             return;
         }
 
+        // (1) Creazione del canale privato
         guild.createTextChannel("private-lobby-" + creator.getEffectiveName(), category)
                 .addPermissionOverride(guild.getPublicRole(), null, EnumSet.of(Permission.VIEW_CHANNEL))
                 .addPermissionOverride(creator, EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND), null)
                 .queue(privateChannel -> {
                     this.privateChannelId = privateChannel.getIdLong();
 
-                    privateChannel.sendMessage("🔐 " + creator.getAsMention() + ", this is your private lobby channel where you can accept or decline players.\nUse `/add @user` to invite someone.")
-                            .queue();
+                    // (2) Messaggio di benvenuto
+                    privateChannel.sendMessageFormat(
+                            "🔐 %s, this is your private lobby channel where you can accept or decline players.\nUse `/add @user` to invite someone.",
+                            creator.getAsMention()
+                    ).queue();
 
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("**Game:** ").append(game).append("\n");
-                    sb.append("**Platform:** ").append(platform).append("\n");
-                    sb.append("**Rules:** ").append((rules == null || rules.isEmpty()) ? "None" : rules).append("\n");
-                    sb.append("**Availability:** ").append((availability == null || availability.isEmpty()) ? "N/A" : availability);
+                    // (3) Info lobby
+                    String info = String.format("%s - %s\nRules: %s\nAvailability: %s",
+                            this.game,
+                            this.platform,
+                            (this.rules == null || this.rules.isEmpty()) ? "None" : this.rules,
+                            (this.availability == null || this.availability.isEmpty()) ? "N/A" : this.availability
+                    );
+                    privateChannel.sendMessage(info).queue();
 
-                    privateChannel.sendMessage(sb.toString()).queue();
+                    // (4) Embed di log con il tuo template
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+                    String creationTimeFormatted = createdAt != null ? createdAt.format(formatter) : "N/A";
 
-                    EmbedBuilder logEmbed = new EmbedBuilder();
-                    logEmbed.setTitle("🔐 New Direct Lobby Created");
-                    logEmbed.setColor(Color.GREEN);
-                    logEmbed.addField("Creator",creator.getAsMention(), true);
-                    logEmbed.addField("Game", game, true);
-                    logEmbed.addField("Platform", platform, true);
-                    logEmbed.addField("Rules", (rules == null || rules.isEmpty()) ? "None" : rules, false);
-                    logEmbed.addField("Availability", (availability == null || availability.isEmpty()) ? "N/A" : availability, false);
-                    logEmbed.addField("Private Channel", privateChannel.getAsMention(), false);
-                    logEmbed.setTimestamp(Instant.now());
+                    EmbedBuilder eb = new EmbedBuilder()
+                            .setTitle("▬▬▬▬▬▬▬ Lobby Created ▬▬▬▬▬▬▬")
+                            .setDescription(
+                                    "**A new lobby has been created!**\n" +
+                                            "** # Lobby: ** Info About The lobby\n" +
+                                            " * **Discord ID:** "     + discordId   + "\n" +
+                                            " * **Player Name:** "     + playerName  + "\n" +
+                                            " * **Game:** "            + game        + "\n" +
+                                            " * **Platform:** "        + platform    + "\n" +
+                                            " * **Region:** "          + region      + "\n" +
+                                            " * **Skill Level:** "     + skillLevel  + "\n" +
+                                            " * **Connection:** "      + connectionType + "\n" +
+                                            " * **Lobby Type:** "      + lobbyType   + "\n" +
+                                            " * **Availability:** "    + availability + "\n" +
+                                            " * **Rules:** "           + (rules != null && !rules.isEmpty() ? rules : "N/A") + "\n" +
+                                            " * **Created At:** "      + creationTimeFormatted + "\n\n" +
+                                            "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+                            )
+                            .setColor(Color.decode("#1c0b2e"))
+                            .setTimestamp(Instant.now());
 
-                    logChannel.sendMessageEmbeds(logEmbed.build()).queue();
+                    logChannel.sendMessageEmbeds(eb.build()).queue(message -> {
+                        long messageId = message.getIdLong();
+                        System.out.println("✅ Log sent! Message ID: " + messageId);
+                        // Statistica “create”
+                        System.out.println("✅ Lobby created incremented for player: " + discordId);
+                    });
 
+                    // (5) Registra la lobby e i partecipanti
                     LobbyManager.addLobby(discordId, this);
                     this.getPartecipants().add(discordId);
 
-                    System.out.println("📢 Private lobby channel created: " + privateChannel.getName());
+                    // (6) Conferma ephemerale all’utente se necessario
+                    // (Se sei in un context di InteractionHook, invoca event.getHook().sendMessage(…))
+                }, failure -> {
+                    System.err.println("❌ Failed to create private channel.");
+                    failure.printStackTrace();
                 });
     }
 

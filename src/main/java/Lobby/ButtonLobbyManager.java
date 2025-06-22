@@ -6,19 +6,14 @@ import Stat.PlayerStatsManager;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
-import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 
 import java.awt.*;
 import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
 
 public class ButtonLobbyManager extends ListenerAdapter {
     @Override
@@ -62,9 +57,7 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 return;
             }
 
-            // Get PlayerStatsManager and load stats
             PlayerStatsManager pm = PlayerStatsManager.getInstance();
-
             PlayerStats hostStats = pm.getPlayerStats(creator.getIdLong());
             if (hostStats == null) {
                 hostStats = new PlayerStats();
@@ -77,24 +70,20 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 joinerStats.setDiscordId(joiner.getIdLong());
             }
 
-            // PRIVATE LOBBY LOGIC
             if (lobby.isDirectLobby()) {
                 if (lobby.getAllowedUserId() != joiner.getIdLong()) {
                     event.reply("❌ You are not allowed to join this private lobby.").setEphemeral(true).queue();
                     return;
                 }
 
-                // Update stats
-                hostStats.incrementIgnoredRequestDirect();       // 👈 Host può ignorare
-                joinerStats.incrementLobbiesJoinedDirect();       // 👈 Joiner ha tentato join direct
+                hostStats.incrementIgnoredRequestDirect();
+                joinerStats.incrementLobbiesJoinedDirect();
 
                 pm.addOrUpdatePlayerStats(hostStats);
                 pm.addOrUpdatePlayerStats(joinerStats);
-
                 PlayerStatMongoDBManager.updatePlayerStats(hostStats);
                 PlayerStatMongoDBManager.updatePlayerStats(joinerStats);
 
-                // Add participant
                 lobby.getPartecipants().add(joiner.getIdLong());
 
                 TextChannel privateChannel = guild.getTextChannelById(lobby.getPrivateChannelId());
@@ -111,17 +100,13 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 return;
             }
 
-            // NORMAL LOBBY LOGIC
-            hostStats.incrementIgnoredRequestGeneral();      // 👈 Host può ignorare
-            joinerStats.incrementLobbiesJoinedGeneral();     // 👈 Joiner ha tentato join general
+            hostStats.incrementIgnoredRequestGeneral();
+            joinerStats.incrementLobbiesJoinedGeneral();
 
             pm.addOrUpdatePlayerStats(hostStats);
             pm.addOrUpdatePlayerStats(joinerStats);
-
             PlayerStatMongoDBManager.updatePlayerStats(hostStats);
             PlayerStatMongoDBManager.updatePlayerStats(joinerStats);
-
-            System.out.println("✅ Lobby answered incremented for player: " + lobby.getDiscordId());
 
             event.reply("✅ Request sent to the lobby owner. Please wait for approval.").setEphemeral(true).queue();
 
@@ -134,8 +119,7 @@ public class ButtonLobbyManager extends ListenerAdapter {
                         ).queue();
             }
 
-
-    } else if (componentId.startsWith("decline_")) {
+        } else if (componentId.startsWith("decline_")) {
             String playerId = componentId.replace("decline_", "");
             User declinedUser = event.getJDA().getUserById(playerId);
             Member creator = event.getMember();
@@ -159,36 +143,29 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 return;
             }
 
-            // ===== STATS UPDATE START =====
             PlayerStatsManager statsManager = PlayerStatsManager.getInstance();
-
-            // Statistiche dell'host (chi rifiuta)
             PlayerStats hostStats = statsManager.getPlayerStats(creator.getIdLong());
             if (hostStats == null) {
                 hostStats = new PlayerStats();
                 hostStats.setDiscordId(creator.getIdLong());
             }
 
-            // Statistiche dell'utente rifiutato
             PlayerStats declinedStats = statsManager.getPlayerStats(declinedUser.getIdLong());
             if (declinedStats == null) {
                 declinedStats = new PlayerStats();
                 declinedStats.setDiscordId(declinedUser.getIdLong());
             }
 
-            // Incrementa i contatori corretti in base al tipo di lobby
             if (lobby.isDirectLobby()) {
-                declinedStats.incrementDeclinedUserDirect();        // Chi ha cliccato "decline" ha rifiutato
+                declinedStats.incrementDeclinedUserDirect();
                 hostStats.incrementWasDeclinedDirect();
             } else {
                 hostStats.incrementDeclinedUserGeneral();
                 declinedStats.incrementWasDeclinedGeneral();
             }
 
-            // Aggiorna le statistiche nel database
             PlayerStatMongoDBManager.updatePlayerStats(hostStats);
             PlayerStatMongoDBManager.updatePlayerStats(declinedStats);
-            // ===== STATS UPDATE END =====
 
             EmbedBuilder embed = new EmbedBuilder()
                     .setTitle("▬▬▬▬ Join Request Declined ▬▬▬▬")
@@ -212,7 +189,6 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 return;
             }
 
-            // Lobby owner
             Lobby lobby = LobbyManager.getLobby(creator.getIdLong());
             if (lobby == null) {
                 event.reply("❌ Lobby not found.").setEphemeral(true).queue();
@@ -220,16 +196,12 @@ public class ButtonLobbyManager extends ListenerAdapter {
             }
 
             long userIdLong = Long.parseLong(playerId);
-
             if (lobby.getPartecipants().contains(userIdLong)) {
                 event.reply("⚠️ This player is already accepted in the lobby.").setEphemeral(true).queue();
                 return;
             }
 
-            // Stats update for host (creator) and accepted user
             PlayerStatsManager pm = PlayerStatsManager.getInstance();
-
-            // Host stats
             PlayerStats hostStats = pm.getPlayerStats(creator.getIdLong());
             if (hostStats == null) {
                 hostStats = new PlayerStats();
@@ -237,7 +209,6 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 pm.addOrUpdatePlayerStats(hostStats);
             }
 
-            // Accepted user stats
             PlayerStats acceptedStats = pm.getPlayerStats(userIdLong);
             if (acceptedStats == null) {
                 acceptedStats = new PlayerStats();
@@ -245,7 +216,6 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 pm.addOrUpdatePlayerStats(acceptedStats);
             }
 
-            // Increment correct stats based on lobby type
             if (lobby.isDirectLobby()) {
                 acceptedStats.incrementWasAcceptedDirect();
                 hostStats.decrementIgnoredRequestDirect();
@@ -258,7 +228,6 @@ public class ButtonLobbyManager extends ListenerAdapter {
             PlayerStatMongoDBManager.updatePlayerStats(hostStats);
             PlayerStatMongoDBManager.updatePlayerStats(acceptedStats);
 
-            // Add user to lobby participants
             lobby.getPartecipants().add(userIdLong);
 
             TextChannel privateChannel = guild.getTextChannelById(lobby.getPrivateChannelId());
@@ -283,5 +252,53 @@ public class ButtonLobbyManager extends ListenerAdapter {
             });
         }
 
+        // ✅ LOGICA AGGIUNTA PER YES / NO
+        else if (componentId.startsWith("lobby_add_yes:") || componentId.startsWith("lobby_add_no:")) {
+            String[] parts = componentId.split(":");
+            boolean accepted = parts[0].endsWith("_yes");
+            long ownerId = Long.parseLong(parts[1]);
+            long userId = Long.parseLong(parts[2]);
+
+            Guild guild = event.getGuild();
+            if (guild == null) {
+                event.reply("❌ Guild not found.").setEphemeral(true).queue();
+                return;
+            }
+
+            Lobby lobby = LobbyManager.getLobby(ownerId);
+            if (lobby == null) {
+                event.reply("❌ Lobby not found.").setEphemeral(true).queue();
+                return;
+            }
+
+            TextChannel priv = guild.getTextChannelById(lobby.getPrivateChannelId());
+            Member invited = guild.getMemberById(userId);
+            if (priv == null || invited == null) {
+                event.reply("❌ Channel or member missing.").setEphemeral(true).queue();
+                return;
+            }
+
+            if (accepted) {
+                priv.getManager()
+                        .putPermissionOverride(invited,
+                                EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND),
+                                EnumSet.noneOf(Permission.class))
+                        .queue(v -> {
+                            lobby.getPartecipants().add(userId);
+                            event.reply("✅ You have joined!").setEphemeral(true).queue();
+                            priv.sendMessage(invited.getAsMention() + " has joined the lobby.").queue();
+                        }, failure -> event.reply("❌ Failed to grant permissions.").setEphemeral(true).queue());
+            } else {
+                priv.getManager()
+                        .putPermissionOverride(invited,
+                                EnumSet.noneOf(Permission.class),
+                                EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND))
+                        .queue(v -> {
+                            lobby.blockUser(userId);
+                            event.reply("❌ You declined the invitation.").setEphemeral(true).queue();
+                            priv.sendMessage(invited.getAsMention() + " has declined the invitation.").queue();
+                        }, failure -> event.reply("❌ Failed to update permissions.").setEphemeral(true).queue());
+            }
+        }
     }
 }

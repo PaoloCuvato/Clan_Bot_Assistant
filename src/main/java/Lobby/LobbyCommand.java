@@ -277,6 +277,19 @@ public class LobbyCommand extends ListenerAdapter {
             return;
         }
 
+        // Recupera o crea le statistiche dell'utente invitato
+        PlayerStatsManager pm = PlayerStatsManager.getInstance();
+        PlayerStats invitedStats = pm.getPlayerStats(toInviteId);
+        if (invitedStats == null) {
+            invitedStats = new PlayerStats();
+            invitedStats.setDiscordId(toInviteId);
+            pm.addOrUpdatePlayerStats(invitedStats);
+        }
+
+        // Incrementa ignoredRequestDirect
+        invitedStats.incrementIgnoredRequestDirect();
+        PlayerStatMongoDBManager.updatePlayerStats(invitedStats);
+
         // 1) Concedi VIEW ma nega esplicitamente SEND (read-only)
         priv.getManager()
                 .putPermissionOverride(
@@ -299,6 +312,7 @@ public class LobbyCommand extends ListenerAdapter {
                     event.reply("❌ Failed to set view permission.").setEphemeral(true).queue();
                 });
     }
+
 
 
 

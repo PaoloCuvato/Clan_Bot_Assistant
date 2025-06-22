@@ -75,9 +75,9 @@ public class ButtonLobbyManager extends ListenerAdapter {
                     event.reply("❌ You are not allowed to join this private lobby.").setEphemeral(true).queue();
                     return;
                 }
-
-                hostStats.incrementIgnoredRequestDirect();
+                // hostStats.incrementIgnoredRequestDirect();
                 joinerStats.incrementLobbiesJoinedDirect();
+                joinerStats.incrementIgnoredRequestDirect();
 
                 pm.addOrUpdatePlayerStats(hostStats);
                 pm.addOrUpdatePlayerStats(joinerStats);
@@ -300,6 +300,7 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 // ✅ Incrementa accepted per creatore e joined per invitato
                 creatorStats.incrementWasAcceptedDirect();
                 invitedStats.incrementLobbiesJoinedDirect();
+                invitedStats.decrementIgnoredRequestDirect();
 
                 PlayerStatMongoDBManager.updatePlayerStats(creatorStats);
                 PlayerStatMongoDBManager.updatePlayerStats(invitedStats);
@@ -317,6 +318,7 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 // ✅ Incrementa declined per creatore
                 creatorStats.incrementWasDeclinedDirect();
                 invitedStats.incrementDeclinedUserDirect();
+                invitedStats.decrementIgnoredRequestDirect();
                 PlayerStatMongoDBManager.updatePlayerStats(creatorStats);
 
                 priv.getManager()

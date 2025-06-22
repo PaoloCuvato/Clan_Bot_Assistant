@@ -103,7 +103,7 @@ public class Lobby extends ListenerAdapter {
         return this.allowedUserId == userId;
     }
 
-
+/*
     public void archivePost(Guild guild) {
         ThreadChannel threadChannel = guild.getThreadChannels().stream()
                 .filter(thread -> thread.getIdLong() == this.PostId)
@@ -144,6 +144,74 @@ public class Lobby extends ListenerAdapter {
         LobbyManager.removeLobby(this.getDiscordId());
     }
 
+
+ */
+
+    public void archivePost(Guild guild) {
+        PlayerStatsManager pm = PlayerStatsManager.getInstance();
+
+        // Host
+        PlayerStats hostStats = pm.getPlayerStats(discordId);
+        if (hostStats == null) {
+            hostStats = new PlayerStats();
+            hostStats.setDiscordId(discordId);
+            pm.addOrUpdatePlayerStats(hostStats);
+        }
+
+        if (this.directLobby) {
+            // SOLO STATISTICHE DIRECT
+            hostStats.incrementLobbiesCompletedDirect();
+            for (Long participantId : partecipants) {
+                if (!participantId.equals(discordId)) {
+                    PlayerStats participantStats = pm.getPlayerStats(participantId);
+                    if (participantStats == null) {
+                        participantStats = new PlayerStats();
+                        participantStats.setDiscordId(participantId);
+                        pm.addOrUpdatePlayerStats(participantStats);
+                    }
+                    participantStats.incrementLobbiesCompletedDirect();
+                    PlayerStatMongoDBManager.updatePlayerStats(participantStats);
+                }
+            }
+
+        } else {
+            // ARCHIVIA THREAD FORUM
+            ThreadChannel threadChannel = guild.getThreadChannels().stream()
+                    .filter(thread -> thread.getIdLong() == this.PostId)
+                    .findFirst()
+                    .orElse(null);
+
+            if (threadChannel != null) {
+                threadChannel.getManager().setArchived(true).setLocked(true).queue(
+                        success -> System.out.println("✅ Post archived and locked."),
+                        error -> System.err.println("❌ Unable to archive the post.")
+                );
+            } else {
+                System.err.println("❌ Forum thread not found.");
+            }
+
+            // STATISTICHE GENERAL
+            hostStats.incrementLobbiesCompletedGeneral();
+            for (Long participantId : partecipants) {
+                if (!participantId.equals(discordId)) {
+                    PlayerStats participantStats = pm.getPlayerStats(participantId);
+                    if (participantStats == null) {
+                        participantStats = new PlayerStats();
+                        participantStats.setDiscordId(participantId);
+                        pm.addOrUpdatePlayerStats(participantStats);
+                    }
+                    participantStats.incrementLobbiesCompletedGeneral();
+                    PlayerStatMongoDBManager.updatePlayerStats(participantStats);
+                }
+            }
+        }
+
+        PlayerStatMongoDBManager.updatePlayerStats(hostStats);
+
+        // RIMUOVI LOBBY
+        LobbyManager.removeLobbyByCompletionMessageId(this.discordId);
+        LobbyManager.removeLobby(this.discordId);
+    }
 
 
     public void deletePost(Guild guild) {
@@ -317,7 +385,7 @@ public class Lobby extends ListenerAdapter {
         }
 
         // (1) Creazione del canale privato
-        guild.createTextChannel("private-lobby-" + creator.getEffectiveName(), category)
+        guild.createTextChannel("private-lobby-" + this.playerName, category)
                 .addPermissionOverride(guild.getPublicRole(), null, EnumSet.of(Permission.VIEW_CHANNEL))
                 .addPermissionOverride(creator, EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND), null)
                 .queue(privateChannel -> {
@@ -455,7 +523,7 @@ public class Lobby extends ListenerAdapter {
         );
     }
 
-    public void incompleteLobby() {
+    public void incompleteLobby(Guild guild) {
         if (this.isCompleted) {
             System.out.println("⚠️ Cannot mark an already completed lobby as incomplete.");
             return;
@@ -475,9 +543,26 @@ public class Lobby extends ListenerAdapter {
         }
 
         if (this.directLobby) {
+            // SOLO STATS DIRECT
             creatorStats.incrementLobbiesIncompleteDirect();
         } else {
+            // STATS GENERAL
             creatorStats.incrementLobbiesIncompleteGeneral();
+
+            // ARCHIVIA THREAD FORUM
+            ThreadChannel threadChannel = guild.getThreadChannels().stream()
+                    .filter(thread -> thread.getIdLong() == this.PostId)
+                    .findFirst()
+                    .orElse(null);
+
+            if (threadChannel != null) {
+                threadChannel.getManager().setArchived(true).setLocked(true).queue(
+                        success -> System.out.println("✅ Post archived and locked (incomplete lobby)."),
+                        error -> System.err.println("❌ Unable to archive the post.")
+                );
+            } else {
+                System.err.println("❌ Forum thread not found.");
+            }
         }
         PlayerStatMongoDBManager.updatePlayerStats(creatorStats);
 

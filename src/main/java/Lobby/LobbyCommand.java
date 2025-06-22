@@ -422,7 +422,7 @@ public class LobbyCommand extends ListenerAdapter {
                     event.reply("✅ Lobby marked as **completed**!").setEphemeral(true).queue();
                 }
                 case "lobby_incompleted" ->{
-                    lobby.incompleteLobby();
+                    lobby.incompleteLobby(event.getGuild());
                     event.reply("⚠️ Lobby marked as **incomplete**.").setEphemeral(true).queue();
                 }
                 case "lobby_score" -> {

@@ -79,6 +79,63 @@ public class LobbyCommand extends ListenerAdapter {
             }
         }
 
+        // Dentro il metodo onSlashCommandInteraction:
+        if (event.getName().equalsIgnoreCase("leave_lobby")) {
+            long userId = event.getUser().getIdLong();
+            Lobby lobby = LobbyManager.getLobby(userId);
+
+            if (lobby == null) {
+                event.reply("You are not in a lobby.").setEphemeral(true).queue();
+                return;
+            }
+
+            if (lobby.getPartecipants().size() > 1) {
+                event.reply("You cannot leave a lobby with other participants.").setEphemeral(true).queue();
+                return;
+            }
+
+            // Recupera le stats del player
+            PlayerStats stats = PlayerStatsManager.getInstance().getPlayerStats(userId);
+            if (stats == null) {
+                stats = new PlayerStats();
+                stats.setDiscordId(userId);
+            }
+
+            // Incrementa le stat in base al tipo di lobby
+            if (lobby.isDirectLobby()) {
+                stats.incrementLobbiesDisbandedDirect();
+            } else {
+                stats.incrementLobbiesDisbandedGeneral();
+            }
+
+            // Aggiorna in memoria e DB
+            PlayerStatsManager.getInstance().addOrUpdatePlayerStats(stats);
+            PlayerStatMongoDBManager.updatePlayerStats(stats);
+
+            // Rimuovi la lobby
+            LobbyManager.removeLobby(userId);
+
+            // Invia messaggio di conferma
+            event.reply("Lobby successfully disbanded. You will no longer have access to the private channel.")
+                    .setEphemeral(true)
+                    .queue(success -> {
+                        Guild guild = event.getGuild();
+                        Member member = event.getMember();
+                        if (guild != null && member != null) {
+                            TextChannel privateChannel = guild.getTextChannelById(lobby.getPrivateChannelId());
+                            if (privateChannel != null) {
+                                var override = privateChannel.getPermissionOverride(member);
+                                if (override != null) {
+                                    override.getManager()
+                                            .deny(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND)
+                                            .queue();
+                                }
+                            }
+                        }
+                    });
+        }
+
+
         if (!event.getName().equals("results")) return;
 
         // Ricava membro e utente che hanno invocato il comando
@@ -195,7 +252,6 @@ public class LobbyCommand extends ListenerAdapter {
             // Risposta finale
             event.reply("🗑️ Your lobby has been successfully cancelled.").setEphemeral(true).queue();
         }
-
 
         if (event.getName().equals("block_user")) {
             long ownerId = event.getUser().getIdLong();

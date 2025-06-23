@@ -732,9 +732,6 @@ public class ManagerCommands extends ListenerAdapter {
         commands.add(Commands.slash("results", "Archives a lobby post and marks it as completed "));
         commands.add(Commands.slash("freestyle", "The bot will send an embeded about the creation of the lobby"));
 
-        commands.add(Commands.slash("kick_user_lobby", "Kick a specific user from your private lobby lobby v2.")
-                .addOption(OptionType.USER, "player", "The name of the user that you want to kick from your lobby", true));
-
         commands.add(Commands.slash("add_user_lobby", "add a specific user on your lobby v2")
                 .addOption(OptionType.USER, "player", "The name of the user that you want to block from your lobby", true));
 
@@ -848,13 +845,12 @@ public class ManagerCommands extends ListenerAdapter {
 
         guild.upsertCommand("cancel", "If you use this command, you will cancel the lobby you created or joined. v2").queue();
 
-        guild.upsertCommand("kick_user_lobby", "Kick a specific user from your private lobby lobby v2.")
-                .addOptions(
-                        new OptionData(OptionType.USER, "player", "The name of the user that you want to kick from your lobby", true)).queue();
-
         guild.upsertCommand("add_user_lobby", "add a specific user on your lobby v2")
                 .addOptions(
                         new OptionData(OptionType.USER, "player", "The name of the user that you want to block from your lobby", true)).queue();
+
+        guild.upsertCommand("leave_lobby", "this command will make you leave a lobby").queue();
+
 
         guild.updateCommands();
 

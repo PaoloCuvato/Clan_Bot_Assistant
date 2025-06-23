@@ -77,17 +77,7 @@ public class Lobby extends ListenerAdapter {
             this.maxPartecipants = 8;
         }
     }
-    /*
-        public void incrementAnswered() {
-            lobbiesAnswered++;
-        }
 
-        public void incrementCompleted() {
-            lobbiesCompleted++;
-        }
-
-
-     */
     public void blockUser(long userId) {
         blockedUsers.add(userId);
     }
@@ -102,50 +92,6 @@ public class Lobby extends ListenerAdapter {
         }
         return this.allowedUserId == userId;
     }
-
-/*
-    public void archivePost(Guild guild) {
-        ThreadChannel threadChannel = guild.getThreadChannels().stream()
-                .filter(thread -> thread.getIdLong() == this.PostId)
-                .findFirst()
-                .orElse(null);
-
-        if (threadChannel == null) {
-            System.err.println("❌ Forum thread not found!");
-            return;
-        }
-
-        threadChannel.getManager().setArchived(true).setLocked(true).queue(
-                success -> System.out.println("✅ Post archived and locked successfully!"),
-                error -> System.err.println("❌ Unable to archive the post!")
-        );
-
-        System.out.println("✅ Lobby completed stat incremented for player: " + this.getDiscordId());
-
-        // Aggiorna le statistiche
-        PlayerStatsManager pm = PlayerStatsManager.getInstance();
-        PlayerStats stats = pm.getPlayerStats(discordId);
-        if (stats == null) {
-            stats = new PlayerStats();
-            stats.setDiscordId(discordId);
-            pm.addOrUpdatePlayerStats(stats);
-        }
-
-        if(this.directLobby) {
-            stats.incrementLobbiesCompletedDirect();
-        } else {
-            stats.incrementLobbiesCompletedGeneral();
-        }
-
-        PlayerStatMongoDBManager.updatePlayerStats(stats);
-
-        // Solo DOPO aver aggiornato tutto, rimuovi la lobby
-        LobbyManager.removeLobbyByCompletionMessageId(this.discordId);
-        LobbyManager.removeLobby(this.getDiscordId());
-    }
-
-
- */
 
     public void archivePost(Guild guild) {
         PlayerStatsManager pm = PlayerStatsManager.getInstance();

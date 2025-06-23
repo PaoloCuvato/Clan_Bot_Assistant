@@ -44,6 +44,8 @@ public class LobbyCommand extends ListenerAdapter {
 
     private final Map<Long, Lobby> lobbySessions = new HashMap<>();
     private final long categoryId = 1381025760231555077L; // Categoria per le lobby
+    private static final String GUILD_ID = "856147888550969345";
+    private static final String TICKET_CATEGORY_NAME = "Ninja disputes";
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
@@ -513,11 +515,21 @@ public class LobbyCommand extends ListenerAdapter {
                     event.replyModal(modal).queue();
                 }
                 case "report_to_referee" -> {
-                    lobby.callRefereeInPrivateChannel(event.getGuild());
-                    event.reply("🛡️ A referee has been notified.").setEphemeral(true).queue(success -> {
-                        event.getMessage().delete().queue();
-                    });
+                    // Prima deferisci subito l'interazione (se non già fatto)
+                    if (!event.isAcknowledged()) {
+                        event.deferReply(true).queue(v -> {
+                            lobby.callRefereeInPrivateChannel(event.getGuild());
+                            createTicket(event);
+                            // Non serve più rispondere qui perché createTicket risponderà usando getHook()
+                            // event.reply(...) DA RIMUOVERE
+                        });
+                    } else {
+                        // Se già deferito o risposto, fai solo la logica (rischioso ma per sicurezza)
+                        lobby.callRefereeInPrivateChannel(event.getGuild());
+                        createTicket(event);
+                    }
                 }
+
                 default -> event.reply("❌ Unknown option selected.").setEphemeral(true).queue();
             }
             return;
@@ -916,6 +928,47 @@ public class LobbyCommand extends ListenerAdapter {
     }
 
 
+    private void createTicket(StringSelectInteractionEvent event) {
+        Guild guild = event.getGuild();
+        if (guild == null || !guild.getId().equals(GUILD_ID)) return;
+
+        User user = event.getUser();
+        Member member = guild.getMember(user);
+        if (member == null) return;
+
+        Category category = guild.getCategoriesByName(TICKET_CATEGORY_NAME, true)
+                .stream().findFirst()
+                .orElseGet(() -> guild.createCategory(TICKET_CATEGORY_NAME).complete());
+
+        String originalName = user.getName() + "-ticket";
+        String channelName = originalName.toLowerCase().replace(" ", "-").replaceAll("-+", "-");
+
+        boolean openTicketExists = category.getTextChannels().stream().anyMatch(c ->
+                c.getName().equals(channelName) &&
+                        c.getPermissionOverride(member) != null &&
+                        !c.getPermissionOverride(member).getDenied().contains(Permission.VIEW_CHANNEL)
+        );
+
+        if (openTicketExists) {
+            event.getHook().sendMessage("❗You already have an open ticket.").setEphemeral(true).queue();
+            return;
+        }
+
+        category.createTextChannel(channelName)
+                .addPermissionOverride(guild.getPublicRole(), 0L, Permission.VIEW_CHANNEL.getRawValue())
+                .addPermissionOverride(member,
+                        Permission.VIEW_CHANNEL.getRawValue()
+                                | Permission.MESSAGE_SEND.getRawValue()
+                                | Permission.MESSAGE_HISTORY.getRawValue(),
+                        0L)
+                .setTopic("Ticket Owner ID: " + user.getId())
+                .queue(channel -> {
+                    channel.sendMessage(user.getAsMention() + " — Ticket created: here you can talk with a referee to fix a problem or to report a problem **")
+                            .addActionRow(Button.danger("ticket:close", "Close Ticket")).queue();
+
+                    event.getHook().sendMessage("✅ Your ticket has been created: " + channel.getAsMention()).setEphemeral(true).queue();
+                });
+    }
 
 
 

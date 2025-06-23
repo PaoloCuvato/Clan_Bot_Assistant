@@ -333,5 +333,43 @@ public class ButtonLobbyManager extends ListenerAdapter {
             }
         }
 
+        String buttonId = event.getComponentId();
+        TextChannel channel = event.getChannel().asTextChannel();
+        Guild guild = event.getGuild();
+        if (guild == null) return;
+
+        String topic = channel.getTopic();
+        if (topic == null || !topic.contains("Ticket Owner ID:")) {
+            event.reply("❌ Ticket owner ID not found in the topic.").setEphemeral(true).queue();
+            return;
+        }
+
+        String userId = topic.replaceAll(".*Ticket Owner ID:\\s*", "").trim();
+        Member ticketOwner = guild.getMemberById(userId);
+        if (ticketOwner == null) {
+            event.reply("❌ Could not find the ticket owner.").setEphemeral(true).queue();
+            return;
+        }
+
+        switch (buttonId) {
+            case "ticket:close":
+                channel.getPermissionOverride(ticketOwner).getManager()
+                        .deny(Permission.VIEW_CHANNEL).queue();
+
+                channel.getManager().setName("closed-" + channel.getName()).queue();
+
+                event.reply("🔒 Ticket has been closed.")
+                        .addActionRow(Button.success("ticket:reopen", "Reopen Ticket")).queue();
+                break;
+
+
+            case "ticket:reopen":
+                channel.getPermissionOverride(ticketOwner).getManager()
+                        .grant(Permission.VIEW_CHANNEL).queue();
+                // Nessun bottone nel messaggio di riapertura
+                event.reply("🔓 Ticket has been reopened.").queue();
+                break;
+        }
+
     }
 }

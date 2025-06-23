@@ -64,22 +64,5 @@ public class LobbyStorage extends ListenerAdapter {
             System.out.println("-------------------------");
         });
     }
-//    public static Lobby getLobbyByCreatorId(String creatorId) {
-//        long creatorIdLong;
-//        try {
-//            creatorIdLong = Long.parseLong(creatorId);
-//        } catch (NumberFormatException e) {
-//            System.out.println("Errore di parsing ID: " + creatorId);
-//            return null;
-//        }
-//
-//        System.out.println("Cerco la lobby per creatorId: " + creatorIdLong);
-//
-//        return lobbies.values().stream()
-//                .filter(lobby -> lobby.getDiscordId() == creatorIdLong)
-//                .findFirst()
-//                .orElse(null);
-//    }
-//
 
 }

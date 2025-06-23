@@ -105,7 +105,6 @@ public class Lobby extends ListenerAdapter {
         }
 
         if (this.directLobby) {
-            // SOLO STATISTICHE DIRECT
             hostStats.incrementLobbiesCompletedDirect();
             for (Long participantId : partecipants) {
                 if (!participantId.equals(discordId)) {
@@ -119,9 +118,7 @@ public class Lobby extends ListenerAdapter {
                     PlayerStatMongoDBManager.updatePlayerStats(participantStats);
                 }
             }
-
         } else {
-            // ARCHIVIA THREAD FORUM
             ThreadChannel threadChannel = guild.getThreadChannels().stream()
                     .filter(thread -> thread.getIdLong() == this.PostId)
                     .findFirst()
@@ -136,7 +133,6 @@ public class Lobby extends ListenerAdapter {
                 System.err.println("❌ Forum thread not found.");
             }
 
-            // STATISTICHE GENERAL
             hostStats.incrementLobbiesCompletedGeneral();
             for (Long participantId : partecipants) {
                 if (!participantId.equals(discordId)) {
@@ -154,7 +150,6 @@ public class Lobby extends ListenerAdapter {
 
         PlayerStatMongoDBManager.updatePlayerStats(hostStats);
 
-        // RIMUOVI LOBBY
         LobbyManager.removeLobbyByCompletionMessageId(this.discordId);
         LobbyManager.removeLobby(this.discordId);
     }
@@ -540,6 +535,27 @@ public class Lobby extends ListenerAdapter {
 
         System.out.println("✅ Lobby marked as incomplete and removed for all players in lobby: " + this.discordId);
     }
+    public void incompleteAndCleanupLobby(Guild guild) {
 
+        // Se la lobby è già completata, non si può marcare incompleta
+        if (this.isCompleted) {
+            System.out.println("⚠️ Cannot mark an already completed lobby as incomplete.");
+            return;
+        }
+
+        // Marca la lobby come incompleta e aggiorna le statistiche
+        this.incompleteLobby(guild);
+
+        // Elimina il canale privato se esiste
+        TextChannel privateChannel = guild.getTextChannelById(this.privateChannelId);
+        if (privateChannel != null) {
+            privateChannel.delete().queue(
+                    success -> System.out.println("✅ Private channel deleted."),
+                    error -> System.err.println("❌ Failed to delete private channel: " + error.getMessage())
+            );
+        } else {
+            System.out.println("⚠️ Private channel not found or already deleted.");
+        }
+    }
 
 }

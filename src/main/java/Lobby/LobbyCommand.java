@@ -489,6 +489,12 @@ public class LobbyCommand extends ListenerAdapter {
 
             switch (selected) {
                 case "completed" -> {
+                    if (lobby.getPartecipants().size() <= 1) {
+                        event.getMessage().delete().queue();  // Cancella messaggio solo qui
+                        event.reply("❌ You cannot complete a lobby without participants.").setEphemeral(true).queue();
+                        return;
+                    }
+
                     lobby.archivePost(event.getGuild());
                     event.reply("✅ Lobby marked as **completed**!").setEphemeral(true).queue(success -> {
                         event.getMessage().delete().queue();

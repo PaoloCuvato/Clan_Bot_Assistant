@@ -486,17 +486,20 @@ public class LobbyCommand extends ListenerAdapter {
             }
 
             switch (selected) {
-                //to do completed and incompleted i need to do player stats
-                case "completed" ->{
+                case "completed" -> {
                     lobby.archivePost(event.getGuild());
-                    event.reply("✅ Lobby marked as **completed**!").setEphemeral(true).queue();
+                    event.reply("✅ Lobby marked as **completed**!").setEphemeral(true).queue(success -> {
+                        event.getMessage().delete().queue();
+                    });
                 }
-                case "lobby_incompleted" ->{
+                case "lobby_incompleted" -> {
                     lobby.incompleteLobby(event.getGuild());
-                    event.reply("⚠️ Lobby marked as **incomplete**.").setEphemeral(true).queue();
+                    event.reply("⚠️ Lobby marked as **incomplete**.").setEphemeral(true).queue(success -> {
+                        event.getMessage().delete().queue();
+                    });
                 }
                 case "lobby_score" -> {
-                    event.getMessage().editMessageComponents().queue();  // ok, è un'azione separata
+                    event.getMessage().editMessageComponents().queue();  // Lasci il messaggio visibile senza menu
 
                     Modal modal = Modal.create("lobby_score_modal", "Enter Your Lobby Score")
                             .addActionRow(
@@ -509,12 +512,11 @@ public class LobbyCommand extends ListenerAdapter {
 
                     event.replyModal(modal).queue();
                 }
-
-
-
                 case "report_to_referee" -> {
                     lobby.callRefereeInPrivateChannel(event.getGuild());
-                    event.reply("🛡️ A referee has been notified.").setEphemeral(true).queue();
+                    event.reply("🛡️ A referee has been notified.").setEphemeral(true).queue(success -> {
+                        event.getMessage().delete().queue();
+                    });
                 }
                 default -> event.reply("❌ Unknown option selected.").setEphemeral(true).queue();
             }

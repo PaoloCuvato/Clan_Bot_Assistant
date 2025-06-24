@@ -6,6 +6,7 @@ import Stat.PlayerStatsManager;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -338,9 +339,17 @@ public class ButtonLobbyManager extends ListenerAdapter {
         Guild guild = event.getGuild();
         if (guild == null) return;
 
+// Controlla che il canale sia nella categoria giusta
+        Category category = channel.getParentCategory();
+        if (category == null || (!category.getId().equals("1386825398402285599") && !category.getName().equalsIgnoreCase("Ninja Disputes"))) {
+            // Non è un canale nella categoria ticket, esci senza fare nulla
+            return;
+        }
+
         String topic = channel.getTopic();
         if (topic == null || !topic.contains("Ticket Owner ID:")) {
-            event.reply("❌ Ticket owner ID not found in the topic.").setEphemeral(true).queue();
+            event.deferReply(true).queue(); // deferReply con ephemeral = true
+            event.getHook().sendMessage("❌ Ticket owner ID not found in the topic.").queue();
             return;
         }
 
@@ -362,11 +371,9 @@ public class ButtonLobbyManager extends ListenerAdapter {
                         .addActionRow(Button.success("ticket:reopen", "Reopen Ticket")).queue();
                 break;
 
-
             case "ticket:reopen":
                 channel.getPermissionOverride(ticketOwner).getManager()
                         .grant(Permission.VIEW_CHANNEL).queue();
-                // Nessun bottone nel messaggio di riapertura
                 event.reply("🔓 Ticket has been reopened.").queue();
                 break;
         }

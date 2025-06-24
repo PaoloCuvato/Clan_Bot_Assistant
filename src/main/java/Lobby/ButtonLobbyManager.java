@@ -320,7 +320,9 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 creatorStats.incrementWasDeclinedDirect();
                 invitedStats.incrementDeclinedUserDirect();
                 invitedStats.decrementIgnoredRequestDirect();
+
                 PlayerStatMongoDBManager.updatePlayerStats(creatorStats);
+                PlayerStatMongoDBManager.updatePlayerStats(invitedStats);  // <-- Aggiorna anche invitedStats
 
                 priv.getManager()
                         .putPermissionOverride(invited,
@@ -333,6 +335,7 @@ public class ButtonLobbyManager extends ListenerAdapter {
                         }, failure -> event.reply("❌ Failed to update permissions.").setEphemeral(true).queue());
             }
         }
+
 
         String buttonId = event.getComponentId();
         TextChannel channel = event.getChannel().asTextChannel();

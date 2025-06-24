@@ -137,7 +137,6 @@ public class LobbyCommand extends ListenerAdapter {
                     });
         }
 
-
         if (!event.getName().equals("results")) return;
 
         // Ricava membro e utente che hanno invocato il comando

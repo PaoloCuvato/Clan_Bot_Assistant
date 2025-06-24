@@ -51,9 +51,9 @@ public class SlashPlayerInfoManager extends ListenerAdapter {
 
             event.getHook().sendMessageEmbeds(ninjaCardEmbed.build()).queue(sentMessage -> {
                 messageIdToUserId.put(sentMessage.getIdLong(), userId);
-                sentMessage.addReaction(Emoji.fromUnicode("🔹")).queue();
-                sentMessage.addReaction(Emoji.fromUnicode("📊")).queue();
-                sentMessage.addReaction(Emoji.fromUnicode("🎯")).queue();
+                sentMessage.addReaction(Emoji.fromUnicode("👤")).queue();
+                sentMessage.addReaction(Emoji.fromUnicode("🌍")).queue();
+                sentMessage.addReaction(Emoji.fromUnicode("🕹️")).queue();
             });
 
         } else if (command.equals("search_ninjacard")) {
@@ -80,9 +80,9 @@ public class SlashPlayerInfoManager extends ListenerAdapter {
             event.deferReply().queue();
             event.getHook().sendMessageEmbeds(ninjaCardEmbed.build()).queue(sentMessage -> {
                 messageIdToUserId.put(sentMessage.getIdLong(), targetUserId);
-                sentMessage.addReaction(Emoji.fromUnicode("🔹")).queue();
-                sentMessage.addReaction(Emoji.fromUnicode("📊")).queue();
-                sentMessage.addReaction(Emoji.fromUnicode("🎯")).queue();
+                sentMessage.addReaction(Emoji.fromUnicode("👤")).queue();
+                sentMessage.addReaction(Emoji.fromUnicode("🌍")).queue();
+                sentMessage.addReaction(Emoji.fromUnicode("🕹️")).queue();
             });
 
         } else if (command.equals("send_player_info_file")) {
@@ -120,13 +120,13 @@ public class SlashPlayerInfoManager extends ListenerAdapter {
 
         EmbedBuilder newEmbed;
         switch (emoji) {
-            case "🔹":
+            case "👤":
                 newEmbed = getNinjaCardEmbed(p);
                 break;
-            case "📊":
+            case "🌍":
                 newEmbed = getGeneralStatsEmbed(stats);
                 break;
-            case "🎯":
+            case "🕹️":
                 newEmbed = getDirectStatsEmbed(stats);
                 break;
             default:

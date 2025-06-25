@@ -78,7 +78,9 @@ public class PlayerInfoMongoDBManager {
             //    .append("inGamePlayTime", info.getInGamePlayTime())
                 .append("currentRegion", info.getCurrentRegion())
             //    .append("targetRegion", info.getTargetRegion())
-           //     .append("availablePlayTime", info.getAvailablePlayTime())
+                //      .availablePlayTime(doc.getString("availablePlayTime"))
+                .append("mostPlayedGame", info.getMostPlayedGame())
+                .append("skillLevel", info.getSkillLevel())
                 .append("spokenLanguages", Arrays.asList(info.getSpokenLanguages()))
                 .append("lobbyCounter", info.getLobbyCounter());
     }
@@ -96,6 +98,8 @@ public class PlayerInfoMongoDBManager {
                 .currentRegion(doc.getString("currentRegion"))
            //     .targetRegion(doc.getString("targetRegion"))
           //      .availablePlayTime(doc.getString("availablePlayTime"))
+                .mostPlayedGame(doc.getString("mostPlayedGame"))
+                .skillLevel(doc.getString("skillLevel"))
                 .spokenLanguages(doc.getList("spokenLanguages", String.class).toArray(new String[0]))
                 .lobbyCounter(doc.getInteger("lobbyCounter", 0))
                 .build();

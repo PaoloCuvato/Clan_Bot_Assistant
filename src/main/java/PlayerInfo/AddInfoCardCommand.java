@@ -9,8 +9,8 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
-import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
@@ -122,6 +122,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
 
 
     private void handleAddInfoCard(SlashCommandInteractionEvent event) {
+        askFinalModal(event);
         User user = event.getUser();
         long discordId = user.getIdLong();
 
@@ -133,7 +134,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
         PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
         System.out.println("New player Discord ID: " + discordId);
 
-        sendIntroEmbed(event, "Create Your Ninja Info Card", "This command helps you set up your player profile to join lobbies and participate in events.");
+        askCurrentRegion(event);
     }
 
     private void handleEditInfoCard(SlashCommandInteractionEvent event) {
@@ -146,37 +147,42 @@ public class AddInfoCardCommand extends ListenerAdapter {
             return;
         }
 
-        sendIntroEmbed(event, "Edit Your Ninja Info Card", "This command lets you update your existing player profile.");
+        askCurrentRegion(event);
     }
 
-    private void sendIntroEmbed(SlashCommandInteractionEvent event, String title, String description) {
+    private void askGameEmbeded(StringSelectInteractionEvent event) {
         EmbedBuilder intro = new EmbedBuilder()
-                .setTitle("▬▬▬▬▬▬▬ " + title + " ▬▬▬▬▬▬▬▬")
-                .setDescription(" > " + description +
+                .setTitle("▬▬▬▬▬▬▬  Select your game  ▬▬▬▬▬▬▬▬")
+                .setDescription(" > This command helps you set up your player profile to join lobbies and participate in events." +
                         "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
                 .setColor(Color.white);
 
-        event.deferReply(true).queue(hook -> {
-            hook.editOriginalEmbeds(intro.build())
-                    .setActionRow(
-                            StringSelectMenu.create("select_game")
-                                    .setPlaceholder("Choose your games")
-                                    .setMinValues(1)
-                                    .setMaxValues(5)
-                                    .addOption("Storm Connections", "Storm Connections")
-                                    .addOption("Storm Evolution", "Storm Evolution")
-                                    .addOption("Storm 4", "Storm 4")
-                                    .addOption("Storm Revolution", "Storm Revolution")
-                                    .addOption("Storm Trilogy", "Storm Trilogy")
-                                    .build()
-                    ).queue();
-        });
+        event.getHook().editOriginalEmbeds(intro.build())
+                .setActionRow(
+                        StringSelectMenu.create("select_game")
+                                .setPlaceholder("Choose your games")
+                                .setMinValues(1)
+                                .setMaxValues(9)
+                                .addOption("NXBUNSC", "NXBUNSC")
+                                .addOption("NSUNSE", "NSUNSE")
+                                .addOption("NSUNS4RTB", "NSUNS4RTB")
+                                .addOption("NSUNSR", "NSUNSR")
+                                .addOption("NSUNS3FB", "NSUNS3FB")
+                                .addOption("NSUNS3", "NSUNS3")
+                                .addOption("NSUNSG", "NSUNSG")
+                                .addOption("NSUNS2", "NSUNS2")
+                                .addOption("NUNS", "NUNS")
+                                .build()
+                )
+                .queue();
     }
 
     @Override
     public void onStringSelectInteraction(StringSelectInteractionEvent event) {
         long discordId = event.getUser().getIdLong();
         PlayerInfo player = PlayerInfoStorage.getPlayerInfo(discordId);
+        System.out.println("Component ID: " + event.getComponentId());
+
 
         if (player == null) {
             event.reply("❌ Player profile not found. Please use /add_info_card to create one.")
@@ -184,43 +190,71 @@ public class AddInfoCardCommand extends ListenerAdapter {
             return;
         }
 
-        switch (event.getComponentId()) {
-            case "select_game" -> {
-                player.setGame(event.getValues().toArray(new String[0]));
-                PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
-                event.deferEdit().queue();
-                askPlatforms(event); // 👈 questa è la versione corretta
-            }
 
-            case "select_platforms" -> {
-                player.setPlatforms(event.getValues().toArray(new String[0])); // Aggiungi metodo `setPlatforms` in PlayerInfo
-                PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
-                event.deferEdit().queue();
-                askConnectionType(event);
-            }
-            case "select_connection" -> {
-                player.setConnectionType(event.getValues().get(0));
-                PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
-                event.deferEdit().queue();
-                askCurrentRegion(event);
-            }
+            // Qui va il resto della logica del listener A
+
+
+        switch (event.getComponentId()) {
+
             case "select_region" -> {
                 player.setCurrentRegion(event.getValues().get(0));
                 PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
                 event.deferEdit().queue();
                 askLanguages(event);
             }
-//            case "select_target_region" -> {
-//                player.setTargetRegion(event.getValues().get(0));
-//                PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
-//                event.deferEdit().queue();
-//                askLanguages(event);
-//            }
+
             case "select_languages" -> {
                 player.setSpokenLanguages(event.getValues().toArray(new String[0]));
                 PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
-                askFinalModal(event);
+                event.deferEdit().queue();
+                askGameEmbeded(event);
             }
+
+            case "select_game" -> {
+                player.setGame(event.getValues().toArray(new String[0]));
+                PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
+                event.deferEdit().queue();
+                askPlatforms(event);
+            }
+
+            case "select_platforms" -> {
+                player.setPlatforms(event.getValues().toArray(new String[0]));
+                PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
+                event.deferEdit().queue();
+                askConnectionType(event);
+            }
+
+            case "select_connection" -> {
+                player.setConnectionType(event.getValues().get(0));
+                PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
+                askMostPlayedGameEmbeded(event);
+            }
+
+            case "select_most_played_game" -> {
+                player.setMostPlayedGame(event.getValues().get(0));
+                PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
+                event.deferEdit().queue();
+                System.out.println("Component ID: " + event.getComponentId());
+                askExperienceLevelEmbeded(event);
+                System.out.println("end of most played");
+
+            }
+            case "experience_level" -> {
+                player.setSkillLevel(event.getValues().get(0));
+                PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
+                if (event.getGuild() != null) {
+                    long roleId = 1382385471300304946L;
+                    event.getGuild().retrieveMemberById(discordId).queue(member -> {
+                        event.getGuild().addRoleToMember(member, event.getGuild().getRoleById(roleId)).queue(
+                                success -> System.out.println("✅ Player Info role assigned to " + member.getEffectiveName()),
+                                error -> System.err.println("❌ Could not assign Player Info role: " + error.getMessage())
+                        );
+                    }, error -> System.err.println("❌ User not found: " + error.getMessage()));
+                }
+                finalMessage(event);
+            }
+
+
             case "result:menu" -> {
                 String selected = event.getValues().get(0);
                 if (player == null) {
@@ -321,6 +355,91 @@ public class AddInfoCardCommand extends ListenerAdapter {
 
         }
     }
+    private void askFinalModal(SlashCommandInteractionEvent event) {
+        event.getHook().editOriginalComponents().queue(); // Clear select menus
+
+        TextInput playerName = TextInput.create("player_name", "In-Game Name", TextInputStyle.SHORT)
+                .setRequired(true)
+                .setPlaceholder("e.g. User1234")
+                .build();
+
+        Modal modal = Modal.create("final_modal", "Final Profile Details")
+                .addActionRow(playerName)
+
+                .build();
+
+        event.replyModal(modal).queue();
+    }
+
+    @Override
+    public void onModalInteraction(ModalInteractionEvent event) {
+        if (!event.getModalId().equals("final_modal")) return;
+
+        long discordId = event.getUser().getIdLong();
+        PlayerInfo player = PlayerInfoStorage.getPlayerInfo(discordId);
+
+        if (player == null) {
+            event.reply("❌ Player profile not found. Please use /add_info_card to create one.")
+                    .setEphemeral(true).queue();
+            return;
+        }
+
+        player.setPlayerName(event.getValue("player_name").getAsString());
+        PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
+        PlayerInfoFileManager.savePlayerInfoList(PlayerInfoStorage.getAllSessions());
+        PlayerInfoStorage.printAllPlayers();
+
+        // Inizio catena dei dropdown: regione
+        EmbedBuilder embed = new EmbedBuilder()
+                .setTitle("▬▬▬▬▬ 🌍 Your Region ▬▬▬▬▬")
+                .setDescription(" > Where are you currently located?\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                .setColor(Color.white);
+
+        event.replyEmbeds(embed.build())
+                .addActionRow(
+                        StringSelectMenu.create("select_region")
+                                .addOption("Europe", "Europe")
+                                .addOption("North America", "North America")
+                                .addOption("Canada", "Canada")
+                                .addOption("Central America", "Central America")
+                                .addOption("South America", "South America")
+                                .addOption("East Asia", "East Asia")
+                                .addOption("Russia", "Russia")
+                                .addOption("Asia", "Asia")
+                                .addOption("Middle East", "Middle East")
+                                .addOption("Africa", "Africa")
+                                .build()
+                )
+                .setEphemeral(true)
+                .queue();
+
+
+    }
+
+    @Override
+    public void onGuildReady(GuildReadyEvent event) {
+        Map<Long, PlayerInfo> playerInfoMap = PlayerInfoMongoDBManager.getAllPlayerInfosAsMap();
+
+        // Carica in memoria
+        PlayerInfoStorage.loadSessions(playerInfoMap);
+
+        // Stampa tutta la mappa
+        System.out.println("✅ NinjaCards loaded from MongoDB:");
+        for (Map.Entry<Long, PlayerInfo> entry : playerInfoMap.entrySet()) {
+            System.out.println("🔹 DiscordID: " + entry.getKey());
+            System.out.println("    " + entry.getValue()); // Assicurati che PlayerInfo abbia un buon toString()
+        }
+    }
+    public void finalMessage(StringSelectInteractionEvent event){
+        EmbedBuilder finalEmbed = new EmbedBuilder()
+                .setTitle("✅ Player Info Created")
+                .setDescription("Your Player Info Card has been created successfully!")
+                .setColor(Color.green);
+
+        event.getHook().editOriginalComponents().queue(); // Rimuove i vecchi componenti (se presenti)
+        event.getHook().editOriginalEmbeds(finalEmbed.build()).queue();
+
+    }
 
     private void askConnectionType(StringSelectInteractionEvent event) {
         EmbedBuilder embed = new EmbedBuilder()
@@ -359,42 +478,31 @@ public class AddInfoCardCommand extends ListenerAdapter {
     }
 
 
-    private void askCurrentRegion(StringSelectInteractionEvent event) {
+    private void askCurrentRegion(SlashCommandInteractionEvent event) {
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("▬▬▬▬▬ 🌍 Your Region ▬▬▬▬▬")
-                .setDescription(" > Where are you currently located?" +
+                .setDescription(" > What region do you play from?" +
                         "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
                 .setColor(Color.white);
 
         event.getHook().editOriginalEmbeds(embed.build())
                 .setActionRow(
                         StringSelectMenu.create("select_region")
-                                .addOption("EU", "EU")
-                                .addOption("NA", "NA")
-                                .addOption("SA", "SA")
-                                .addOption("JP", "JP")
+                                .addOption("Europe", "Europe")
+                                .addOption("North America", "North America")
+                                .addOption("Canada", "Canada")
+                                .addOption("Central America", "Central America")
+                                .addOption("South America", "South America")
+                                .addOption("East Asia", "East Asia")
+                                .addOption("Russia", "Russia")
+                                .addOption("Asia", "Asia")
+                                .addOption("Middle East", "Middle East")
+                                .addOption("Africa", "Africa")
                                 .build()
-                ).queue();
-    }
-/*
-    private void askTargetRegion(StringSelectInteractionEvent event) {
-        EmbedBuilder embed = new EmbedBuilder()
-                .setTitle("▬▬▬▬▬ 🎯 Target Region ▬▬▬▬▬")
-                .setDescription(" > Which region do you want to play with?\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
-                .setColor(Color.white);
-
-        event.getHook().editOriginalEmbeds(embed.build())
-                .setActionRow(
-                        StringSelectMenu.create("select_target_region")
-                                .addOption("EU", "EU")
-                                .addOption("NA", "NA")
-                                .addOption("JP", "JP")
-                                .addOption("SA", "SA")
-                                .build()
-                ).queue();
+                )
+                .queue();
     }
 
- */
 
     private void askLanguages(StringSelectInteractionEvent event) {
         EmbedBuilder embed = new EmbedBuilder()
@@ -407,106 +515,22 @@ public class AddInfoCardCommand extends ListenerAdapter {
                 .setActionRow(
                         StringSelectMenu.create("select_languages")
                                 .setPlaceholder("Choose languages")
-                                .setMaxValues(6)
+                                .setMaxValues(12)
                                 .addOption("English", "English")
-                                .addOption("French", "French")
                                 .addOption("Spanish", "Spanish")
+                                .addOption("French", "French")
+                                .addOption("German", "German")
                                 .addOption("Italian", "Italian")
-                                .addOption("Arabic", "Arabian")
+                                .addOption("Portuguese", "Portuguese")
+                                .addOption("Russian", "Russian")
+                                .addOption("Indonesian", "Indonesian")
+                                .addOption("Korean", "Korean")
+                                .addOption("Chinese", "Chinese")
+                                .addOption("Arabic", "Arabic")
                                 .addOption("Japanese", "Japanese")
                                 .build()
-                ).queue();
-    }
-
-    private void askFinalModal(StringSelectInteractionEvent event) {
-        event.getHook().editOriginalComponents().queue(); // Clear select menus
-
-        TextInput playerName = TextInput.create("player_name", "In-Game Name", TextInputStyle.SHORT)
-                .setRequired(true)
-                .setPlaceholder("e.g. User1234")
-                .build();
-/*
-        TextInput hoursPlayed = TextInput.create("hours_played", "Hours Played (number)", TextInputStyle.SHORT)
-                .setRequired(true)
-                .setPlaceholder("e.g. 120")
-                .build();
-
-        TextInput availableTime = TextInput.create("available_time", "When Do You Play?", TextInputStyle.PARAGRAPH)
-                .setRequired(true)
-                .setPlaceholder("e.g. Weekends, Monday evenings, etc.")
-                .build();
- */
-        Modal modal = Modal.create("final_modal", "Final Profile Details")
-                .addActionRow(playerName)
-               // .addActionRow(hoursPlayed)
-              //  .addActionRow(availableTime)
-                .build();
-
-        event.replyModal(modal).queue();
-    }
-
-    @Override
-    public void onModalInteraction(ModalInteractionEvent event) {
-        if (!event.getModalId().equals("final_modal")) return;
-
-        long discordId = event.getUser().getIdLong();
-        PlayerInfo player = PlayerInfoStorage.getPlayerInfo(discordId);
-
-        if (player == null) {
-            event.reply("❌ Player profile not found. Please use /add_info_card to create one.")
-                    .setEphemeral(true).queue();
-            return;
-        }
-
-        player.setPlayerName(event.getValue("player_name").getAsString());
-/*
-        String hoursInput = event.getValue("hours_played").getAsString();
-        try {
-            int hours = Integer.parseInt(hoursInput);
-            player.setInGamePlayTime(String.valueOf(hours));
-        } catch (NumberFormatException e) {
-            event.reply("❌ Please enter a valid number for hours played.")
-                    .setEphemeral(true).queue();
-            return;
-        }
-
-        player.setAvailablePlayTime(event.getValue("available_time").getAsString());
-
-
- */
-        PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
-        // Qui salvi la lista aggiornata su file
-        PlayerInfoFileManager.savePlayerInfoList(PlayerInfoStorage.getAllSessions());
-        PlayerInfoStorage.printAllPlayers();
-
-        event.reply("✅ Your profile has been successfully updated!").setEphemeral(true).queue();
-
-        player.sendPlayerInfoLog(Objects.requireNonNull(event.getGuild()));
-
-        // 👉 Here you assign the player info role
-        long roleId = 1382385471300304946L; // ID del ruolo
-        event.getGuild().retrieveMemberById(discordId).queue(member -> {
-            event.getGuild().addRoleToMember(member, event.getGuild().getRoleById(roleId)).queue(
-                    success -> System.out.println("✅ Ruolo Player Info assegnato a " + member.getEffectiveName()),
-                    error -> System.err.println("❌ Impossibile assegnare il ruolo Player Info: " + error.getMessage())
-            );
-        }, error -> {
-            System.err.println("❌ Utente non trovato: " + error.getMessage());
-        });
-    }
-    @Override
-    public void onGuildReady(GuildReadyEvent event) {
-        Map<Long, PlayerInfo> playerInfoMap = PlayerInfoMongoDBManager.getAllPlayerInfosAsMap();
-
-        // Carica in memoria
-        PlayerInfoStorage.loadSessions(playerInfoMap);
-
-        // Stampa tutta la mappa
-        System.out.println("✅ NinjaCards loaded from MongoDB:");
-        for (Map.Entry<Long, PlayerInfo> entry : playerInfoMap.entrySet()) {
-            System.out.println("🔹 DiscordID: " + entry.getKey());
-            System.out.println("    " + entry.getValue()); // Assicurati che PlayerInfo abbia un buon toString()
-        }
+                )
+                .queue();
     }
 
 
@@ -522,14 +546,56 @@ public class AddInfoCardCommand extends ListenerAdapter {
                                 " * **Player Name:** " + p.getPlayerName() + "\n" +
                                 " * **Connection:** " + p.getConnectionType() + "\n" +
                                 " * **My Region:** " + p.getCurrentRegion() + "\n" +
-                     //           " * **Target Region:** " + p.getTargetRegion() + "\n" +
+                                //           " * **Target Region:** " + p.getTargetRegion() + "\n" +
                                 " * **Languages:** " + String.join(", ", p.getSpokenLanguages()) + "\n" +
-                    //            " * **Availability:** " + p.getAvailablePlayTime() + "\n" +
-                   //             " * **Hours Played:** " + p.getInGamePlayTime() + "\n" +
+                                //            " * **Availability:** " + p.getAvailablePlayTime() + "\n" +
+                                //             " * **Hours Played:** " + p.getInGamePlayTime() + "\n" +
                                 " * **Lobbies Joined:** " + p.getLobbyCounter() + "\n" +
                                 "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
                 );
     }
+    private void askMostPlayedGameEmbeded(StringSelectInteractionEvent event) {
+        event.deferEdit().queue();
+
+        EmbedBuilder embed = new EmbedBuilder()
+                .setTitle("▬▬▬▬▬▬▬ Most Played Game ▬▬▬▬▬▬▬")
+                .setDescription(" > Which UNS game do you play the most out of what you listed" +
+                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                .setColor(Color.white);
+
+        event.getHook().editOriginalEmbeds(embed.build())
+                .setActionRow(
+                        StringSelectMenu.create("select_most_played_game")
+                                .setMaxValues(1)
+                                .addOption("NXBUNSC", "NXBUNSC")
+                                .addOption("NSUNSE", "NSUNSE")
+                                .addOption("NSUNS4RTB", "NSUNS4RTB")
+                                .addOption("NSUNSR", "NSUNSR")
+                                .addOption("NSUNS3FB", "NSUNS3FB")
+                                .addOption("NSUNS3", "NSUNS3")
+                                .addOption("NSUNSG", "NSUNSG")
+                                .addOption("NSUNS2", "NSUNS2")
+                                .addOption("NUNS", "NUNS")
+                                .build()
+                ).queue();
+    }
+    private void askExperienceLevelEmbeded(StringSelectInteractionEvent event) {
+        EmbedBuilder embed = new EmbedBuilder()
+                .setTitle("▬▬▬▬▬▬▬ Choose your skill level ▬▬▬▬▬▬▬")
+                .setDescription(" > Which skill level do you think you are in your most played game?" +
+                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                .setColor(Color.white);
+
+        event.getHook().editOriginalEmbeds(embed.build())
+                .setActionRow(
+                        StringSelectMenu.create("experience_level")
+                                .addOption("Beginner", "Beginner")
+                                .addOption("Intermediate", "Intermediate")
+                                .addOption("Advanced", "Advanced")
+                                .build()
+                ).queue();
+    }
+
 
     private EmbedBuilder getGeneralStatsEmbed(PlayerStats stats) {
         return new EmbedBuilder()

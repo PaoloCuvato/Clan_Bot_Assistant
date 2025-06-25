@@ -32,18 +32,21 @@ public class PlayerInfo extends ListenerAdapter {
 
     private String connectionType; // e.g. "WiFi" or "Wired"
 
-//    private String inGamePlayTime; // the number of hour someone have on the game
-
-    private String currentRegion; // Region they live in (e.g. EU, NA)
-
- //   private String targetRegion; // Region they want to play in (e.g. NA, JP)
-
- //   private String availablePlayTime; // e.g. "Evenings", "Weekends", or time range
-
     private String[] spokenLanguages = new String[0]; ; // Languages spoken (e.g. ["English", "French"])
 
     private int lobbyCounter; // Number of lobbies the player has joined
 
+    private String currentRegion; // Region they live in (e.g. EU, NA)
+
+    private String  mostPlayedGame;
+
+    private String  skillLevel;
+
+    //  private String inGamePlayTime; // the number of hour someone have on the game
+
+    //   private String targetRegion; // Region they want to play in (e.g. NA, JP)
+
+    //   private String availablePlayTime; // e.g. "Evenings", "Weekends", or time range
     public void sendPlayerInfoLog(Guild guild) {
         long logChannelId = 1377959042663714846L; // Sostituisci con l'ID corretto del tuo canale
         TextChannel logChannel = guild.getTextChannelById(logChannelId);

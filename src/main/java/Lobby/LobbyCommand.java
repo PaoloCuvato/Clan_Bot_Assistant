@@ -151,7 +151,7 @@ public class LobbyCommand extends ListenerAdapter {
                                 "> Use this command to finalize the lobby. You can view a summary of what happened, report results, provide feedback, or notify an admin if needed.It’s the last step to close out the session properly\n\n" +
                                 "**Please choose one of the options below for your lobby:**\n" +
                                 "> * **Complete lobby:** this option will mark and complete the current lobby\n" +
-                           //     "> * **Report Lobby Score:** with this option you can report  the score of the lobby\n" +
+                                //     "> * **Report Lobby Score:** with this option you can report  the score of the lobby\n" +
                                 "> * **Incomplete lobby:** this option will mark your lobby as incompleted\n" +
                                 "> * **Referee:** This option will contact an admin to do as referee or to report something.\n"
 
@@ -167,7 +167,7 @@ public class LobbyCommand extends ListenerAdapter {
                 .setMaxValues(1)
                 .addOption("Complete lobby", "completed")
                 .addOption("Incompleted Lobby", "lobby_incompleted")
-             //   .addOption("Score Lobby", "lobby_score")
+                //   .addOption("Score Lobby", "lobby_score")
                 .addOption("Referee", "report_to_referee")
                 .build();
 

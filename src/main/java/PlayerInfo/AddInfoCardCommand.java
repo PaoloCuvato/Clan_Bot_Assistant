@@ -1,6 +1,8 @@
 package PlayerInfo;
 
+import Stat.PlayerStats;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -11,6 +13,7 @@ import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
+import Stat.*;
 
 import java.awt.*;
 import java.util.Map;
@@ -24,6 +27,41 @@ public class AddInfoCardCommand extends ListenerAdapter {
             case "add_info_card" -> handleAddInfoCard(event);
             case "edit_ninja_card" -> handleEditInfoCard(event);
         }
+
+        if (!event.getName().equals("my_ninjacard")) return;
+
+        // Ricava membro e utente che hanno invocato il comando
+        Member member = event.getMember();
+        User user = event.getUser();
+
+        // 1) Costruisci l'embed
+        EmbedBuilder eb = new EmbedBuilder()
+                .setDescription(
+                        "**Welcome to our Show stats page.**\n" +
+                                "> Use this command to display all the info about you. You can view a summary of your stat, like your player info and stats about your games\n\n" +
+                                "**Please choose one of the options below to see:**\n" +
+                                "> * **Ninja Card Info:** This option will show you all the data relative to your ninja card\n" +
+                                "> * **General Stats:** This option will show you all the data relative to your Global Lobby stats\n" +
+                                "> * **Direct Stats:** This option will show you all the data relative to your Private Lobby stats\n"
+                )
+                .setImage("https://64.media.tumblr.com/87273056002f62ae5f1b6417c001170f/f4a7711e15cf7a55-f5/s1280x1920/ec0568cc634542254ba8908d2de2861fda4d171f.gif")
+                .setColor(Color.white);
+        // 2) Costruisci il dropdown menu
+        StringSelectMenu menu = StringSelectMenu.create("result:menu")
+                .setPlaceholder("Choose an option to see")
+                .setMinValues(1)
+                .setMaxValues(1)
+                .addOption("Ninja Card Info", "ninja_card_info")
+                .addOption("General Stats", "general_stats")
+                //   .addOption("Score Lobby", "lobby_score")
+                .addOption("Direct Stats", "direct_stats")
+                .build();
+
+        // 3) Invia embed + menu
+        event.replyEmbeds(eb.build())
+                .addActionRow(menu)
+                .setEphemeral(true)
+                .queue();
     }
 
     private void handleAddInfoCard(SlashCommandInteractionEvent event) {
@@ -78,7 +116,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
         });
     }
 
-        @Override
+    @Override
     public void onStringSelectInteraction(StringSelectInteractionEvent event) {
         long discordId = event.getUser().getIdLong();
         PlayerInfo player = PlayerInfoStorage.getPlayerInfo(discordId);
@@ -126,6 +164,54 @@ public class AddInfoCardCommand extends ListenerAdapter {
                 PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
                 askFinalModal(event);
             }
+            case "result:menu" -> {
+                String selected = event.getValues().get(0);
+                if (player == null) {
+                    event.reply("❌ Player profile not found. Please use `/add_info_card` to create one.")
+                            .setEphemeral(true).queue();
+                    return;
+                }
+
+                switch (selected) {
+                    case "ninja_card_info" -> {
+                        event.deferEdit().queue(); // Rimuove i componenti e "pulisce" il messaggio
+                        event.getHook().editOriginalEmbeds(getNinjaCardEmbed(player).build())
+                                .setComponents() // Rimuove i componenti (menu) se non vuoi lasciarli
+                                .queue();
+                    }
+                    case "general_stats" -> {
+                        PlayerStats stats = PlayerStatsManager.getInstance().getPlayerStats(discordId);
+
+                        if (stats == null) {
+                            event.reply("❌ Player statistics not found. Please play some matches first.")
+                                    .setEphemeral(true).queue();
+                            return;
+                        }
+
+                        event.deferEdit().queue();
+                        event.getHook().editOriginalEmbeds(getGeneralStatsEmbed(stats).build())
+                                .setComponents()
+                                .queue();
+                    }
+
+                    case "direct_stats" -> {
+                        PlayerStats stats = PlayerStatsManager.getInstance().getPlayerStats(discordId);
+
+                        if (stats == null) {
+                            event.reply("❌ Player statistics not found. Please play some matches first.")
+                                    .setEphemeral(true).queue();
+                            return;
+                        }
+
+                        event.deferEdit().queue();
+                        event.getHook().editOriginalEmbeds(getDirectStatsEmbed(stats).build())
+                                .setComponents()
+                                .queue();
+                    }
+
+                }
+            }
+
         }
     }
 
@@ -313,5 +399,66 @@ public class AddInfoCardCommand extends ListenerAdapter {
     }
 
 
+    private EmbedBuilder getNinjaCardEmbed(PlayerInfo p) {
+        return new EmbedBuilder()
+                .setTitle("▬▬▬▬▬▬ Your Ninja Card ▬▬▬▬▬▬")
+                .setColor(Color.decode("#1c0b2e"))
+                .setDescription(
+                        "**# Ninja Card Info:**" +
+                                "These are all the stat about your player ninja card\n" +
+                                " * **Platform:** " + String.join(", ", p.getPlatforms()) + "\n" +
+                                " * **Game:** " + String.join(", ", p.getGame()) + "\n" +
+                                " * **Player Name:** " + p.getPlayerName() + "\n" +
+                                " * **Connection:** " + p.getConnectionType() + "\n" +
+                                " * **My Region:** " + p.getCurrentRegion() + "\n" +
+                                " * **Target Region:** " + p.getTargetRegion() + "\n" +
+                                " * **Languages:** " + String.join(", ", p.getSpokenLanguages()) + "\n" +
+                                " * **Availability:** " + p.getAvailablePlayTime() + "\n" +
+                                " * **Hours Played:** " + p.getInGamePlayTime() + "\n" +
+                                " * **Lobbies Joined:** " + p.getLobbyCounter() + "\n" +
+                                "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+                );
+    }
+
+    private EmbedBuilder getGeneralStatsEmbed(PlayerStats stats) {
+        return new EmbedBuilder()
+                .setTitle("▬▬▬▬▬▬ Your General Stats ▬▬▬▬▬▬")
+                .setColor(Color.decode("#1c0b2e"))
+                .setDescription(
+                        "**# General Stats:**" +
+                                "These are all the stat about your public lobby history\n" +
+                                " * **Lobbies Created: **" + stats.getLobbiesCreatedGeneral() + "\n" +
+                                " * **Lobbies Joined: **" + stats.getLobbiesJoinedGeneral() + "\n" +
+                                " * **Host Accepted Users: **" + stats.getHostAcceptedUserGeneral() + "\n" +
+                                " * **Was Accepted: **" + stats.getWasAcceptedGeneral() + "\n" +
+                                " * **Declined Users: **" + stats.getDeclinedUserGeneral() + "\n" +
+                                " * **Was Declined: **" + stats.getWasDeclinedGeneral() + "\n" +
+                                " * **Ignored Requests: **" + stats.getIgnoredRequestGeneral() + "\n" +
+                                " * **Lobbies Completed: **" + stats.getLobbiesCompletedGeneral() + "\n" +
+                                " * **Lobbies Incomplete: **" + stats.getLobbiesIncompleteGeneral() + "\n" +
+                                " * **Lobbies Disbanded: **" + stats.getLobbiesDisbandedGeneral() + "\n" +
+                                "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+                );
+    }
+
+    private EmbedBuilder getDirectStatsEmbed(PlayerStats stats) {
+        return new EmbedBuilder()
+                .setTitle("▬▬▬▬▬▬ Your Direct Stats ▬▬▬▬▬▬")
+                .setColor(Color.decode("#1c0b2e"))
+                .setDescription(
+                        "**# Direct Stats:**" +
+                                "These are all the stat about your private lobby history\n" +
+                                " * **Lobbies Created: **" + stats.getLobbiesCreatedDirect() + "\n" +
+                                " * **Lobbies Joined: **" + stats.getLobbiesJoinedDirect() + "\n" +
+                                " * **Was Accepted: **" + stats.getWasAcceptedDirect() + "\n" +
+                                " * **Declined Users: **" + stats.getDeclinedUserDirect() + "\n" +
+                                " * **Was Declined: **" + stats.getWasDeclinedDirect() + "\n" +
+                                " * **Ignored Requests: **" + stats.getIgnoredRequestDirect() + "\n" +
+                                " * **Lobbies Completed: **" + stats.getLobbiesCompletedDirect() + "\n" +
+                                " * **Lobbies Incomplete: **" + stats.getLobbiesIncompleteDirect() + "\n" +
+                                " * **Lobbies Disbanded: **" + stats.getLobbiesDisbandedDirect() + "\n" +
+                                "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+                );
+    }
 
 }

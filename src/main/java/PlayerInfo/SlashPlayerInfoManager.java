@@ -31,7 +31,7 @@ public class SlashPlayerInfoManager extends ListenerAdapter {
         }
         return instance;
     }
-
+/*
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         String command = event.getName();
@@ -272,4 +272,6 @@ public class SlashPlayerInfoManager extends ListenerAdapter {
                                 "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
                 );
     }
+
+ */
 }

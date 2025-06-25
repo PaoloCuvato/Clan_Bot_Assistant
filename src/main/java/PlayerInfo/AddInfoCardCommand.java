@@ -18,6 +18,7 @@ import net.dv8tion.jda.api.interactions.modals.Modal;
 import Stat.*;
 
 import java.awt.*;
+import java.io.File;
 import java.util.Map;
 import java.util.Objects;
 
@@ -31,7 +32,21 @@ public class AddInfoCardCommand extends ListenerAdapter {
             case "add_info_card" -> handleAddInfoCard(event);
             case "edit_ninja_card" -> handleEditInfoCard(event);
             case "search_ninjacard" -> handleSearchNinjaCard(event);
+        }
 
+        if (event.getName().equals("send_player_info_file")) {
+            event.deferReply().queue();
+
+            File file = new File("playerinfolist.txt");
+
+            if (!file.exists()) {
+                event.getHook().sendMessage("❌ The file playerinfolist.txt was not found.").queue();
+                return;
+            }
+
+            event.getHook().sendMessage("📄 Here is a text file containing all the users with the Player Info role:")
+                    .addFiles(net.dv8tion.jda.api.utils.FileUpload.fromData(file))
+                    .queue();
         }
 
         if (!event.getName().equals("my_ninjacard")) return;

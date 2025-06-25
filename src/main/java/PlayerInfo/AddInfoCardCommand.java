@@ -65,7 +65,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
                                 "> * **General Stats:** This option will show you all the data relative to your Global Lobby stats\n" +
                                 "> * **Direct Stats:** This option will show you all the data relative to your Private Lobby stats\n"
                 )
-                .setImage("https://tenor.com/view/anime-kabuto-yakushi-naruto-ninja-info-cards-gif-12845996")
+                .setImage("https://media.discordapp.net/attachments/1163923648034373773/1387401919567368263/Meme.gif?ex=685d363a&is=685be4ba&hm=545ca9c6eb7aa7412b16d580f4fa65cf808cd530296d8c694113dae5d16f7fa4&=")
                 .setColor(Color.white);
         // 2) Costruisci il dropdown menu
         StringSelectMenu menu = StringSelectMenu.create("result:menu")
@@ -99,7 +99,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
                                 "> * **General Stats:** This option will show you all the data related to the player's Global Lobby stats.\n" +
                                 "> * **Direct Stats:** This option will show you all the data related to the player's Private Lobby stats.\n"
                 )
-                .setImage("https://tenor.com/view/anime-kabuto-yakushi-naruto-ninja-info-cards-gif-12845996")
+                .setImage("https://media.discordapp.net/attachments/1163923648034373773/1387396028650750114/JJ.gif?ex=685d30bd&is=685bdf3d&hm=0619f4f76510179973924bb2aa175ef88d6f34482ac57723a9e3c4bb8dae8e5b&=")
                 .setColor(Color.white);
 
         String componentId = "search_result:menu:";

@@ -208,14 +208,14 @@ public class AddInfoCardCommand extends ListenerAdapter {
                 player.setCurrentRegion(event.getValues().get(0));
                 PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
                 event.deferEdit().queue();
-                askTargetRegion(event);
-            }
-            case "select_target_region" -> {
-                player.setTargetRegion(event.getValues().get(0));
-                PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
-                event.deferEdit().queue();
                 askLanguages(event);
             }
+//            case "select_target_region" -> {
+//                player.setTargetRegion(event.getValues().get(0));
+//                PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
+//                event.deferEdit().queue();
+//                askLanguages(event);
+//            }
             case "select_languages" -> {
                 player.setSpokenLanguages(event.getValues().toArray(new String[0]));
                 PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
@@ -376,7 +376,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
                                 .build()
                 ).queue();
     }
-
+/*
     private void askTargetRegion(StringSelectInteractionEvent event) {
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("▬▬▬▬▬ 🎯 Target Region ▬▬▬▬▬")
@@ -393,6 +393,8 @@ public class AddInfoCardCommand extends ListenerAdapter {
                                 .build()
                 ).queue();
     }
+
+ */
 
     private void askLanguages(StringSelectInteractionEvent event) {
         EmbedBuilder embed = new EmbedBuilder()
@@ -423,7 +425,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
                 .setRequired(true)
                 .setPlaceholder("e.g. User1234")
                 .build();
-
+/*
         TextInput hoursPlayed = TextInput.create("hours_played", "Hours Played (number)", TextInputStyle.SHORT)
                 .setRequired(true)
                 .setPlaceholder("e.g. 120")
@@ -433,11 +435,11 @@ public class AddInfoCardCommand extends ListenerAdapter {
                 .setRequired(true)
                 .setPlaceholder("e.g. Weekends, Monday evenings, etc.")
                 .build();
-
+ */
         Modal modal = Modal.create("final_modal", "Final Profile Details")
                 .addActionRow(playerName)
-                .addActionRow(hoursPlayed)
-                .addActionRow(availableTime)
+               // .addActionRow(hoursPlayed)
+              //  .addActionRow(availableTime)
                 .build();
 
         event.replyModal(modal).queue();
@@ -457,7 +459,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
         }
 
         player.setPlayerName(event.getValue("player_name").getAsString());
-
+/*
         String hoursInput = event.getValue("hours_played").getAsString();
         try {
             int hours = Integer.parseInt(hoursInput);
@@ -470,6 +472,8 @@ public class AddInfoCardCommand extends ListenerAdapter {
 
         player.setAvailablePlayTime(event.getValue("available_time").getAsString());
 
+
+ */
         PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
         // Qui salvi la lista aggiornata su file
         PlayerInfoFileManager.savePlayerInfoList(PlayerInfoStorage.getAllSessions());
@@ -518,10 +522,10 @@ public class AddInfoCardCommand extends ListenerAdapter {
                                 " * **Player Name:** " + p.getPlayerName() + "\n" +
                                 " * **Connection:** " + p.getConnectionType() + "\n" +
                                 " * **My Region:** " + p.getCurrentRegion() + "\n" +
-                                " * **Target Region:** " + p.getTargetRegion() + "\n" +
+                     //           " * **Target Region:** " + p.getTargetRegion() + "\n" +
                                 " * **Languages:** " + String.join(", ", p.getSpokenLanguages()) + "\n" +
-                                " * **Availability:** " + p.getAvailablePlayTime() + "\n" +
-                                " * **Hours Played:** " + p.getInGamePlayTime() + "\n" +
+                    //            " * **Availability:** " + p.getAvailablePlayTime() + "\n" +
+                   //             " * **Hours Played:** " + p.getInGamePlayTime() + "\n" +
                                 " * **Lobbies Joined:** " + p.getLobbyCounter() + "\n" +
                                 "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
                 );

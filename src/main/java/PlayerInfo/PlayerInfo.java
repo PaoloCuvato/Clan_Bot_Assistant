@@ -32,13 +32,13 @@ public class PlayerInfo extends ListenerAdapter {
 
     private String connectionType; // e.g. "WiFi" or "Wired"
 
-    private String inGamePlayTime; // the number of hour someone have on the game
+//    private String inGamePlayTime; // the number of hour someone have on the game
 
     private String currentRegion; // Region they live in (e.g. EU, NA)
 
-    private String targetRegion; // Region they want to play in (e.g. NA, JP)
+ //   private String targetRegion; // Region they want to play in (e.g. NA, JP)
 
-    private String availablePlayTime; // e.g. "Evenings", "Weekends", or time range
+ //   private String availablePlayTime; // e.g. "Evenings", "Weekends", or time range
 
     private String[] spokenLanguages = new String[0]; ; // Languages spoken (e.g. ["English", "French"])
 
@@ -70,11 +70,11 @@ public class PlayerInfo extends ListenerAdapter {
                                 " * **Game:** " + String.join(",",this.game) + "\n" +
                                 " * **Player Name:** " + this.playerName + "\n" +
                                 " * **Connection:** " + this.connectionType + "\n" +
-                                " * **Hours Played:** " + this.inGamePlayTime + "\n" +
+                      //          " * **Hours Played:** " + this.inGamePlayTime + "\n" +
                                 " * **Current Region:** " + this.currentRegion + "\n" +
-                                " * **Target Region:** " + this.targetRegion + "\n" +
+                      //          " * **Target Region:** " + this.targetRegion + "\n" +
                                 " * **Languages:** " + String.join(", ", this.spokenLanguages) + "\n" +
-                                " * **Availability:** " + this.availablePlayTime + "\n" +
+                      //          " * **Availability:** " + this.availablePlayTime + "\n" +
                                 " * **Lobbies Joined:** " + this.lobbyCounter + "\n" +
                                 " * **Created At:** " + creationTime + "\n\n" +
                                 "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
@@ -111,11 +111,11 @@ public class PlayerInfo extends ListenerAdapter {
                                 " * **Platform:** " + String.join(",",this.platforms) + "\n" +
                                 " * **Player Name:** " + this.playerName + "\n" +
                                 " * **Connection:** " + this.connectionType + "\n" +
-                                " * **Hours Played:**" + this.inGamePlayTime + "\n" +
+                           //     " * **Hours Played:**" + this.inGamePlayTime + "\n" +
                                 " * **Current Region:** " + this.currentRegion + "\n" +
-                                " * **Target Region:** " + this.targetRegion + "\n" +
+                           //     " * **Target Region:** " + this.targetRegion + "\n" +
                                 " * **Languages:** " + String.join(", ", this.spokenLanguages) + "\n" +
-                                " * **Availability:** " + this.availablePlayTime + "\n" +
+                          //      " * **Availability:** " + this.availablePlayTime + "\n" +
                                 " *  **Lobbies Joined:** " + this.lobbyCounter + "\n\n" +
                                 "**Created At:** " + creationTime + "\n\n" +
                                 "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"

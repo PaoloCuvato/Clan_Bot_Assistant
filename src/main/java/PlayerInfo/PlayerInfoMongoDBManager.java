@@ -75,10 +75,10 @@ public class PlayerInfoMongoDBManager {
                 .append("game", Arrays.asList(info.getGame()))
                 .append("platforms", Arrays.asList(info.getPlatforms()))
                 .append("connectionType", info.getConnectionType())
-                .append("inGamePlayTime", info.getInGamePlayTime())
+            //    .append("inGamePlayTime", info.getInGamePlayTime())
                 .append("currentRegion", info.getCurrentRegion())
-                .append("targetRegion", info.getTargetRegion())
-                .append("availablePlayTime", info.getAvailablePlayTime())
+            //    .append("targetRegion", info.getTargetRegion())
+           //     .append("availablePlayTime", info.getAvailablePlayTime())
                 .append("spokenLanguages", Arrays.asList(info.getSpokenLanguages()))
                 .append("lobbyCounter", info.getLobbyCounter());
     }
@@ -92,10 +92,10 @@ public class PlayerInfoMongoDBManager {
                 .game(doc.getList("game", String.class).toArray(new String[0]))
                 .platforms(doc.getList("platforms", String.class).toArray(new String[0]))
                 .connectionType(doc.getString("connectionType"))
-                .inGamePlayTime(doc.getString("inGamePlayTime"))
+          //      .inGamePlayTime(doc.getString("inGamePlayTime"))
                 .currentRegion(doc.getString("currentRegion"))
-                .targetRegion(doc.getString("targetRegion"))
-                .availablePlayTime(doc.getString("availablePlayTime"))
+           //     .targetRegion(doc.getString("targetRegion"))
+          //      .availablePlayTime(doc.getString("availablePlayTime"))
                 .spokenLanguages(doc.getList("spokenLanguages", String.class).toArray(new String[0]))
                 .lobbyCounter(doc.getInteger("lobbyCounter", 0))
                 .build();

@@ -9,6 +9,8 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
@@ -21,11 +23,15 @@ import java.util.Objects;
 
 public class AddInfoCardCommand extends ListenerAdapter {
 
+    public User target;
+
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         switch (event.getName()) {
             case "add_info_card" -> handleAddInfoCard(event);
             case "edit_ninja_card" -> handleEditInfoCard(event);
+            case "search_ninjacard" -> handleSearchNinjaCard(event);
+
         }
 
         if (!event.getName().equals("my_ninjacard")) return;
@@ -44,7 +50,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
                                 "> * **General Stats:** This option will show you all the data relative to your Global Lobby stats\n" +
                                 "> * **Direct Stats:** This option will show you all the data relative to your Private Lobby stats\n"
                 )
-                .setImage("https://64.media.tumblr.com/87273056002f62ae5f1b6417c001170f/f4a7711e15cf7a55-f5/s1280x1920/ec0568cc634542254ba8908d2de2861fda4d171f.gif")
+                .setImage("https://tenor.com/view/anime-kabuto-yakushi-naruto-ninja-info-cards-gif-12845996")
                 .setColor(Color.white);
         // 2) Costruisci il dropdown menu
         StringSelectMenu menu = StringSelectMenu.create("result:menu")
@@ -63,6 +69,42 @@ public class AddInfoCardCommand extends ListenerAdapter {
                 .setEphemeral(true)
                 .queue();
     }
+
+    private void handleSearchNinjaCard(SlashCommandInteractionEvent event) {
+
+        OptionMapping targetOption = event.getOption("target");
+        this.target= targetOption.getAsUser();
+
+        EmbedBuilder eb = new EmbedBuilder()
+                .setDescription(
+                        "**Stats for player:** " + targetOption.getAsUser().getName() + "\n" +
+                                "> Use this command to display all the info about a specific user. You can view a summary of their player info and stats about their games.\n" +
+                                "**Please choose one of the options below to see:**\n" +
+                                "> * **Ninja Card Info:** This option will show you all the data related to the player's ninja card.\n" +
+                                "> * **General Stats:** This option will show you all the data related to the player's Global Lobby stats.\n" +
+                                "> * **Direct Stats:** This option will show you all the data related to the player's Private Lobby stats.\n"
+                )
+                .setImage("https://tenor.com/view/anime-kabuto-yakushi-naruto-ninja-info-cards-gif-12845996")
+                .setColor(Color.white);
+
+        String componentId = "search_result:menu:";
+
+        StringSelectMenu menu = StringSelectMenu.create(componentId)
+                .setPlaceholder("Choose an option to see")
+                .setMinValues(1)
+                .setMaxValues(1)
+                .addOption("Ninja Card Info", "ninja_card_info")
+                .addOption("General Stats", "general_stats")
+                .addOption("Direct Stats", "direct_stats")
+                .build();
+
+        event.replyEmbeds(eb.build())
+                .addActionRow(menu)
+                .setEphemeral(true)
+                .queue();
+    }
+
+
 
     private void handleAddInfoCard(SlashCommandInteractionEvent event) {
         User user = event.getUser();
@@ -210,6 +252,56 @@ public class AddInfoCardCommand extends ListenerAdapter {
                     }
 
                 }
+
+            }
+            case "search_result:menu:" -> {
+                String selected = event.getValues().get(0);
+                if (this.target == null) {
+                    event.reply("❌ The user that you send is null")
+                            .setEphemeral(true).queue();
+                    return;
+                }
+
+                switch (selected) {
+                    case "ninja_card_info" -> {
+                        PlayerInfo p2 = PlayerInfoStorage.getPlayerInfo(target.getIdLong());
+                        event.deferEdit().queue(); // Rimuove i componenti e "pulisce" il messaggio
+                        event.getHook().editOriginalEmbeds(getNinjaCardEmbed(p2).build())
+                                .setComponents() // Rimuove i componenti (menu) se non vuoi lasciarli
+                                .queue();
+                    }
+                    case "general_stats" -> {
+                        PlayerStats stats = PlayerStatsManager.getInstance().getPlayerStats(target.getIdLong());
+
+                        if (stats == null) {
+                            event.reply("❌ Player statistics not found. Please play some matches first.")
+                                    .setEphemeral(true).queue();
+                            return;
+                        }
+
+                        event.deferEdit().queue();
+                        event.getHook().editOriginalEmbeds(getGeneralStatsEmbed(stats).build())
+                                .setComponents()
+                                .queue();
+                    }
+
+                    case "direct_stats" -> {
+                        PlayerStats stats = PlayerStatsManager.getInstance().getPlayerStats(target.getIdLong());
+
+                        if (stats == null) {
+                            event.reply("❌ Player statistics not found. Please play some matches first.")
+                                    .setEphemeral(true).queue();
+                            return;
+                        }
+
+                        event.deferEdit().queue();
+                        event.getHook().editOriginalEmbeds(getDirectStatsEmbed(stats).build())
+                                .setComponents()
+                                .queue();
+                    }
+
+                }
+
             }
 
         }

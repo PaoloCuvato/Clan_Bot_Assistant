@@ -145,9 +145,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
             return;
         }
 
-        event.deferReply(true).queue(); // Acknowledge the interaction
-
-        askCurrentRegion(event); // Poi continua normalmente
+        askFinalModal(event); // Poi continua normalmente
     }
 
 

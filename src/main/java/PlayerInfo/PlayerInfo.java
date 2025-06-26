@@ -112,15 +112,15 @@ public class PlayerInfo extends ListenerAdapter {
                                 "** # Player Info:**\n" +
                                 " * **Game:** " + this.game + "\n" +
                                 " * **Platform:** " + String.join(",",this.platforms) + "\n" +
+                                " * **Most Played Game:** " + this.mostPlayedGame + "\n" +
+                                " * **Skill Level:** " + this.skillLevel + "\n\n" +
                                 " * **Player Name:** " + this.playerName + "\n" +
                                 " * **Connection:** " + this.connectionType + "\n" +
                            //     " * **Hours Played:**" + this.inGamePlayTime + "\n" +
                                 " * **Current Region:** " + this.currentRegion + "\n" +
                            //     " * **Target Region:** " + this.targetRegion + "\n" +
                                 " * **Languages:** " + String.join(", ", this.spokenLanguages) + "\n" +
-                          //      " * **Availability:** " + this.availablePlayTime + "\n" +
-                                " *  **Lobbies Joined:** " + this.lobbyCounter + "\n\n" +
-                                "**Created At:** " + creationTime + "\n\n" +
+                           //     "**Created At:** " + creationTime + "\n\n" +
                                 "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
                 )
                 .setColor(Color.WHITE)

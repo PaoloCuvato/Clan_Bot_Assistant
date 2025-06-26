@@ -18,6 +18,7 @@ import net.dv8tion.jda.api.interactions.modals.Modal;
 
 import java.awt.*;
 import java.io.File;
+import java.time.Instant;
 import java.util.Map;
 
 public class AddInfoCardCommand extends ListenerAdapter {
@@ -534,26 +535,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
     }
 
 
-    private EmbedBuilder getNinjaCardEmbed(PlayerInfo p) {
-        return new EmbedBuilder()
-                .setTitle("▬▬▬▬▬▬ Your Ninja Card ▬▬▬▬▬▬")
-                .setColor(Color.decode("#1c0b2e"))
-                .setDescription(
-                        "**# Ninja Card Info:**" +
-                                "These are all the stat about your player ninja card\n" +
-                                " * **Platform:** " + String.join(", ", p.getPlatforms()) + "\n" +
-                                " * **Game:** " + String.join(", ", p.getGame()) + "\n" +
-                                " * **Player Name:** " + p.getPlayerName() + "\n" +
-                                " * **Connection:** " + p.getConnectionType() + "\n" +
-                                " * **My Region:** " + p.getCurrentRegion() + "\n" +
-                                //           " * **Target Region:** " + p.getTargetRegion() + "\n" +
-                                " * **Languages:** " + String.join(", ", p.getSpokenLanguages()) + "\n" +
-                                //            " * **Availability:** " + p.getAvailablePlayTime() + "\n" +
-                                //             " * **Hours Played:** " + p.getInGamePlayTime() + "\n" +
-                                " * **Lobbies Joined:** " + p.getLobbyCounter() + "\n" +
-                                "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
-                );
-    }
+
     private void askMostPlayedGameEmbeded(StringSelectInteractionEvent event) {
         event.deferEdit().queue();
 
@@ -616,6 +598,54 @@ public class AddInfoCardCommand extends ListenerAdapter {
         event.getHook().editOriginalEmbeds(finalEmbed.build()).queue();
     }
 
+    private EmbedBuilder getNinjaCardEmbed(PlayerInfo p) {
+        return new EmbedBuilder()
+                .setTitle("▬▬▬▬▬▬▬▬ My Ninja Info Card ▬▬▬▬▬▬▬▬")
+                .setColor(Color.decode("#1c0b2e"))
+                .setDescription(
+                        "# "+"<@"+p.getDiscordId()+">"+" | " +p.getDiscordId() + "\n"+
+                                "These are all the stat about your player ninja card\n" +
+                                " * **In Game Name: ** " + p.getPlayerName() + "\n" +
+                                " * **Region: **" + p.getCurrentRegion() + "\n" +
+                                " * **Spoken Languages: **" + String.join(", ", p.getSpokenLanguages()) + "\n" +
+                                " * **UNS Games played: **" + String.join(", ", p.getGame()) + "\n" +
+                                " * **Connection: **" + p.getConnectionType() + "\n" +
+                                " * **Most Played UNS Game: **" + p.getMostPlayedGame() + "\n" +
+                                "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+
+                                //" * **Platform: **" + String.join(", ", p.getPlatforms()) + "\n" +
+                                //           " * **Target Region:** " + p.getTargetRegion() + "\n" +
+                                //            " * **Availability:** " + p.getAvailablePlayTime() + "\n" +
+                                //             " * **Hours Played:** " + p.getInGamePlayTime() + "\n" +
+                                //" * **Lobbies Joined: **" + p.getLobbyCounter() + "\n" +
+                )
+                .setTimestamp(Instant.now()); // 👈 footer automatico con orario
+    }
+
+    /*
+        private EmbedBuilder getNinjaCardEmbed(PlayerInfo p) {
+        return new EmbedBuilder()
+                .setTitle("▬▬▬▬ My Ninja Info Card ▬▬▬▬")
+                .setColor(Color.decode("#1c0b2e"))
+                .setDescription(
+                        "**# Ninja Card Info:**" +
+                                "These are all the stat about your player ninja card\n" +
+                                " * **Platform:** " + String.join(", ", p.getPlatforms()) + "\n" +
+                                " * **Game:** " + String.join(", ", p.getGame()) + "\n" +
+                                " * **Player Name:** " + p.getPlayerName() + "\n" +
+                                " * **Connection:** " + p.getConnectionType() + "\n" +
+                                " * **My Region:** " + p.getCurrentRegion() + "\n" +
+                                //           " * **Target Region:** " + p.getTargetRegion() + "\n" +
+                                " * **Languages:** " + String.join(", ", p.getSpokenLanguages()) + "\n" +
+                                //            " * **Availability:** " + p.getAvailablePlayTime() + "\n" +
+                                //             " * **Hours Played:** " + p.getInGamePlayTime() + "\n" +
+                                " * **Lobbies Joined:** " + p.getLobbyCounter() + "\n" +
+                                "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+                )
+                .setTimestamp(Instant.now()); // 👈 footer automatico con orario
+    }
+
+     */
 
     private EmbedBuilder getGeneralStatsEmbed(PlayerStats stats) {
         return new EmbedBuilder()
@@ -635,7 +665,8 @@ public class AddInfoCardCommand extends ListenerAdapter {
                                 " * **Lobbies Incomplete: **" + stats.getLobbiesIncompleteGeneral() + "\n" +
                                 " * **Lobbies Disbanded: **" + stats.getLobbiesDisbandedGeneral() + "\n" +
                                 "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
-                );
+                )                .setTimestamp(Instant.now()); // 👈 footer automatico con orario
+
     }
 
     private EmbedBuilder getDirectStatsEmbed(PlayerStats stats) {
@@ -655,7 +686,8 @@ public class AddInfoCardCommand extends ListenerAdapter {
                                 " * **Lobbies Incomplete: **" + stats.getLobbiesIncompleteDirect() + "\n" +
                                 " * **Lobbies Disbanded: **" + stats.getLobbiesDisbandedDirect() + "\n" +
                                 "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
-                );
+                )                 .setTimestamp(Instant.now()); // 👈 footer automatico con orario
+
     }
 
 }

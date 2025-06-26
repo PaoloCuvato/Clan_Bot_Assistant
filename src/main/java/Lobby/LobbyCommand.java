@@ -161,7 +161,7 @@ public class LobbyCommand extends ListenerAdapter {
                 .setColor(Color.white);
 //- Report Lobby Score (Score option only shows up when match format is set to casual 1v1 or group FT sets, Clan Battle)
         // 2) Costruisci il dropdown menu
-        StringSelectMenu menu = StringSelectMenu.create("result:menu")
+        StringSelectMenu menu = StringSelectMenu.create("lobby:menu")
                 .setPlaceholder("Choose an option for the lobby")
                 .setMinValues(1)
                 .setMaxValues(1)
@@ -472,11 +472,11 @@ public class LobbyCommand extends ListenerAdapter {
         System.out.println("[Info] Component ID: " + event.getComponentId());
         System.out.println("[Info] Selected values: " + event.getValues());
 
-        // Report referee viene gestito prima della lookup per utente
-        if (event.getComponentId().equals("result:menu")) {
+        // Gestione menu principale della lobby
+        if (event.getComponentId().equals("lobby:menu")) {
             String selected = event.getValues().get(0);
-            System.out.println("Handling result:menu selection: " + selected);
-            // Gestione via utente per le altre selezioni
+            System.out.println("Handling lobby:menu selection: " + selected);
+
             long discordId = event.getUser().getIdLong();
             Lobby lobby = LobbyManager.getLobby(discordId);
 
@@ -489,7 +489,7 @@ public class LobbyCommand extends ListenerAdapter {
             switch (selected) {
                 case "completed" -> {
                     if (lobby.getPartecipants().size() <= 1) {
-                        event.getMessage().delete().queue();  // Cancella messaggio solo qui
+                        event.getMessage().delete().queue();
                         event.reply("❌ You cannot complete a lobby without participants.").setEphemeral(true).queue();
                         return;
                     }
@@ -506,7 +506,7 @@ public class LobbyCommand extends ListenerAdapter {
                     });
                 }
                 case "lobby_score" -> {
-                    event.getMessage().editMessageComponents().queue();  // Lasci il messaggio visibile senza menu
+                    event.getMessage().editMessageComponents().queue();
 
                     Modal modal = Modal.create("lobby_score_modal", "Enter Your Lobby Score")
                             .addActionRow(
@@ -520,47 +520,49 @@ public class LobbyCommand extends ListenerAdapter {
                     event.replyModal(modal).queue();
                 }
                 case "report_to_referee" -> {
-                    // Prima deferisci subito l'interazione (se non già fatto)
                     if (!event.isAcknowledged()) {
                         event.deferReply(true).queue(v -> {
                             lobby.callRefereeInPrivateChannel(event.getGuild());
                             createTicket(event);
-                            // Non serve più rispondere qui perché createTicket risponderà usando getHook()
-                            // event.reply(...) DA RIMUOVERE
                         });
                     } else {
-                        // Se già deferito o risposto, fai solo la logica (rischioso ma per sicurezza)
                         lobby.callRefereeInPrivateChannel(event.getGuild());
                         createTicket(event);
                     }
                 }
-
                 default -> event.reply("❌ Unknown option selected.").setEphemeral(true).queue();
             }
             return;
         }
 
-        // Gestione via utente per le altre selezioni
-        long discordId = event.getUser().getIdLong();
-        Lobby lobby = lobbySessions.get(discordId);
-        if (lobby == null) {
-            System.out.println("No lobby found for user ID: " + discordId);
-            event.reply("❌ No active lobby found.").setEphemeral(true).queue();
-            return;
-        }
-
+        // Gestione selezioni specifiche della lobby
         switch (event.getComponentId()) {
             case "lobby_type_select_lobby" -> {
+                Lobby lobby = lobbySessions.get(event.getUser().getIdLong());
+                if (lobby == null) {
+                    event.reply("❌ No active lobby found.").setEphemeral(true).queue();
+                    return;
+                }
                 System.out.println("[Info] Setting lobby type: " + event.getValues().get(0));
                 lobby.setLobbyType(event.getValues().get(0));
                 promptGameSelection(event);
             }
             case "lobby_game_select_lobby" -> {
+                Lobby lobby = lobbySessions.get(event.getUser().getIdLong());
+                if (lobby == null) {
+                    event.reply("❌ No active lobby found.").setEphemeral(true).queue();
+                    return;
+                }
                 System.out.println("[Info] Setting game: " + event.getValues().get(0));
                 lobby.setGame(event.getValues().get(0));
                 promptPlatformSelection(event);
             }
             case "lobby_platform_select_lobby" -> {
+                Lobby lobby = lobbySessions.get(event.getUser().getIdLong());
+                if (lobby == null) {
+                    event.reply("❌ No active lobby found.").setEphemeral(true).queue();
+                    return;
+                }
                 System.out.println("[Info] Setting platform: " + event.getValues().get(0));
                 lobby.setPlatform(event.getValues().get(0));
                 if (lobby.isDirectLobby()) {
@@ -570,16 +572,31 @@ public class LobbyCommand extends ListenerAdapter {
                 }
             }
             case "lobby_region_select_lobby" -> {
+                Lobby lobby = lobbySessions.get(event.getUser().getIdLong());
+                if (lobby == null) {
+                    event.reply("❌ No active lobby found.").setEphemeral(true).queue();
+                    return;
+                }
                 System.out.println("[Info] Setting region: " + event.getValues().get(0));
                 lobby.setRegion(event.getValues().get(0));
                 promptSkillLevelSelection(event);
             }
             case "lobby_skill_select_lobby" -> {
+                Lobby lobby = lobbySessions.get(event.getUser().getIdLong());
+                if (lobby == null) {
+                    event.reply("❌ No active lobby found.").setEphemeral(true).queue();
+                    return;
+                }
                 System.out.println("[Info] Setting skill level: " + event.getValues().get(0));
                 lobby.setSkillLevel(event.getValues().get(0));
                 promptConnectionTypeSelection(event);
             }
             case "lobby_connection_select_lobby" -> {
+                Lobby lobby = lobbySessions.get(event.getUser().getIdLong());
+                if (lobby == null) {
+                    event.reply("❌ No active lobby found.").setEphemeral(true).queue();
+                    return;
+                }
                 System.out.println("[Info] Setting connection type: " + event.getValues().get(0));
                 lobby.setConnectionType(event.getValues().get(0));
                 promptLobbyDetailsModal(event);
@@ -587,6 +604,7 @@ public class LobbyCommand extends ListenerAdapter {
             default -> System.out.println("[Info] Unknown componentId: " + event.getComponentId());
         }
     }
+
 
 
 

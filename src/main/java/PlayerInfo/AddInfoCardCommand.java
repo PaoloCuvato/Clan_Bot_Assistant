@@ -120,7 +120,6 @@ public class AddInfoCardCommand extends ListenerAdapter {
 
 
     private void handleAddInfoCard(SlashCommandInteractionEvent event) {
-        askFinalModal(event);
         User user = event.getUser();
         long discordId = user.getIdLong();
 
@@ -132,7 +131,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
         PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
         System.out.println("New player Discord ID: " + discordId);
 
-        askCurrentRegion(event);
+        askFinalModal(event);
     }
 
     private void handleEditInfoCard(SlashCommandInteractionEvent event) {
@@ -357,7 +356,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
         }
     }
     private void askFinalModal(SlashCommandInteractionEvent event) {
-        event.getHook().editOriginalComponents().queue(); // Clear select menus
+      //  event.getHook().editOriginalComponents().queue(); // Clear select menus
 
         TextInput playerName = TextInput.create("player_name", "In-Game Name", TextInputStyle.SHORT)
                 .setRequired(true)

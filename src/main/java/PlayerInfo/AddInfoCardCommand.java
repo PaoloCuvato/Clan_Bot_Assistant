@@ -1,26 +1,24 @@
 package PlayerInfo;
 
 import Stat.PlayerStats;
+import Stat.PlayerStatsManager;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
-import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
-import Stat.*;
 
 import java.awt.*;
 import java.io.File;
 import java.util.Map;
-import java.util.Objects;
 
 public class AddInfoCardCommand extends ListenerAdapter {
 
@@ -152,7 +150,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
 
     private void askGameEmbeded(StringSelectInteractionEvent event) {
         EmbedBuilder intro = new EmbedBuilder()
-                .setTitle("▬▬▬▬▬▬▬  Select your game  ▬▬▬▬▬▬▬▬")
+                .setTitle("▬▬▬▬▬▬▬▬▬  Select your game  ▬▬▬▬▬▬▬▬▬▬")
                 .setDescription(" > This command helps you set up your player profile to join lobbies and participate in events." +
                         "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
                 .setColor(Color.white);
@@ -242,6 +240,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
             case "experience_level" -> {
                 player.setSkillLevel(event.getValues().get(0));
                 PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
+                event.deferEdit().queue();
                 if (event.getGuild() != null) {
                     long roleId = 1382385471300304946L;
                     event.getGuild().retrieveMemberById(discordId).queue(member -> {
@@ -251,8 +250,9 @@ public class AddInfoCardCommand extends ListenerAdapter {
                         );
                     }, error -> System.err.println("❌ User not found: " + error.getMessage()));
                 }
-                finalMessage(event);
+                handleSkillLevelSelection(event);
             }
+
 
 
             case "result:menu" -> {
@@ -581,9 +581,9 @@ public class AddInfoCardCommand extends ListenerAdapter {
     }
     private void askExperienceLevelEmbeded(StringSelectInteractionEvent event) {
         EmbedBuilder embed = new EmbedBuilder()
-                .setTitle("▬▬▬▬▬▬▬ Choose your skill level ▬▬▬▬▬▬▬")
+                .setTitle("▬▬▬▬▬▬▬▬ Choose your skill level ▬▬▬▬▬▬▬▬")
                 .setDescription(" > Which skill level do you think you are in your most played game?" +
-                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
                 .setColor(Color.white);
 
         event.getHook().editOriginalEmbeds(embed.build())
@@ -594,6 +594,26 @@ public class AddInfoCardCommand extends ListenerAdapter {
                                 .addOption("Advanced", "Advanced")
                                 .build()
                 ).queue();
+    }
+    public void handleSkillLevelSelection(StringSelectInteractionEvent event) {
+        String selectedLevel = event.getValues().get(0); // Ottieni il livello scelto
+
+        // Supponiamo tu aggiorni il PlayerInfo qui
+        PlayerInfo playerInfo = PlayerInfoStorage.getPlayerInfo(event.getUser().getIdLong());
+        if (playerInfo != null) {
+            playerInfo.setSkillLevel(selectedLevel);
+            PlayerInfoMongoDBManager.updatePlayerInfo(playerInfo); // Aggiorna nel DB
+        }
+
+        // Crea l'embed finale
+        EmbedBuilder finalEmbed = new EmbedBuilder()
+                .setTitle("▬▬▬▬▬▬ Ninja Card Created or Updated ▬▬▬▬▬▬")
+                .setDescription("** > Your Ninja Card has been successfully created or updated **"+
+                        "\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                .setColor(Color.white);
+        // Rimuovi i componenti e mostra solo l'embed finale
+        event.getHook().editOriginalComponents().queue();
+        event.getHook().editOriginalEmbeds(finalEmbed.build()).queue();
     }
 
 

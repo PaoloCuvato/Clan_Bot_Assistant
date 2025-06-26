@@ -213,16 +213,16 @@ public class AddInfoCardCommand extends ListenerAdapter {
                 player.setGame(event.getValues().toArray(new String[0]));
                 PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
                 event.deferEdit().queue();
-                askPlatforms(event);
+                askConnectionType(event);
             }
-
+/*
             case "select_platforms" -> {
                 player.setPlatforms(event.getValues().toArray(new String[0]));
                 PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
                 event.deferEdit().queue();
                 askConnectionType(event);
             }
-
+ */
             case "select_connection" -> {
                 player.setConnectionType(event.getValues().get(0));
                 PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);

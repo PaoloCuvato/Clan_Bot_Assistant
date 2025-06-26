@@ -145,8 +145,11 @@ public class AddInfoCardCommand extends ListenerAdapter {
             return;
         }
 
-        askCurrentRegion(event);
+        event.deferReply(true).queue(); // Acknowledge the interaction
+
+        askCurrentRegion(event); // Poi continua normalmente
     }
+
 
     private void askGameEmbeded(StringSelectInteractionEvent event) {
         EmbedBuilder intro = new EmbedBuilder()

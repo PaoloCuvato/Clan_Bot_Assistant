@@ -359,14 +359,13 @@ public class AddInfoCardCommand extends ListenerAdapter {
     private void askFinalModal(SlashCommandInteractionEvent event) {
       //  event.getHook().editOriginalComponents().queue(); // Clear select menus
 
-        TextInput playerName = TextInput.create("player_name", "In-Game Name", TextInputStyle.SHORT)
+        TextInput playerName = TextInput.create("player_name", "In-Game Name (including platform)", TextInputStyle.SHORT)
                 .setRequired(true)
-                .setPlaceholder("e.g. User1234")
+                .setPlaceholder("e.g. User1234 (PS5)")
                 .build();
 
-        Modal modal = Modal.create("final_modal", "Final Profile Details")
+        Modal modal = Modal.create("final_modal", "Enter your in-game name with the platform")
                 .addActionRow(playerName)
-
                 .build();
 
         event.replyModal(modal).queue();

@@ -472,7 +472,6 @@ public class LobbyCommand extends ListenerAdapter {
         System.out.println("[Info] Component ID: " + event.getComponentId());
         System.out.println("[Info] Selected values: " + event.getValues());
 
-        // Gestione menu principale della lobby
         if (event.getComponentId().equals("lobby:menu")) {
             String selected = event.getValues().get(0);
             System.out.println("Handling lobby:menu selection: " + selected);
@@ -481,7 +480,6 @@ public class LobbyCommand extends ListenerAdapter {
             Lobby lobby = LobbyManager.getLobby(discordId);
 
             if (lobby == null) {
-                System.err.println("❌ No lobby associated with this player ID: " + discordId);
                 event.reply("❌ No active lobby found for this player.").setEphemeral(true).queue();
                 return;
             }
@@ -535,7 +533,6 @@ public class LobbyCommand extends ListenerAdapter {
             return;
         }
 
-        // Gestione selezioni specifiche della lobby
         switch (event.getComponentId()) {
             case "lobby_type_select_lobby" -> {
                 Lobby lobby = lobbySessions.get(event.getUser().getIdLong());
@@ -545,7 +542,23 @@ public class LobbyCommand extends ListenerAdapter {
                 }
                 System.out.println("[Info] Setting lobby type: " + event.getValues().get(0));
                 lobby.setLobbyType(event.getValues().get(0));
-                promptGameSelection(event);
+                promptPlatformSelection(event);  // Prima la piattaforma
+            }
+            case "lobby_platform_select_lobby" -> {
+                Lobby lobby = lobbySessions.get(event.getUser().getIdLong());
+                if (lobby == null) {
+                    event.reply("❌ No active lobby found.").setEphemeral(true).queue();
+                    return;
+                }
+                String selectedPlatform = event.getValues().get(0);
+                System.out.println("[Info] Setting platform: " + selectedPlatform);
+                lobby.setPlatform(selectedPlatform);
+
+                if (lobby.isDirectLobby()) {
+                    promptConnectionTypeSelection(event);
+                } else {
+                    promptGameSelection(event, selectedPlatform);  // Mostra giochi in base alla piattaforma
+                }
             }
             case "lobby_game_select_lobby" -> {
                 Lobby lobby = lobbySessions.get(event.getUser().getIdLong());
@@ -555,21 +568,7 @@ public class LobbyCommand extends ListenerAdapter {
                 }
                 System.out.println("[Info] Setting game: " + event.getValues().get(0));
                 lobby.setGame(event.getValues().get(0));
-                promptPlatformSelection(event);
-            }
-            case "lobby_platform_select_lobby" -> {
-                Lobby lobby = lobbySessions.get(event.getUser().getIdLong());
-                if (lobby == null) {
-                    event.reply("❌ No active lobby found.").setEphemeral(true).queue();
-                    return;
-                }
-                System.out.println("[Info] Setting platform: " + event.getValues().get(0));
-                lobby.setPlatform(event.getValues().get(0));
-                if (lobby.isDirectLobby()) {
-                    promptConnectionTypeSelection(event);
-                } else {
-                    promptRegionSelection(event);
-                }
+                promptRegionSelection(event);
             }
             case "lobby_region_select_lobby" -> {
                 Lobby lobby = lobbySessions.get(event.getUser().getIdLong());
@@ -605,13 +604,39 @@ public class LobbyCommand extends ListenerAdapter {
         }
     }
 
-
-
-
-    private void promptGameSelection(StringSelectInteractionEvent event) {
+    private void promptGameSelection(StringSelectInteractionEvent event, String platform) {
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("▬▬▬▬▬▬ 🎮 Select Game ▬▬▬▬▬▬")
                 .setDescription(" > Choose the game for your lobby." +
+                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                .setColor(Color.white);
+
+        StringSelectMenu.Builder menuBuilder = StringSelectMenu.create("lobby_game_select_lobby");
+
+        // Opzioni base
+        menuBuilder.addOption("Storm Connections", "Storm Connections");
+        menuBuilder.addOption("Storm 4", "Storm 4");
+        menuBuilder.addOption("Storm Revolution", "Storm Revolution");
+        menuBuilder.addOption("Storm Trilogy", "Storm Trilogy");
+
+        // Aggiunte per PC
+        if (platform.equalsIgnoreCase("PC")) {
+            menuBuilder.addOption("RPCS3", "RPCS3");
+            menuBuilder.addOption("Storm Evolution", "Storm Evolution");
+        }
+
+        event.deferEdit().queue();
+        event.getHook().editOriginalEmbeds(embed.build())
+                .setComponents(ActionRow.of(menuBuilder.build()))
+                .queue();
+    }
+
+
+
+    private void promptFpsSelection(StringSelectInteractionEvent event) {
+        EmbedBuilder embed = new EmbedBuilder()
+                .setTitle("▬▬▬▬▬▬ Select Your Target Fps ▬▬▬▬▬▬")
+                .setDescription(" > Choose the fps that you are currently playing." +
                         "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
                 .setColor(Color.white);
 
@@ -619,11 +644,10 @@ public class LobbyCommand extends ListenerAdapter {
         event.getHook().editOriginalEmbeds(embed.build())
                 .setComponents(ActionRow.of(
                         StringSelectMenu.create("lobby_game_select_lobby")
-                                .addOption("Storm Connections", "Storm Connections")
-                                .addOption("Storm Evolution", "Storm Evolution")
-                                .addOption("Storm 4", "Storm 4")
-                                .addOption("Storm Revolution", "Storm Revolution")
-                                .addOption("Storm Trilogy", "Storm Trilogy")
+                                .setMinValues(1)
+                                .setMaxValues(2)
+                                .addOption("30 Fps", "30 Fps")
+                                .addOption("60 Fps", "60 Fps")
                                 .build()
                 ))
                 .queue();
@@ -641,9 +665,13 @@ public class LobbyCommand extends ListenerAdapter {
                 .setComponents(ActionRow.of(
                         StringSelectMenu.create("lobby_platform_select_lobby")
                                 .addOption("PC", "PC")
-                                .addOption("Xbox", "Xbox")
-                                .addOption("PlayStation", "PlayStation")
-                                .addOption("Switch", "Switch")
+                                .addOption("Xbox Series X", "Xbox Series X")
+                                .addOption("Xbox Series S", "Xbox Series S")
+                                .addOption("PS5", "PS5")
+                                .addOption("PS4", "PS4")
+                                .addOption("Nintendo Switch 1", "Nintendo Switch 1")
+                                .addOption("Nintendo Switch 2", "Nintendo Switch 2")
+
                                 .build()
                 ))
                 .queue();
@@ -660,11 +688,17 @@ public class LobbyCommand extends ListenerAdapter {
         event.getHook().editOriginalEmbeds(embed.build())
                 .setComponents(ActionRow.of(
                         StringSelectMenu.create("lobby_region_select_lobby")
-                                .addOption("NA", "NA")
-                                .addOption("EU", "EU")
-                                .addOption("SA", "SA")
-                                .addOption("JP", "JP")
+                                .addOption("Europe", "Europe")
+                                .addOption("North America", "North America")
+                                .addOption("Canada", "Canada")
+                                .addOption("Central America", "Central America")
+                                .addOption("South America", "South America")
+                                .addOption("East Asia", "East Asia")
+                                .addOption("East Europe", "East Europe")
                                 .addOption("Asia", "Asia")
+                                .addOption("Middle East", "Middle East")
+                                .addOption("Africa", "Africa")
+                                .addOption("Oceania", "Oceania")
                                 .build()
                 ))
                 .queue();

@@ -408,6 +408,8 @@ public class AddInfoCardCommand extends ListenerAdapter {
                                 .addOption("Asia", "Asia")
                                 .addOption("Middle East", "Middle East")
                                 .addOption("Africa", "Africa")
+                                .addOption("Oceania", "Oceania")
+
                                 .build()
                 )
                 .setEphemeral(true)

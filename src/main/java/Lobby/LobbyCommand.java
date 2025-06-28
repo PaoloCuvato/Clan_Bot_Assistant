@@ -687,24 +687,24 @@ public class LobbyCommand extends ListenerAdapter {
         private void promptLobbyTypeStep(StringSelectInteractionEvent event) {
             EmbedBuilder embed = new EmbedBuilder()
                     .setTitle("▬▬▬▬▬▬▬▬▬▬ Choose Lobby Type ▬▬▬▬▬▬▬▬▬")
-                    .setDescription(" > Select the type of lobby you want to create.(Ranked and Endless will be implemented on the future)" +
+                    .setDescription(" > Select the type of lobby you want to create. (Ranked and Endless will be implemented in the future)" +
                             "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
                     .setColor(Color.white);
 
-            event.deferReply(true).queue(hook -> {
-                hook.editOriginalEmbeds(embed.build())
-                        .setComponents(
-                                ActionRow.of(
-                                        StringSelectMenu.create("lobby_type_select_lobby")
-                                                .addOption("Ranked", "Ranked")
-                                                .addOption("Player Match", "Player Match")
-                                                .addOption("Endless", "Endless")
-                                                .build()
-                                )
-                        )
-                        .queue();
-            });
+            event.deferEdit().queue();
+            event.getHook().editOriginalEmbeds(embed.build())
+                    .setComponents(
+                            ActionRow.of(
+                                    StringSelectMenu.create("lobby_type_select_lobby")
+                                            .addOption("Ranked", "Ranked")
+                                            .addOption("Player Match", "Player Match")
+                                            .addOption("Endless", "Endless")
+                                            .build()
+                            )
+                    )
+                    .queue();
         }
+
     private void promptRegionSelection(StringSelectInteractionEvent event) {
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("▬▬▬▬▬▬▬ 🌍 Select Region ▬▬▬▬▬▬▬")

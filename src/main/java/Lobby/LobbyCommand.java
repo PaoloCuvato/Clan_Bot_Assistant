@@ -397,7 +397,7 @@ public class LobbyCommand extends ListenerAdapter {
         lobby.setDiscordId(discordId);
         lobby.setCreatedAt(LocalDateTime.now());
         lobbySessions.put(discordId, lobby);
-        promptLobbyTypeStep(event);
+        promptPlatformSelection(event);
     }
 
     private void handleDirect(SlashCommandInteractionEvent event) {
@@ -421,13 +421,8 @@ public class LobbyCommand extends ListenerAdapter {
         lobbySessions.put(discordId, lobby);
 
         // 2) Avvia il flow (es. promptLobbyTypeStep che mostrerà il Modal)
-        promptLobbyTypeStep(event);
+        promptPlatformSelection(event);
     }
-
-
-
-
-
 
 
     private void handleEditLobby(SlashCommandInteractionEvent event) {
@@ -442,30 +437,10 @@ public class LobbyCommand extends ListenerAdapter {
         }
 
         lobbySessions.put(discordId, lobby);
-        promptLobbyTypeStep(event);
+        promptPlatformSelection(event);
     }
 
-    private void promptLobbyTypeStep(SlashCommandInteractionEvent event) {
-        EmbedBuilder embed = new EmbedBuilder()
-                .setTitle("▬▬▬▬▬▬▬▬▬▬ Choose Lobby Type ▬▬▬▬▬▬▬▬▬")
-                .setDescription(" > Select the type of lobby you want to create.(Ranked and Endless will be implemented on the future)" +
-                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
-                .setColor(Color.white);
 
-        event.deferReply(true).queue(hook -> {
-            hook.editOriginalEmbeds(embed.build())
-                    .setComponents(
-                            ActionRow.of(
-                                    StringSelectMenu.create("lobby_type_select_lobby")
-                                            .addOption("Ranked", "Ranked")
-                                            .addOption("Player Match", "Player Match")
-                                            .addOption("Endless", "Endless")
-                                            .build()
-                            )
-                    )
-                    .queue();
-        });
-    }
     @Override
     public void onStringSelectInteraction(StringSelectInteractionEvent event) {
         System.out.println("[Info] Received select interaction!");
@@ -534,16 +509,6 @@ public class LobbyCommand extends ListenerAdapter {
         }
 
         switch (event.getComponentId()) {
-            case "lobby_type_select_lobby" -> {
-                Lobby lobby = lobbySessions.get(event.getUser().getIdLong());
-                if (lobby == null) {
-                    event.reply("❌ No active lobby found.").setEphemeral(true).queue();
-                    return;
-                }
-                System.out.println("[Info] Setting lobby type: " + event.getValues().get(0));
-                lobby.setLobbyType(event.getValues().get(0));
-                promptPlatformSelection(event);  // Prima la piattaforma
-            }
             case "lobby_platform_select_lobby" -> {
                 Lobby lobby = lobbySessions.get(event.getUser().getIdLong());
                 if (lobby == null) {
@@ -568,8 +533,32 @@ public class LobbyCommand extends ListenerAdapter {
                 }
                 System.out.println("[Info] Setting game: " + event.getValues().get(0));
                 lobby.setGame(event.getValues().get(0));
+                promptFpsSelection(event);
+            }
+            case "lobby_fps_select" -> {
+                Lobby lobby = lobbySessions.get(event.getUser().getIdLong());
+                if (lobby == null) {
+                    event.reply("❌ No active lobby found.").setEphemeral(true).queue();
+                    return;
+                }
+                System.out.println("[Info] Setting game: " + event.getValues().get(0));
+                lobby.setGame(event.getValues().get(0));
+                promptLobbyTypeStep(event);
+                //  promptRegionSelection(event);
+                // AGGIUNGI IL COSO DA CHIAMARE
+            }
+
+            case "lobby_type_select_lobby" -> {
+                Lobby lobby = lobbySessions.get(event.getUser().getIdLong());
+                if (lobby == null) {
+                    event.reply("❌ No active lobby found.").setEphemeral(true).queue();
+                    return;
+                }
+                System.out.println("[Info] Setting lobby type: " + event.getValues().get(0));
+                lobby.setLobbyType(event.getValues().get(0));
                 promptRegionSelection(event);
             }
+
             case "lobby_region_select_lobby" -> {
                 Lobby lobby = lobbySessions.get(event.getUser().getIdLong());
                 if (lobby == null) {
@@ -643,7 +632,7 @@ public class LobbyCommand extends ListenerAdapter {
         event.deferEdit().queue();
         event.getHook().editOriginalEmbeds(embed.build())
                 .setComponents(ActionRow.of(
-                        StringSelectMenu.create("lobby_game_select_lobby")
+                        StringSelectMenu.create("lobby_fps_select")
                                 .setMinValues(1)
                                 .setMaxValues(2)
                                 .addOption("30 Fps", "30 Fps")
@@ -653,13 +642,31 @@ public class LobbyCommand extends ListenerAdapter {
                 .queue();
     }
 
-    private void promptPlatformSelection(StringSelectInteractionEvent event) {
+    private void promptPlatformSelection(SlashCommandInteractionEvent event) {
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("▬▬▬▬▬▬ 🕹️ Select Platform ▬▬▬▬▬▬")
                 .setDescription(" > Choose your platform." +
                         "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
                 .setColor(Color.white);
 
+        event.replyEmbeds(embed.build())
+                .addActionRow(
+                        StringSelectMenu.create("lobby_platform_select_lobby")
+                                .addOption("PC", "PC")
+                                .addOption("Xbox Series X", "Xbox Series X")
+                                .addOption("Xbox Series S", "Xbox Series S")
+                                .addOption("PS5", "PS5")
+                                .addOption("PS4", "PS4")
+                                .addOption("Nintendo Switch 1", "Nintendo Switch 1")
+                                .addOption("Nintendo Switch 2", "Nintendo Switch 2")
+                                .build()
+                )
+                .setEphemeral(true)
+                .queue();
+    }
+
+        // VECCHIO
+/*
         event.deferEdit().queue();
         event.getHook().editOriginalEmbeds(embed.build())
                 .setComponents(ActionRow.of(
@@ -675,8 +682,29 @@ public class LobbyCommand extends ListenerAdapter {
                                 .build()
                 ))
                 .queue();
-    }
 
+ */
+        private void promptLobbyTypeStep(StringSelectInteractionEvent event) {
+            EmbedBuilder embed = new EmbedBuilder()
+                    .setTitle("▬▬▬▬▬▬▬▬▬▬ Choose Lobby Type ▬▬▬▬▬▬▬▬▬")
+                    .setDescription(" > Select the type of lobby you want to create.(Ranked and Endless will be implemented on the future)" +
+                            "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                    .setColor(Color.white);
+
+            event.deferReply(true).queue(hook -> {
+                hook.editOriginalEmbeds(embed.build())
+                        .setComponents(
+                                ActionRow.of(
+                                        StringSelectMenu.create("lobby_type_select_lobby")
+                                                .addOption("Ranked", "Ranked")
+                                                .addOption("Player Match", "Player Match")
+                                                .addOption("Endless", "Endless")
+                                                .build()
+                                )
+                        )
+                        .queue();
+            });
+        }
     private void promptRegionSelection(StringSelectInteractionEvent event) {
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("▬▬▬▬▬▬▬ 🌍 Select Region ▬▬▬▬▬▬▬")

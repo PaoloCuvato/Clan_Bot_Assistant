@@ -31,6 +31,7 @@ import java.awt.*;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.List;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
@@ -467,7 +468,15 @@ public class LobbyCommand extends ListenerAdapter {
                         event.reply("❌ You cannot complete a lobby without participants.").setEphemeral(true).queue();
                         return;
                     }
+                    Lobby l= LobbyManager.getLobby(event.getUser().getIdLong());
+                    System.out.println(l);
+                    ThreadChannel threadChannel = event.getGuild().getThreadChannels().stream()
+                            .filter(thread -> thread.getIdLong() == l.getPostId())
+                            .findFirst()
+                            .orElse(null);
 
+
+                    changeTagFromOpenedToClosed(threadChannel,l.getSkillLevel());
                     lobby.archivePost(event.getGuild());
                     event.reply("✅ Lobby marked as **completed**!").setEphemeral(true).queue(success -> {
                         event.getMessage().delete().queue();
@@ -806,9 +815,15 @@ public class LobbyCommand extends ListenerAdapter {
         event.replyModal(modal).queue();
     }
 
-    public void changeTagFromOpenedToClosed(ThreadChannel threadChannel) {
+    public void changeTagFromOpenedToClosed(ThreadChannel threadChannel, String skillLevel) {
         if (threadChannel == null) {
             System.err.println("❌ ThreadChannel is null.");
+            return;
+        }
+
+        List<String> validSkillLevels = Arrays.asList("Beginner", "Intermediate", "Advanced");
+        if (!validSkillLevels.contains(skillLevel)) {
+            System.err.println("❌ Invalid skill level specified: " + skillLevel);
             return;
         }
 
@@ -818,23 +833,32 @@ public class LobbyCommand extends ListenerAdapter {
             return;
         }
 
-        // Trova il tag "closed"
         ForumTag closedTag = forum.getAvailableTags().stream()
                 .filter(tag -> tag.getName().equalsIgnoreCase("Closed"))
                 .findFirst()
                 .orElse(null);
 
         if (closedTag == null) {
-            System.err.println("❌ Tag 'closed' not found.");
+            System.err.println("❌ Tag 'Closed' not found.");
             return;
         }
 
-        // Cambia i tag applicati: qui rimuoviamo tutti e mettiamo solo "closed"
+        ForumTag skillLevelTag = forum.getAvailableTags().stream()
+                .filter(tag -> tag.getName().equalsIgnoreCase(skillLevel))
+                .findFirst()
+                .orElse(null);
+
+        if (skillLevelTag == null) {
+            System.err.println("❌ Skill level tag '" + skillLevel + "' not found.");
+            return;
+        }
+
+        // Applica i tag
         threadChannel.getManager()
-                .setAppliedTags(Collections.singleton(closedTag))
+                .setAppliedTags(Arrays.asList(closedTag, skillLevelTag))
                 .queue(
-                        success -> System.out.println("✅ Tag changed to 'closed' successfully."),
-                        error -> System.err.println("❌ Failed to change tag: " + error.getMessage())
+                        success -> System.out.println("✅ Tags changed to 'Closed' and '" + skillLevel + "', thread archived successfully."),
+                        error -> System.err.println("❌ Failed to change tags or archive thread: " + error.getMessage())
                 );
     }
 
@@ -994,7 +1018,9 @@ public class LobbyCommand extends ListenerAdapter {
         // Archiviazione thread forum
         ThreadChannel threadChannel = event.getGuild().getThreadChannelById(lobby.getPostId());
         if (threadChannel != null) {
-            changeTagFromOpenedToClosed(threadChannel);  // aggiorna i tag forum
+            Lobby l = LobbyManager.getLobby(event.getUser().getIdLong());
+            String skill= l.getSkillLevel();
+            changeTagFromOpenedToClosed(threadChannel,skill);  // aggiorna i tag forum
             lobby.archivePost(event.getGuild());
             threadChannel.sendMessage("✅ Lobby completed and archived.").queue();
         } else {

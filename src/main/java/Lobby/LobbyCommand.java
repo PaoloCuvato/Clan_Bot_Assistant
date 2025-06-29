@@ -416,6 +416,7 @@ public class LobbyCommand extends ListenerAdapter {
         // 1) Crea solo in sessione temporanea, **senza** aggiungere al Manager
         Lobby lobby = new Lobby();
         lobby.setDirectLobby(true);
+        System.out.println("direct property: "+lobby.isDirectLobby());
         lobby.setDiscordId(discordId);
         lobby.setCreatedAt(LocalDateTime.now());
         lobbySessions.put(discordId, lobby);
@@ -520,7 +521,7 @@ public class LobbyCommand extends ListenerAdapter {
                 lobby.setPlatform(selectedPlatform);
 
                 if (lobby.isDirectLobby()) {
-                    promptConnectionTypeSelection(event);
+                    promptGameSelection(event,selectedPlatform);
                 } else {
                     promptGameSelection(event, selectedPlatform);  // Mostra giochi in base alla piattaforma
                 }
@@ -533,7 +534,11 @@ public class LobbyCommand extends ListenerAdapter {
                 }
                 System.out.println("[Info] Setting game: " + event.getValues().get(0));
                 lobby.setGame(event.getValues().get(0));
-                promptFpsSelection(event);
+                if (lobby.isDirectLobby()) {
+                    promptLobbyTypeStep(event); // Salta FPS se è Direct
+                } else {
+                    promptFpsSelection(event);
+                }
             }
             case "lobby_fps_select" -> {
                 Lobby lobby = lobbySessions.get(event.getUser().getIdLong());
@@ -541,8 +546,8 @@ public class LobbyCommand extends ListenerAdapter {
                     event.reply("❌ No active lobby found.").setEphemeral(true).queue();
                     return;
                 }
-                System.out.println("[Info] Setting game: " + event.getValues().get(0));
-                lobby.setGame(event.getValues().get(0));
+                System.out.println("[Info] Setting FPS: " + event.getValues().get(0));
+                lobby.setFps(event.getValues().get(0));
                 promptLobbyTypeStep(event);
                 //  promptRegionSelection(event);
                 // AGGIUNGI IL COSO DA CHIAMARE
@@ -556,7 +561,11 @@ public class LobbyCommand extends ListenerAdapter {
                 }
                 System.out.println("[Info] Setting lobby type: " + event.getValues().get(0));
                 lobby.setLobbyType(event.getValues().get(0));
-                promptRegionSelection(event);
+                if (lobby.isDirectLobby()) {
+                    promptConnectionTypeSelection(event); // Salta Region e Skill Level
+                } else {
+                    promptRegionSelection(event);
+                }
             }
 
             case "lobby_region_select_lobby" -> {

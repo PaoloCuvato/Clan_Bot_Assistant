@@ -50,6 +50,7 @@ public class Lobby extends ListenerAdapter {
     private long EmbededMessageId;     // id of the embeded message with the join button
     private long announcementChannelId;  // nuovo campo
     private int maxPartecipants = 2;
+    private String Fps;  // nuovo campo
 
     // other stuff not on lobby stat
     private long PostId;

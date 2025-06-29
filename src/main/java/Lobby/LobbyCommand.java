@@ -655,6 +655,7 @@ public class LobbyCommand extends ListenerAdapter {
                                 .setMaxValues(2)
                                 .addOption("30 Fps", "30 Fps")
                                 .addOption("60 Fps", "60 Fps")
+                                .addOption("Any", "Any")
                                 .build()
                 ))
                 .queue();
@@ -745,6 +746,9 @@ public class LobbyCommand extends ListenerAdapter {
                                 .addOption("Middle East", "Middle East")
                                 .addOption("Africa", "Africa")
                                 .addOption("Oceania", "Oceania")
+                                .addOption("Oceania", "Oceania")
+                                .addOption("Any", "Any")
+
                                 .build()
                 ))
                 .queue();
@@ -764,6 +768,7 @@ public class LobbyCommand extends ListenerAdapter {
                                 .addOption("Beginner", "Beginner")
                                 .addOption("Intermediate", "Intermediate")
                                 .addOption("Advanced", "Advanced")
+                                .addOption("Any", "Any")
                                 .build()
                 ))
                 .queue();
@@ -782,6 +787,7 @@ public class LobbyCommand extends ListenerAdapter {
                         StringSelectMenu.create("lobby_connection_select_lobby")
                                 .addOption("WiFi", "WiFi")
                                 .addOption("Ethernet", "Ethernet")
+                                .addOption("Any", "Any")
                                 .build()
                 ))
                 .queue();

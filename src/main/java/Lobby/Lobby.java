@@ -69,7 +69,7 @@ public class Lobby extends ListenerAdapter {
     // this  method will set up the max people on the lobby
     public void checkMaxpartecipants() {
 
-        if(this.lobbyType.equals("Player Match")){
+        if (this.lobbyType.equals("Player Match")) {
             this.maxPartecipants = 2;
 
         } else if (this.lobbyType.equals("Ranked")) {
@@ -77,6 +77,10 @@ public class Lobby extends ListenerAdapter {
 
         } else if (this.lobbyType.equals("Endless")) {
             this.maxPartecipants = 8;
+
+        } else if (this.lobbyType.equals("Tournaments")) {
+            this.maxPartecipants = 8;
+
         }
     }
 
@@ -306,14 +310,6 @@ public class Lobby extends ListenerAdapter {
                                 " * **Availability:** " + availability + "\n" +
                                 " * **Rules:** " + (rules != null && !rules.isEmpty() ? rules : "N/A") + "\n" +
                                 " * **Created At:** " + creationTimeFormatted + "\n" +
-
-                                "** # Lobby Stats:**" +
-                                "interaction that the user have with the lobby's\n"+
-                                " * **Created:** " +  "\n" +
-                                " * **Answered:** " + "\n" +
-                                " * **Completed:** " + "\n" +
-                                "reworking this part" + "\n" +
-
                                 "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
                 )
                 .setColor(Color.decode("#1c0b2e"))

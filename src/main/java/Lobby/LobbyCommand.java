@@ -959,12 +959,14 @@ public class LobbyCommand extends ListenerAdapter {
             // ✅ Nuovo metodo compatto
             lobby.sendDirectCreationLobbyLog(guild, directLogChannelId, directCategoryId);
 
+
             // ✅ Conferma ephemerale (opzionale: può stare nel metodo anche)
             event.getHook().sendMessage("✅ Private lobby channel creation in progress...").setEphemeral(true).queue();
 
         } else {
             // --- Generale (forum post + log) ---
             try {
+                lobby.sendLobbyLog(guild, 1380683537501519963L);
                 lobby.sendLobbyAnnouncement(guild, 1367186054045761616L);
                 LobbyManager.addLobby(discordId, lobby);
                 event.getHook().sendMessage("✅ Lobby created successfully!").setEphemeral(true).queue();

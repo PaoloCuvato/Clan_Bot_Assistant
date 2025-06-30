@@ -543,7 +543,7 @@ public class LobbyCommand extends ListenerAdapter {
                 }
                 System.out.println("[Info] Setting game: " + event.getValues().get(0));
                 lobby.setGame(event.getValues().get(0));
-                if (lobby.isDirectLobby()) {
+                if(lobby.isDirectLobby()) {
                     promptLobbyTypeStep(event); // Salta FPS se è Direct
                 } else {
                     promptFpsSelection(event);
@@ -628,16 +628,24 @@ public class LobbyCommand extends ListenerAdapter {
 
         // Aggiunte per PC
         if (platform.equalsIgnoreCase("PC")) {
-            menuBuilder.addOption("RPCS3", "RPCS3");
             menuBuilder.addOption("Storm Evolution", "Storm Evolution");
         }
+        if (platform.equalsIgnoreCase("RPCS3")) {
+             menuBuilder.addOption("NSUNS", "NSUNS")
+                        .addOption("NSUNS 2", "NSUNS 2")
+                        .addOption("NSUNSG", "NSUNSG")
+                        .addOption("NSUNS 3", "NSUNS 3")
+                        .addOption("NSUNSFB", "NSUNSFB")
+                        .addOption("NSUNSR", "NSUNSR");
+        }
+
+
 
         event.deferEdit().queue();
         event.getHook().editOriginalEmbeds(embed.build())
                 .setComponents(ActionRow.of(menuBuilder.build()))
                 .queue();
     }
-
 
 
     private void promptFpsSelection(StringSelectInteractionEvent event) {
@@ -672,6 +680,7 @@ public class LobbyCommand extends ListenerAdapter {
                 .addActionRow(
                         StringSelectMenu.create("lobby_platform_select_lobby")
                                 .addOption("PC", "PC")
+                                .addOption("RPCS3", "RPCS3")
                                 .addOption("Xbox Series X", "Xbox Series X")
                                 .addOption("Xbox Series S", "Xbox Series S")
                                 .addOption("PS5", "PS5")
@@ -745,7 +754,6 @@ public class LobbyCommand extends ListenerAdapter {
                                 .addOption("Asia", "Asia")
                                 .addOption("Middle East", "Middle East")
                                 .addOption("Africa", "Africa")
-                                .addOption("Oceania", "Oceania")
                                 .addOption("Oceania", "Oceania")
                                 .addOption("Any", "Any")
 

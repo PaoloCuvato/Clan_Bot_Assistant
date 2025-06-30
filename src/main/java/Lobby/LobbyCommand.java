@@ -662,7 +662,6 @@ public class LobbyCommand extends ListenerAdapter {
                 .setComponents(ActionRow.of(
                         StringSelectMenu.create("lobby_fps_select")
                                 .setMinValues(1)
-                                .setMaxValues(2)
                                 .addOption("30 Fps", "30 Fps")
                                 .addOption("60 Fps", "60 Fps")
                                 .addOption("Any", "Any")
@@ -726,9 +725,10 @@ public class LobbyCommand extends ListenerAdapter {
                     .setComponents(
                             ActionRow.of(
                                     StringSelectMenu.create("lobby_type_select_lobby")
-                                            .addOption("Ranked", "Ranked")
+             //                               .addOption("Ranked", "Ranked")
                                             .addOption("Player Match", "Player Match")
                                             .addOption("Endless", "Endless")
+                                            .addOption("Tournament", "Tournament")
                                             .build()
                             )
                     )
@@ -816,7 +816,7 @@ public class LobbyCommand extends ListenerAdapter {
                 )
                 .addActionRow(
                         TextInput.create("lobby_availability", "Availability", TextInputStyle.PARAGRAPH)
-                                .setPlaceholder("Describe your availability, e.g. Mondays, Weekends...")
+                                .setPlaceholder("Specify how many minutes you will be available for, e.g. 60 Minutes,120 Minutes...")
                                 .setRequired(true)
                                 .build()
                 )

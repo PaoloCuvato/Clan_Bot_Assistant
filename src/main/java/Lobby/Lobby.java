@@ -499,6 +499,32 @@ public class Lobby extends ListenerAdapter {
 
     public EmbedBuilder buildLobbyEmbed() {
         EmbedBuilder embed = new EmbedBuilder()
+                .setTitle("▬▬▬▬▬▬▬▬▬▬ " + lobbyType + " Created ▬▬▬▬▬▬▬▬▬▬")
+                .setColor(Color.decode("#1c0b2e"))
+                .setDescription(
+                      //  "# "+"<@"+this.getDiscordId()+">"+" | " +this.getDiscordId() + "\n"+
+                        "### <@"+this.getDiscordId()+">"+" is available for the next "+ availability +" on " + platform + "\n"+
+                                "* **In Game Name:** " + playerName + "\n" +
+                                "* **Game Target:** " + game + "\n" +
+                             //   "**Platform:** " + platform + "\n" +
+                                "* **FPS Target:** " + Fps + "\n" +
+                                "* **Skill Target:** " + skillLevel + " players\n" +
+                                "* **Region Target:** " + region + "\n" +
+                                "* **Connection Method Target: **" + connectionType + "\n" +
+                                "* **Target Rules:** " + rules + "\n\n" +
+                             //   "**Availability:** " + availability + "\n" +
+                                "*** Lobby is open - Click to join ***"+
+                                "\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+
+                )
+                .setTimestamp(Instant.now());
+        return embed;
+    }
+
+
+    /*
+        public EmbedBuilder buildLobbyEmbed() {
+        EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("▬▬▬▬▬▬▬ " + playerName + " Lobby ▬▬▬▬▬▬▬")
                 .setColor(Color.decode("#1c0b2e"))
                 .setDescription(
@@ -512,6 +538,7 @@ public class Lobby extends ListenerAdapter {
                 .setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
         return embed;
     }
+     */
     public void updateLobbyPost(Guild guild) {
         if (this.privateChannelId == 0 || this.PostId == 0) {
             System.err.println("❌ Cannot update post: missing privateChannelId or PostId");

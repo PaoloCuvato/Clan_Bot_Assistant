@@ -619,13 +619,13 @@ public class LobbyCommand extends ListenerAdapter {
                 .setColor(Color.white);
 
         StringSelectMenu.Builder menuBuilder = StringSelectMenu.create("lobby_game_select_lobby");
-
-        // Opzioni base
-        menuBuilder.addOption("Storm Connections", "Storm Connections");
-        menuBuilder.addOption("Storm 4", "Storm 4");
-        menuBuilder.addOption("Storm Revolution", "Storm Revolution");
-        menuBuilder.addOption("Storm Trilogy", "Storm Trilogy");
-
+        if (!platform.equalsIgnoreCase("RPCS3")) {
+            // Opzioni base per tutti ma non per rpcs3
+            menuBuilder.addOption("Storm Connections", "Storm Connections");
+            menuBuilder.addOption("Storm 4", "Storm 4");
+            menuBuilder.addOption("Storm Revolution", "Storm Revolution");
+            menuBuilder.addOption("Storm Trilogy", "Storm Trilogy");
+        }
         // Aggiunte per PC
         if (platform.equalsIgnoreCase("PC")) {
             menuBuilder.addOption("Storm Evolution", "Storm Evolution");
@@ -638,8 +638,6 @@ public class LobbyCommand extends ListenerAdapter {
                         .addOption("NSUNSFB", "NSUNSFB")
                         .addOption("NSUNSR", "NSUNSR");
         }
-
-
 
         event.deferEdit().queue();
         event.getHook().editOriginalEmbeds(embed.build())

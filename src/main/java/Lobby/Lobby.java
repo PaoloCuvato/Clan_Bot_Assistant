@@ -393,7 +393,7 @@ public class Lobby extends ListenerAdapter {
 
                                 // Secondo messaggio con il cancelletto e regole
                                 StringBuilder secondMessage = new StringBuilder();
-                                secondMessage.append("# ").append(game).append(" - ").append(platform).append("\n\n");
+                                secondMessage.append("### ").append(platform).append(" - ").append(game).append("\n\n");
 
                                 if (rules != null && !rules.isEmpty()) {
                                     secondMessage.append("**Rules:** ").append(rules).append("\n");

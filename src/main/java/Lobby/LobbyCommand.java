@@ -621,20 +621,24 @@ public class LobbyCommand extends ListenerAdapter {
         StringSelectMenu.Builder menuBuilder = StringSelectMenu.create("lobby_game_select_lobby");
         if (!platform.equalsIgnoreCase("RPCS3")) {
             // Opzioni base per tutti ma non per rpcs3
-            menuBuilder.addOption("Storm Connections", "Storm Connections");
-            menuBuilder.addOption("Storm 4", "Storm 4");
-            menuBuilder.addOption("Storm Revolution", "Storm Revolution");
-            menuBuilder.addOption("Storm Trilogy", "Storm Trilogy");
+            menuBuilder.addOption("NSUNS2", "NSUNS2");
+            menuBuilder.addOption("NSUNSFB", "NSUNSFB");
+            menuBuilder.addOption("NSUNSR", "NSUNSR");
+            menuBuilder.addOption("NSUNSRTB", "NSUNSRTB");
+            menuBuilder.addOption("NXBUNSC", "NXBUNSC");
+
+            //    menuBuilder.addOption("Storm Trilogy", "Storm Trilogy");
+
         }
         // Aggiunte per PC
         if (platform.equalsIgnoreCase("PC")) {
-            menuBuilder.addOption("Storm Evolution", "Storm Evolution");
+            menuBuilder.addOption("NSUNSE", "NSUNSE");
         }
         if (platform.equalsIgnoreCase("RPCS3")) {
              menuBuilder.addOption("NSUNS", "NSUNS")
-                        .addOption("NSUNS 2", "NSUNS 2")
+                        .addOption("NSUNS2", "NSUNS 2")
                         .addOption("NSUNSG", "NSUNSG")
-                        .addOption("NSUNS 3", "NSUNS 3")
+                        .addOption("NSUNS3", "NSUNS 3")
                         .addOption("NSUNSFB", "NSUNSFB")
                         .addOption("NSUNSR", "NSUNSR");
         }
@@ -650,7 +654,7 @@ public class LobbyCommand extends ListenerAdapter {
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("▬▬▬▬▬▬ Select Your Target Fps ▬▬▬▬▬▬")
                 .setDescription(" > Choose the fps that you are currently playing." +
-                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
                 .setColor(Color.white);
 
         event.deferEdit().queue();

@@ -966,10 +966,12 @@ public class LobbyCommand extends ListenerAdapter {
         } else {
             // --- Generale (forum post + log) ---
             try {
-                lobby.sendLobbyLog(guild, 1380683537501519963L);
-                lobby.sendLobbyAnnouncement(guild, 1367186054045761616L);
-                LobbyManager.addLobby(discordId, lobby);
-                event.getHook().sendMessage("✅ Lobby created successfully!").setEphemeral(true).queue();
+                lobby.sendLobbyAnnouncement(guild, 1367186054045761616L, () -> {
+                    lobby.sendLobbyLog(guild, 1380683537501519963L);
+                    LobbyManager.addLobby(discordId, lobby);
+                    event.getHook().sendMessage("✅ Lobby created successfully!").setEphemeral(true).queue();
+                });
+
             } catch (Exception e) {
                 e.printStackTrace();
                 event.getHook().sendMessage("❌ Failed to create lobby post.").setEphemeral(true).queue();

@@ -309,6 +309,7 @@ public class Lobby extends ListenerAdapter {
                                 " * **Lobby Type:** " + lobbyType + "\n" +
                                 " * **Availability:** " + availability + "\n" +
                                 " * **Rules:** " + (rules != null && !rules.isEmpty() ? rules : "N/A") + "\n" +
+                                " * **Post Link:** " + "<#"+PostId+">"+ "\n" +
                                 " * **Created At:** " + creationTimeFormatted + "\n" +
                                 "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
                 )
@@ -325,29 +326,26 @@ public class Lobby extends ListenerAdapter {
         });
     }
 
-    public void sendLobbyAnnouncement(Guild guild, long postChannelId) {
+    public void sendLobbyAnnouncement(Guild guild, long postChannelId, Runnable onComplete) {
         ForumChannel postChannel = guild.getForumChannelById(postChannelId);
         if (postChannel == null) {
             System.err.println("❌ Forum post channel not found!");
             return;
         }
 
-        // Salvo l'ID del canale forum per poter aggiornare il messaggio in futuro
         this.announcementChannelId = postChannelId;
 
-        // Trova i tag disponibili e seleziona quelli corretti
         List<ForumTag> appliedTags = new ArrayList<>();
         for (ForumTag tag : postChannel.getAvailableTags()) {
             if (tag.getName().equalsIgnoreCase("Opened")) {
                 appliedTags.add(tag);
             }
-            if (tag.getName().equalsIgnoreCase(skillLevel)) { // es: "Beginner", "Intermediate", "Advanced"
+            if (tag.getName().equalsIgnoreCase(skillLevel)) {
                 appliedTags.add(tag);
             }
         }
 
         EmbedBuilder publicEmbed = buildLobbyEmbed();
-
         Button joinButton = Button.success("join_lobby_" + discordId, "Join");
 
         postChannel.createForumPost(playerName + " Lobby", new MessageCreateBuilder()
@@ -356,10 +354,10 @@ public class Lobby extends ListenerAdapter {
                         .build())
                 .setTags(appliedTags)
                 .queue(post -> {
-                    // Recupera il thread creato
                     ThreadChannel threadChannel = post.getThreadChannel();
+                    this.setPostId(threadChannel.getIdLong());
 
-                    // Prendi fino a 100 messaggi per trovare il più vecchio (il primo del thread)
+                    // Recupera fino a 100 messaggi per trovare il primo
                     threadChannel.getHistory().retrievePast(100).queue(messages -> {
                         Message firstMessage = messages.stream()
                                 .min(Comparator.comparing(Message::getTimeCreated))
@@ -373,21 +371,18 @@ public class Lobby extends ListenerAdapter {
                     });
 
                     System.out.println("📣 Forum lobby post created! Thread ID: " + threadChannel.getIdLong());
-                    this.setPostId(threadChannel.getIdLong());
 
                     guild.createTextChannel(playerName.toLowerCase().replace(" ", "-") + "-lobby")
-                            .setParent(guild.getCategoryById(1381025760231555077L)) // Categoria "lobby" corretta
+                            .setParent(guild.getCategoryById(1381025760231555077L))
                             .addPermissionOverride(guild.getPublicRole(), null, EnumSet.of(Permission.VIEW_CHANNEL))
                             .addPermissionOverride(guild.getMemberById(discordId),
                                     EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND), null)
                             .queue(privateChannel -> {
                                 this.privateChannelId = privateChannel.getIdLong();
 
-                                // Primo messaggio classico
                                 privateChannel.sendMessage("🔐 " + guild.getMember(UserSnowflake.fromId(discordId)).getUser().getAsMention() +
                                         ", this is your private lobby channel where you can accept or decline players.").queue();
 
-                                // Secondo messaggio con il cancelletto e regole
                                 StringBuilder secondMessage = new StringBuilder();
                                 secondMessage.append("### ").append(platform).append(" - ").append(game).append("\n\n");
 
@@ -399,10 +394,13 @@ public class Lobby extends ListenerAdapter {
 
                                 privateChannel.sendMessage(secondMessage.toString()).queue();
 
-                                // Registra la lobby nel manager per accesso futuro
                                 LobbyManager.addLobby(discordId, this);
                                 this.getPartecipants().add(discordId);
 
+                                // ✅ Callback finale eseguita SOLO dopo che tutto è stato creato
+                                if (onComplete != null) {
+                                    onComplete.run();
+                                }
                             });
                 });
     }

@@ -309,7 +309,7 @@ public class Lobby extends ListenerAdapter {
                                 " * **Lobby Type:** " + lobbyType + "\n" +
                                 " * **Availability:** " + availability + "\n" +
                                 " * **Rules:** " + (rules != null && !rules.isEmpty() ? rules : "N/A") + "\n" +
-                                " * **Post Link:** " + "<#"+PostId+">"+ "\n" +
+                                " * **Post URL:** " + "<#"+PostId+">"+ " | " + PostId + "\n" +
                                 " * **Created At:** " + creationTimeFormatted + "\n" +
                                 "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
                 )

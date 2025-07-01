@@ -1,6 +1,7 @@
 package MongoDB;
 
 import ClanManager.Clan;
+import Config.Config;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
@@ -18,12 +19,15 @@ public class MongoDBManager {
     private static MongoDatabase database;
 
     public static MongoDatabase getDatabase() {
+        Config config= new Config();
         if (database == null) {
-            mongoClient = MongoClients.create("mongodb://localhost:27017"); // MongoDB URI
-            database = mongoClient.getDatabase("stormClanBot"); // Il nome del database
+            String uri = config.getDbConnection();
+            mongoClient = MongoClients.create(uri);
+            database = mongoClient.getDatabase(config.getDbName());
         }
         return database;
     }
+
 
     public static void close() {
         if (mongoClient != null) {

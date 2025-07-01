@@ -19,9 +19,12 @@ import javax.security.auth.login.LoginException;
 import java.util.Arrays;
 import Lobby.*;
 import java.util.EnumSet;
+import Config.*;
 
 public class Bot {
-    final String token = "MTMxMDE3MzY4NTI2ODc0NjI2Mg.GeWkHX._DXswbdkA_PzB62kd2aoVarg2f4tFqkSU3WaVc";
+    Config config = new Config();
+    String token = config.getToken();
+
 
     public Bot() throws LoginException {
         // Inizializza MongoDB

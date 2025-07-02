@@ -667,7 +667,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
                                 " * **Ignored Requests: **" + stats.getIgnoredRequestGeneral() + "\n" +
                                 " * **Lobbies Completed: **" + stats.getLobbiesCompletedGeneral() + "\n" +
                                 " * **Lobbies Incomplete: **" + stats.getLobbiesIncompleteGeneral() + "\n" +
-                                " * **Lobbies Disbanded: **" + stats.getLobbiesDisbandedGeneral() + "\n" +
+                             //   " * **Lobbies Disbanded: **" + stats.getLobbiesDisbandedGeneral() + "\n" +
                                 "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
                 )                .setTimestamp(Instant.now()); // 👈 footer automatico con orario
 
@@ -688,7 +688,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
                                 " * **Ignored Requests: **" + stats.getIgnoredRequestDirect() + "\n" +
                                 " * **Lobbies Completed: **" + stats.getLobbiesCompletedDirect() + "\n" +
                                 " * **Lobbies Incomplete: **" + stats.getLobbiesIncompleteDirect() + "\n" +
-                                " * **Lobbies Disbanded: **" + stats.getLobbiesDisbandedDirect() + "\n" +
+                               // " * **Lobbies Disbanded: **" + stats.getLobbiesDisbandedDirect() + "\n" +
                                 "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
                 )                 .setTimestamp(Instant.now()); // 👈 footer automatico con orario
 

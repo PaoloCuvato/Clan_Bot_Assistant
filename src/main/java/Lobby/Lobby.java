@@ -394,6 +394,7 @@ public class Lobby extends ListenerAdapter {
                         if (!messages.isEmpty()) {
                             Message firstMessage = messages.get(0);
                             this.setEmbededMessageId(firstMessage.getIdLong());
+                            firstMessage.pin().queue();
 
                             // Emoji Map
                             Map<String, Long> gameEmojiMap = Map.of(

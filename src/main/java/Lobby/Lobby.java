@@ -403,7 +403,7 @@ public class Lobby extends ListenerAdapter {
                                     "NSUNSR", 1317940351608160317L,
                                     "NSUNS4", 1317940595758600245L,
                                     "NXBUNSC", 1317943597450133514L,
-                                    "NSUNS4E", 1317941842897010800L
+                                    "NSUNSE", 1317941842897010800L
                             );
 
                             String key = game.toUpperCase();

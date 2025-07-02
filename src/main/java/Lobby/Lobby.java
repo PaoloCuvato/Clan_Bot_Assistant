@@ -20,9 +20,11 @@ import net.dv8tion.jda.api.entities.channel.forums.ForumTag;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.utils.FileUpload;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 
 import java.awt.*;
+import java.io.InputStream;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -327,7 +329,6 @@ public class Lobby extends ListenerAdapter {
             // Puoi salvare o usare messageId come vuoi
         });
     }
-
     public void sendLobbyAnnouncement(Guild guild, long postChannelId, Runnable onComplete) {
         ForumChannel postChannel = guild.getForumChannelById(postChannelId);
         if (postChannel == null) {
@@ -350,16 +351,29 @@ public class Lobby extends ListenerAdapter {
         EmbedBuilder publicEmbed = buildLobbyEmbed();
         Button joinButton = Button.success("join_lobby_" + discordId, "Join");
 
-        postChannel.createForumPost(playerName + " Lobby", new MessageCreateBuilder()
-                        .setEmbeds(publicEmbed.build())
-                        .setActionRow(joinButton)
-                        .build())
+        MessageCreateBuilder messageBuilder = new MessageCreateBuilder()
+                .setEmbeds(publicEmbed.build())
+                .setActionRow(joinButton);
+
+        // Caricamento immagine da resources/images (nome gioco in maiuscolo)
+        String imageName = game.toUpperCase() + ".png";
+        System.out.println("Cerco immagine: images/" + imageName);
+        InputStream imageStream = getClass().getClassLoader().getResourceAsStream("images/" + imageName);
+
+        if (imageStream != null) {
+            FileUpload imageUpload = FileUpload.fromData(imageStream, imageName);
+            System.out.println("Immagine caricata: " + imageUpload.getName());
+            messageBuilder.addFiles(imageUpload);
+        } else {
+            System.err.println("⚠️ Immagine per il gioco '" + game + "' non trovata nelle risorse (cercato: images/" + imageName + ")");
+        }
+
+        postChannel.createForumPost(playerName + " Lobby", messageBuilder.build())
                 .setTags(appliedTags)
                 .queue(post -> {
                     ThreadChannel threadChannel = post.getThreadChannel();
                     this.setPostId(threadChannel.getIdLong());
 
-                    // Recupera fino a 100 messaggi per trovare il primo
                     threadChannel.getHistory().retrievePast(100).queue(messages -> {
                         Message firstMessage = messages.stream()
                                 .min(Comparator.comparing(Message::getTimeCreated))
@@ -375,9 +389,7 @@ public class Lobby extends ListenerAdapter {
                     System.out.println("📣 Forum lobby post created! Thread ID: " + threadChannel.getIdLong());
 
                     guild.createTextChannel(playerName.toLowerCase().replace(" ", "-") + "-lobby")
-                           // .setParent(guild.getCategoryById(1381025760231555077L))
-                             .setParent(guild.getCategoryById(c.getLobbyCategory()))
-
+                            .setParent(guild.getCategoryById(c.getLobbyCategory()))
                             .addPermissionOverride(guild.getPublicRole(), null, EnumSet.of(Permission.VIEW_CHANNEL))
                             .addPermissionOverride(guild.getMemberById(discordId),
                                     EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND), null)
@@ -401,13 +413,13 @@ public class Lobby extends ListenerAdapter {
                                 LobbyManager.addLobby(discordId, this);
                                 this.getPartecipants().add(discordId);
 
-                                // ✅ Callback finale eseguita SOLO dopo che tutto è stato creato
                                 if (onComplete != null) {
                                     onComplete.run();
                                 }
                             });
                 });
     }
+
 
     public void sendDirectCreationLobbyLog(Guild guild, long logChannelId, long categoryId) {
         TextChannel logChannel = guild.getTextChannelById(logChannelId);

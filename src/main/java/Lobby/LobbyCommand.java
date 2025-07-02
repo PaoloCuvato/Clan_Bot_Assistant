@@ -1014,10 +1014,6 @@ public class LobbyCommand extends ListenerAdapter {
     }
 
 
-
-
-
-
     @Override
     public void onMessageReactionAdd(MessageReactionAddEvent event) {
         // Ignora i bot

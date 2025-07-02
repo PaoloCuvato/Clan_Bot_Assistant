@@ -249,25 +249,27 @@ public class ButtonLobbyManager extends ListenerAdapter {
                     .putPermissionOverride(acceptedMember, EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND), null)
                     .queue();
 
-            event.deferEdit().queue(success -> {
-                event.getMessage().delete().queue();
-                privateChannel.sendMessage("✅ " + acceptedMember.getAsMention() + " has been accepted by " + creator.getAsMention() + ".").queue();
-            });
-
             long threadPostId = lobby.getPostId();
             ThreadChannel thread = guild.getThreadChannelById(threadPostId);
+            if (thread == null) {
+                event.reply("❌ Could not find the forum thread for this lobby.").setEphemeral(true).queue();
+                return;
+            }
 
             EmbedBuilder embed = new EmbedBuilder()
                     .setTitle("▬▬▬▬▬▬▬▬ Lobby Behavior ▬▬▬▬▬▬▬▬")
-                    .setDescription("Player " + acceptedUser.getAsMention() + " has been Accepted by " + creator.getAsMention() + ".")
+                    .setDescription("Player " + acceptedUser.getAsMention() + " has been accepted by " + creator.getAsMention() + ".")
                     .setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
                     .setColor(Color.decode("#1c0b2e"));
 
+            // Unica chiamata a deferEdit
             event.deferEdit().queue(success -> {
                 event.getMessage().delete().queue();
+                privateChannel.sendMessage("✅ " + acceptedMember.getAsMention() + " has been accepted by " + creator.getAsMention() + ".").queue();
                 thread.sendMessageEmbeds(embed.build()).queue();
             });
         }
+
 
         // ✅ LOGICA AGGIUNTA PER YES / NO
         else if (componentId.startsWith("lobby_add_yes:") || componentId.startsWith("lobby_add_no:")) {

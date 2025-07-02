@@ -22,6 +22,21 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.FileUpload;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
+import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.UserSnowflake;
+import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
+import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.utils.FileUpload;
+import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
+import net.dv8tion.jda.api.Permission;
+
+import java.io.InputStream;
+import java.util.*;
+
 
 import java.awt.*;
 import java.io.InputStream;
@@ -329,6 +344,7 @@ public class Lobby extends ListenerAdapter {
             // Puoi salvare o usare messageId come vuoi
         });
     }
+
     public void sendLobbyAnnouncement(Guild guild, long postChannelId, Runnable onComplete) {
         ForumChannel postChannel = guild.getForumChannelById(postChannelId);
         if (postChannel == null) {
@@ -374,15 +390,37 @@ public class Lobby extends ListenerAdapter {
                     ThreadChannel threadChannel = post.getThreadChannel();
                     this.setPostId(threadChannel.getIdLong());
 
-                    threadChannel.getHistory().retrievePast(100).queue(messages -> {
-                        Message firstMessage = messages.stream()
-                                .min(Comparator.comparing(Message::getTimeCreated))
-                                .orElse(null);
-
-                        if (firstMessage != null) {
+                    threadChannel.getHistory().retrievePast(1).queue(messages -> {
+                        if (!messages.isEmpty()) {
+                            Message firstMessage = messages.get(0);
                             this.setEmbededMessageId(firstMessage.getIdLong());
+
+                            // Emoji Map
+                            Map<String, Long> gameEmojiMap = Map.of(
+                                    "NSUNSG", 1317938657872838656L,
+                                    "NSUNS3", 1317938959472398479L,
+                                    "NSUNSR", 1317940351608160317L,
+                                    "NSUNS4", 1317940595758600245L,
+                                    "NXBUNSC", 1317943597450133514L,
+                                    "NSUNS4E", 1317941842897010800L
+                            );
+
+                            String key = game.toUpperCase();
+                            Long emojiId = gameEmojiMap.get(key);
+                            if (emojiId != null) {
+                                RichCustomEmoji emoji = guild.getEmojiById(emojiId);
+                                if (emoji != null) {
+                                    firstMessage.addReaction(emoji).queue();
+                                    System.out.println("✅ Reaction aggiunta: " + emoji.getName());
+                                } else {
+                                    System.err.println("⚠️ Emoji ID " + emojiId + " non trovata nella guild.");
+                                }
+                            } else {
+                                System.err.println("⚠️ Nessuna emoji configurata per il gioco: " + game);
+                            }
+
                         } else {
-                            System.err.println("⚠️ Impossibile trovare il messaggio embedded nel thread");
+                            System.err.println("⚠️ Nessun messaggio trovato nel thread.");
                         }
                     });
 

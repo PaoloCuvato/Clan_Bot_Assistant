@@ -1,5 +1,6 @@
 package MatchMaking;
 
+import Config.Config;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
@@ -49,6 +50,7 @@ public class MatchMakingCommand extends ListenerAdapter {
     private static final String GUILD_ID = "1261880269573459990";
     private final Map<String, String> lobbyOwners = new HashMap<>();
     private final Map<String, String> lobbyHostsByMessageId = new HashMap<>();
+    private Config config = new Config();
     public Long lobbyId;
 
     GuildReadyEvent  guildOnReadyEvent;
@@ -196,28 +198,6 @@ public class MatchMakingCommand extends ListenerAdapter {
                     .queue();
         }
 
-
-/*
-            if (event.getModalId().equals("submit_player_id")) {
-                String userId = event.getUser().getId();
-                String playerGameName = event.getValue("player_id").getAsString();
-                playerGameNameSelections.put(event.getMember().getId(),playerGameName);
-                sendLobbyRecap( userId,  event.getUser().getName(), gameSelections.get(userId), platformSelections.get(userId), playerGameName);
-                // Puoi salvarlo o loggarlo
-                System.out.println("User " + userId + " submitted: " + playerGameName);
-
-                // Stampa l'intera mappa
-                System.out.println("📋 Current PlayerGameNameSelections Map:");
-                playerGameNameSelections.forEach((k, v) ->
-                        System.out.println(" > User ID: " + k + " -> PlayerGameName: " + v)
-                );
-
-                event.reply("✅ Your ID has been saved successfully!")
-                        .setEphemeral(true)
-                        .queue();
-            }
-
- */
         }
 
     public void createLobby(String userId, String playerGameName, Guild guild) {
@@ -252,103 +232,11 @@ public class MatchMakingCommand extends ListenerAdapter {
                 });
     }
 
-
-/*
-
-    @Override
-        public void onButtonInteraction(ButtonInteractionEvent event) {
-            if (!event.getComponentId().equals("join_lobby")) return;
-
-            // Recupera il membro che ha cliccato il bottone
-            Member clicker = event.getMember();
-            String clickerId = clicker.getId();
-
-            // Ottieni l'ID del creatore della lobby, che dovresti avere salvato precedentemente
-            String lobbyOwnerId = lobbyOwners.get();
-
-            if (lobbyOwnerId == null) {
-                event.reply("❌ Lobby not found").setEphemeral(true).queue();
-                return;
-            }
-
-            // Recupera il canale della lobby
-            TextChannel lobbyChannel = event.getGuild().getTextChannelById(lobbyOwnerId + "-lobby");
-            if (lobbyChannel == null) {
-                event.reply("❌ Lobby channel not found").setEphemeral(true).queue();
-                return;
-            }
-
-            // Aggiungi il clicker al canale
-            lobbyChannel.getPermissionContainer()
-                    .upsertPermissionOverride(clicker)
-                    .setAllowed(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND)
-                    .queue();
-
-            // Messaggio di benvenuto nel canale della lobby
-            lobbyChannel.sendMessage("🎮 <@" + clickerId + "> has joined the lobby!").queue();
-
-            // Risposta effimera per confermare che l'utente è stato aggiunto
-            event.reply("✅ You've been added to the lobby!").setEphemeral(true).queue();
-
-
-
-
- */
-        /*
-        if (!event.getComponentId().equals("join_lobby")) return;
-
-        Guild guild      = event.getGuild();
-        Member clicker   = event.getMember();
-        String clickerId = clicker.getId();
-        // Recupera l'host dal messageId salvato in onModalInteraction
-        String hostId    = lobbyHostsByMessageId.get(event.getMessage().getId());
-
-        // 1) Elimina subito il messaggio col bottone
-        event.getMessage().delete().queue();
-
-        // 2) Crea un thread pubblico "lobby"
-        event.getMessage()
-                .createThreadChannel("lobby")
-                .setAutoArchiveDuration(ThreadChannel.AutoArchiveDuration.TIME_24_HOURS)
-                .queue(thread -> {
-                    IPermissionContainer perms = thread.getPermissionContainer();
-
-                    // 3) Nega VIEW_CHANNEL a tutti (@everyone)
-                    perms.upsertPermissionOverride(guild.getPublicRole())
-                            .setDenied(Permission.VIEW_CHANNEL)
-                            .queue();
-
-                    // 4) Concede VIEW + SEND al clicker
-                    perms.upsertPermissionOverride(clicker)
-                            .setAllowed(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND)
-                            .queue();
-
-                    // 5) Concede VIEW + SEND anche all’host
-                    if (hostId != null && !hostId.equals(clickerId)) {
-                        guild.retrieveMemberById(hostId).queue(hostMember ->
-                                        perms.upsertPermissionOverride(hostMember)
-                                                .setAllowed(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND)
-                                                .queue(),
-                                err -> System.err.println("Host non trovato: " + err.getMessage())
-                        );
-                    }
-
-                    // 6) Messaggio di benvenuto nel thread
-                    thread.sendMessage("🎮 <@" + clickerId + "> joined the lobby!").queue();
-                });
-
-        // 7) Conferma effimera al clicker
-        event.reply("✅ Lobby thread created and you're in!").setEphemeral(true).queue();
-
-         */
-
-
-
     @Override
     public void onGuildReady(GuildReadyEvent event) {
         this.guildOnReadyEvent = event;
         List<CommandData> commands = new ArrayList<>();
-        Long guildId = 856147888550969345L; // Replace with your server's ID
+        Long guildId = Long.valueOf(config.getGuildId()); // Replace with your server's ID
         Guild guild = event.getJDA().getGuildById(guildId);
 
         commands.add(Commands.slash("matchmaking", "Open a Matchmaking Request"));
@@ -359,7 +247,7 @@ public class MatchMakingCommand extends ListenerAdapter {
     public void sendLobbyRecap( String userId, String username, String game, String platform, String playerName) {
 
         // ID del canale di log (sostituisci con il tuo)
-        long logChannelId = 1366842485791526994L; // <-- Sostituisci con il tuo vero ID
+        long logChannelId = Long.parseLong(config.getLobbyChannelLog()); // <-- Sostituisci con il tuo vero ID
 
         TextChannel logChannel = guildOnReadyEvent.getGuild().getTextChannelById(logChannelId);
         if (logChannel == null) {

@@ -2,6 +2,7 @@ package Command;
 
 import ClanManager.Clan;
 import ClanManager.ClanStorage;
+import Config.Config;
 import MongoDB.MongoDBManager;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
@@ -649,6 +650,7 @@ public class ManagerCommands extends ListenerAdapter {
         // Altri comandi per aggiornare o eliminare clan
     }
 
+    /*
     @Override
     public void onGuildReady(GuildReadyEvent event) {
         // List of commands to register for the guild
@@ -735,16 +737,20 @@ public class ManagerCommands extends ListenerAdapter {
         commands.add(Commands.slash("add_user_lobby", "add a specific user on your lobby v2")
                 .addOption(OptionType.USER, "player", "The name of the user that you want to block from your lobby", true));
 
+        commands.add(Commands.slash("direct", "Send private lobby"));
 
 
         // Register the commands to the guild
         event.getJDA().updateCommands().addCommands(commands).queue();
     }
 
+     */
+
     @Override
     public void onReady(ReadyEvent event) {
+        Config config = new Config();
         // Update the commands for the bot
-        Long guildId = 856147888550969345L; // Replace with your server's ID
+        Long guildId = Long.valueOf(config.getGuildId()); // Replace with your server's ID
         Guild guild = event.getJDA().getGuildById(guildId);
         guild.upsertCommand("info", "Info about the bot").queue();
 
@@ -823,10 +829,9 @@ public class ManagerCommands extends ListenerAdapter {
 
         guild.upsertCommand("edit_lobby", "Edit the lobby embeded").queue();
 
-        guild.updateCommands().addCommands(
-                Commands.slash("direct", "Send private lobby")).queue();
+        guild.upsertCommand( Commands.slash("direct", "Send private lobby")).queue();
 
-        guild.upsertCommand("delete_lobby", "Permanently deletes the selected lobby post and its associated thread. ").queue();
+     //   guild.upsertCommand("delete_lobby", "Permanently deletes the selected lobby post and its associated thread. ").queue();
 
         guild.upsertCommand("complete_lobby", "Archives a lobby post and marks it as completed ").queue();
 

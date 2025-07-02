@@ -19,7 +19,7 @@ public class InactivityManager extends ListenerAdapter {
     private final Map<Long, Instant> lastActivityMap = new ConcurrentHashMap<>();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
-   private final long inactivityThresholdMillis = 3 * 60 * 1000; // 3 ore
+   private final long inactivityThresholdMillis = 3 * 60 * 60 * 1000; // 3 ore
    // * 60 * 60 * 1000
    // private final long inactivityThresholdMillis = 6 * 60 * 1000; // 6 minuti
 

@@ -1,5 +1,6 @@
 package PlayerInfo;
 
+import Config.Config;
 import Stat.PlayerStats;
 import Stat.PlayerStatsManager;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -24,6 +25,7 @@ import java.util.Map;
 public class AddInfoCardCommand extends ListenerAdapter {
 
     public User target;
+    private Config config = new Config();
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
@@ -243,7 +245,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
                 PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
                 event.deferEdit().queue();
                 if (event.getGuild() != null) {
-                    long roleId = 1382385471300304946L;
+                    long roleId = Long.parseLong(config.getPlayerInfoRole());
                     event.getGuild().retrieveMemberById(discordId).queue(member -> {
                         event.getGuild().addRoleToMember(member, event.getGuild().getRoleById(roleId)).queue(
                                 success -> System.out.println("✅ Player Info role assigned to " + member.getEffectiveName()),
@@ -597,6 +599,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
         // Rimuovi i componenti e mostra solo l'embed finale
         event.getHook().editOriginalComponents().queue();
         event.getHook().editOriginalEmbeds(finalEmbed.build()).queue();
+        playerInfo.sendPlayerInfoLog(event.getGuild());
     }
 
     private EmbedBuilder getNinjaCardEmbed(PlayerInfo p) {

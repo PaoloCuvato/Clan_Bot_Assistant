@@ -1,4 +1,5 @@
 package PlayerInfo;
+import Config.Config;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -42,13 +43,15 @@ public class PlayerInfo extends ListenerAdapter {
 
     private String  skillLevel;
 
+
     //  private String inGamePlayTime; // the number of hour someone have on the game
 
     //   private String targetRegion; // Region they want to play in (e.g. NA, JP)
 
     //   private String availablePlayTime; // e.g. "Evenings", "Weekends", or time range
     public void sendPlayerInfoLog(Guild guild) {
-        long logChannelId = 1377959042663714846L; // Sostituisci con l'ID corretto del tuo canale
+        Config config = new Config();
+        long logChannelId = Long.parseLong(config.getNinjacardChannel()); // Sostituisci con l'ID corretto del tuo canale
         TextChannel logChannel = guild.getTextChannelById(logChannelId);
 
         if (logChannel == null) {
@@ -91,7 +94,8 @@ public class PlayerInfo extends ListenerAdapter {
     }
 
     public void sendPlayerInfo(Guild guild) {
-        long logChannelId = 1377959042663714846L; // Sostituisci con l'ID corretto del tuo canale
+        Config config = new Config();
+        long logChannelId = Long.parseLong(config.getNinjacardChannel()); // Sostituisci con l'ID corretto del tuo canale
         TextChannel logChannel = guild.getTextChannelById(logChannelId);
 
         if (logChannel == null) {

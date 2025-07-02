@@ -1,5 +1,6 @@
 package Lobby;
 
+import Config.Config;
 import Stat.PlayerStatMongoDBManager;
 import Stat.PlayerStats;
 import Stat.PlayerStatsManager;
@@ -65,6 +66,7 @@ public class Lobby extends ListenerAdapter {
     //stats
     private final Set<Long> blockedUsers = new HashSet<>();
     private long allowedUserId;  // ID dell'utente autorizzato per lobby privat
+    private Config c = new Config();
 
     // this  method will set up the max people on the lobby
     public void checkMaxpartecipants() {
@@ -337,7 +339,7 @@ public class Lobby extends ListenerAdapter {
 
         List<ForumTag> appliedTags = new ArrayList<>();
         for (ForumTag tag : postChannel.getAvailableTags()) {
-            if (tag.getName().equalsIgnoreCase("Opened")) {
+            if (tag.getName().equalsIgnoreCase("Open")) {
                 appliedTags.add(tag);
             }
             if (tag.getName().equalsIgnoreCase(skillLevel)) {
@@ -373,7 +375,9 @@ public class Lobby extends ListenerAdapter {
                     System.out.println("📣 Forum lobby post created! Thread ID: " + threadChannel.getIdLong());
 
                     guild.createTextChannel(playerName.toLowerCase().replace(" ", "-") + "-lobby")
-                            .setParent(guild.getCategoryById(1381025760231555077L))
+                           // .setParent(guild.getCategoryById(1381025760231555077L))
+                             .setParent(guild.getCategoryById(c.getLobbyCategory()))
+
                             .addPermissionOverride(guild.getPublicRole(), null, EnumSet.of(Permission.VIEW_CHANNEL))
                             .addPermissionOverride(guild.getMemberById(discordId),
                                     EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND), null)
@@ -575,7 +579,8 @@ public class Lobby extends ListenerAdapter {
     }
 
     public void callRefereeInPrivateChannel(Guild guild) {
-        String adminRoleId = "1015310375094337656";
+        String adminRoleId =c.getRefereeRole();
+       // String adminRoleId = "1015310375094337656";
         String message = "<@&" + adminRoleId + "> You have been requested to manage/oversee a dispute between the participants of this lobby.";
 
         TextChannel privateChannel = guild.getTextChannelById(this.privateChannelId);

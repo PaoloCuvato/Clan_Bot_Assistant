@@ -193,6 +193,19 @@ public class Config {
             return null;
         }
     }
+    public String getDesputesCategory(){
+        Properties props = new Properties();
+
+        try (FileInputStream fis = new FileInputStream("config.properties")) {
+            props.load(fis);
+            return props.getProperty("disputes.category");
+
+        }catch (IOException e){
+            e.printStackTrace();
+            System.out.println(e.getCause() + "\n" + e.getMessage());
+            return null;
+        }
+    }
     // Db Part
     public String getDbConnection(){
         Properties props = new Properties();

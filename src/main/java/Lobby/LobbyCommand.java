@@ -1,5 +1,6 @@
 package Lobby;
 
+import Config.Config;
 import Stat.PlayerStatMongoDBManager;
 import Stat.PlayerStats;
 import Stat.PlayerStatsManager;
@@ -45,7 +46,9 @@ public class LobbyCommand extends ListenerAdapter {
 
     private final Map<Long, Lobby> lobbySessions = new HashMap<>();
     private final long categoryId = 1381025760231555077L; // Categoria per le lobby
-    private static final String GUILD_ID = "856147888550969345";
+
+    private Config config = new Config();
+    private  final String GUILD_ID = config.getGuildId();
     private static final String TICKET_CATEGORY_NAME = "Ninja disputes";
 
     @Override
@@ -619,28 +622,39 @@ public class LobbyCommand extends ListenerAdapter {
                 .setColor(Color.white);
 
         StringSelectMenu.Builder menuBuilder = StringSelectMenu.create("lobby_game_select_lobby");
-        if (!platform.equalsIgnoreCase("RPCS3")) {
+        if (!platform.equalsIgnoreCase("RPCS3") &&  !platform.equalsIgnoreCase("PS3") &&  !platform.equalsIgnoreCase("Xbox 360")) {
+
             // Opzioni base per tutti ma non per rpcs3
             menuBuilder.addOption("NSUNS2", "NSUNS2");
             menuBuilder.addOption("NSUNSFB", "NSUNSFB");
             menuBuilder.addOption("NSUNSR", "NSUNSR");
             menuBuilder.addOption("NSUNSRTB", "NSUNSRTB");
             menuBuilder.addOption("NXBUNSC", "NXBUNSC");
-
-            //    menuBuilder.addOption("Storm Trilogy", "Storm Trilogy");
-
         }
         // Aggiunte per PC
         if (platform.equalsIgnoreCase("PC")) {
             menuBuilder.addOption("NSUNSE", "NSUNSE");
         }
+
         if (platform.equalsIgnoreCase("RPCS3")) {
              menuBuilder.addOption("NSUNS", "NSUNS")
-                        .addOption("NSUNS2", "NSUNS 2")
+                        .addOption("NSUNS2", "NSUNS2")
                         .addOption("NSUNSG", "NSUNSG")
-                        .addOption("NSUNS3", "NSUNS 3")
+                        .addOption("NSUNS3", "NSUNS3")
                         .addOption("NSUNSFB", "NSUNSFB")
                         .addOption("NSUNSR", "NSUNSR");
+        }
+
+        if (platform.equalsIgnoreCase("PS3")) {
+            menuBuilder.addOption("NSUNS2", "NSUNS2")
+                       .addOption("NSUNSG", "NSUNSG")
+                       .addOption("NSUNSFB", "NSUNSFB");
+        }
+
+        if (platform.equalsIgnoreCase("Xbox 360")) {
+            menuBuilder.addOption("NSUNS2", "NSUNS2")
+                       .addOption("NSUNSG", "NSUNSG")
+                       .addOption("NSUNSFB", "NSUNSFB");
         }
 
         event.deferEdit().queue();
@@ -684,8 +698,10 @@ public class LobbyCommand extends ListenerAdapter {
                                 .addOption("RPCS3", "RPCS3")
                                 .addOption("Xbox Series X", "Xbox Series X")
                                 .addOption("Xbox Series S", "Xbox Series S")
+                                .addOption("Xbox 360", "Xbox 360")
                                 .addOption("PS5", "PS5")
                                 .addOption("PS4", "PS4")
+                                .addOption("PS3", "PS3")
                                 .addOption("Nintendo Switch 1", "Nintendo Switch 1")
                                 .addOption("Nintendo Switch 2", "Nintendo Switch 2")
                                 .build()
@@ -775,10 +791,10 @@ public class LobbyCommand extends ListenerAdapter {
         event.getHook().editOriginalEmbeds(embed.build())
                 .setComponents(ActionRow.of(
                         StringSelectMenu.create("lobby_skill_select_lobby")
-                                .addOption("Beginner", "Beginner")
-                                .addOption("Intermediate", "Intermediate")
-                                .addOption("Advanced", "Advanced")
-                                .addOption("Any", "Any")
+                                .addOption("Beginner", "LF Beginner")
+                                .addOption("Intermediate", "LF Intermediate")
+                                .addOption("Advanced", "LF Advanced")
+                                .addOption("Any", "LF Any")
                                 .build()
                 ))
                 .queue();
@@ -837,7 +853,7 @@ public class LobbyCommand extends ListenerAdapter {
             return;
         }
 
-        List<String> validSkillLevels = Arrays.asList("Beginner", "Intermediate", "Advanced");
+        List<String> validSkillLevels = Arrays.asList("LF Beginner", "LF Intermediate", "LF Advanced", "LF Any");
         if (!validSkillLevels.contains(skillLevel)) {
             System.err.println("❌ Invalid skill level specified: " + skillLevel);
             return;
@@ -939,7 +955,7 @@ public class LobbyCommand extends ListenerAdapter {
             try {
                 lobby.updateLobbyPost(guild);
                 event.reply("✅ Lobby updated successfully!").setEphemeral(true).queue();
-                lobby.sendLobbyLog(guild, 1380683537501519963L);
+                lobby.sendLobbyLog(guild, Long.parseLong(config.getLobbyChannelLog()));
                 LobbyManager.addLobby(discordId, lobby);
             } catch (Exception e) {
                 event.reply("❌ Failed to update lobby embed.").setEphemeral(true).queue();
@@ -953,8 +969,8 @@ public class LobbyCommand extends ListenerAdapter {
 
         if (lobby.isDirectLobby()) {
             // --- Direct (privata) ---
-            long directLogChannelId = 1380683537501519963L;
-            long directCategoryId   = 1381025760231555077L;
+            long directLogChannelId = Long.parseLong(config.getLobbyChannelLog());
+            long directCategoryId   = Long.parseLong(config.getLobbyCategory());
 
             // ✅ Nuovo metodo compatto
             lobby.sendDirectCreationLobbyLog(guild, directLogChannelId, directCategoryId);
@@ -966,8 +982,8 @@ public class LobbyCommand extends ListenerAdapter {
         } else {
             // --- Generale (forum post + log) ---
             try {
-                lobby.sendLobbyAnnouncement(guild, 1367186054045761616L, () -> {
-                    lobby.sendLobbyLog(guild, 1380683537501519963L);
+                lobby.sendLobbyAnnouncement(guild, Long.parseLong(config.getMatchmakingForumPost()), () -> {
+                    lobby.sendLobbyLog(guild, Long.parseLong(config.getLobbyChannelLog()));
                     LobbyManager.addLobby(discordId, lobby);
                     event.getHook().sendMessage("✅ Lobby created successfully!").setEphemeral(true).queue();
                 });

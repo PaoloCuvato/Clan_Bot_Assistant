@@ -1,5 +1,6 @@
 package Lobby;
 
+import Config.Config;
 import Stat.PlayerStatMongoDBManager;
 import Stat.PlayerStats;
 import Stat.PlayerStatsManager;
@@ -17,6 +18,7 @@ import java.awt.*;
 import java.util.EnumSet;
 
 public class ButtonLobbyManager extends ListenerAdapter {
+    Config config = new Config();
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
         String componentId = event.getComponentId();
@@ -25,8 +27,8 @@ public class ButtonLobbyManager extends ListenerAdapter {
             Member joiner = event.getMember();
             Guild guild = event.getGuild();
             if (joiner == null || guild == null) return;
-
-            long playerInfoRoleId = 1382385471300304946L;
+            long playerInfoRoleId = Long.parseLong(config.getPlayerInfoRole());
+            // long playerInfoRoleId = 1382385471300304946L;
             Role playerInfoRole = guild.getRoleById(playerInfoRoleId);
             if (playerInfoRole == null) {
                 event.reply("❌ Configuration error: required role not found.").setEphemeral(true).queue();
@@ -169,9 +171,9 @@ public class ButtonLobbyManager extends ListenerAdapter {
             PlayerStatMongoDBManager.updatePlayerStats(declinedStats);
 
             EmbedBuilder embed = new EmbedBuilder()
-                    .setTitle("▬▬▬▬ Join Request Declined ▬▬▬▬")
+                    .setTitle("▬▬▬▬▬▬▬▬ Lobby Behavior ▬▬▬▬▬▬▬▬")
                     .setDescription("Player " + declinedUser.getAsMention() + " has been declined by " + creator.getAsMention() + ".")
-                    .setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                    .setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
                     .setColor(Color.decode("#1c0b2e"));
 
             event.deferEdit().queue(success -> {
@@ -250,6 +252,20 @@ public class ButtonLobbyManager extends ListenerAdapter {
             event.deferEdit().queue(success -> {
                 event.getMessage().delete().queue();
                 privateChannel.sendMessage("✅ " + acceptedMember.getAsMention() + " has been accepted by " + creator.getAsMention() + ".").queue();
+            });
+
+            long threadPostId = lobby.getPostId();
+            ThreadChannel thread = guild.getThreadChannelById(threadPostId);
+
+            EmbedBuilder embed = new EmbedBuilder()
+                    .setTitle("▬▬▬▬▬▬▬▬ Lobby Behavior ▬▬▬▬▬▬▬▬")
+                    .setDescription("Player " + acceptedUser.getAsMention() + " has been Accepted by " + creator.getAsMention() + ".")
+                    .setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                    .setColor(Color.decode("#1c0b2e"));
+
+            event.deferEdit().queue(success -> {
+                event.getMessage().delete().queue();
+                thread.sendMessageEmbeds(embed.build()).queue();
             });
         }
 
@@ -344,8 +360,10 @@ public class ButtonLobbyManager extends ListenerAdapter {
 
 // Controlla che il canale sia nella categoria giusta
         Category category = channel.getParentCategory();
-        if (category == null || (!category.getId().equals("1386825398402285599") && !category.getName().equalsIgnoreCase("Ninja Disputes"))) {
-            // Non è un canale nella categoria ticket, esci senza fare nulla
+        if (category == null || (!category.getId().equals(config.getDesputesCategory()) && !category.getName().equalsIgnoreCase("Ninja Disputes"))) {
+           // if (category == null || (!category.getId().equals("1386825398402285599") && !category.getName().equalsIgnoreCase("Ninja Disputes"))) {
+
+                // Non è un canale nella categoria ticket, esci senza fare nulla
             return;
         }
 

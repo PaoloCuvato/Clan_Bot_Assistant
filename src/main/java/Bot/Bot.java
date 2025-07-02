@@ -3,7 +3,6 @@ package Bot;
 import ClanManager.ClanStorage;
 import Command.ManagerCommands;
 import Lobby.Lobby;
-import Log.Logger;
 import MatchMaking.ForumMatchmaking;
 import MatchMaking.MatchMakingCommand;
 import MongoDB.MongoDBManager;
@@ -29,14 +28,14 @@ public class Bot {
     public Bot() throws LoginException {
         // Inizializza MongoDB
         MongoDBManager.getDatabase();  // Questo assicura che MongoDB sia inizializzato quando parte il bot.
-        long categoryId = 1381025760231555077L; // metti l'ID della tua categoria dei canali temporanei
+        long categoryId = Long.parseLong(config.getLobbyCategory()); // metti l'ID della tua categoria dei canali temporanei
 
 
         DefaultShardManagerBuilder manager = DefaultShardManagerBuilder.createDefault(token);
         //manager.setActivity(Activity.customStatus("Helping The Admin to Manage Clan Related Things"));
         manager.setAutoReconnect(true);
         manager.setStatus(OnlineStatus.ONLINE);
-        manager.addEventListeners(new ManagerCommands(), new ForumMatchmaking(),new Logger(), new AddInfoCardCommand(),new SlashPlayerInfoManager()); // Aggiungi i comandi
+        manager.addEventListeners(new ManagerCommands(), new ForumMatchmaking(), new AddInfoCardCommand(),new SlashPlayerInfoManager()); // Aggiungi i comandi
         manager.addEventListeners(new ClanStorage(), new LobbyCommand(), new ButtonLobbyManager(), new Lobby());
         manager.addEventListeners(new InactivityInitializer(categoryId));
 

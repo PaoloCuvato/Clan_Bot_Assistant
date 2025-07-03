@@ -649,104 +649,7 @@ public class ManagerCommands extends ListenerAdapter {
             event.getChannel().sendMessage("Clan added successfully!").queue();
         }
 
-        // Altri comandi per aggiornare o eliminare clan
     }
-
-    /*
-    @Override
-    public void onGuildReady(GuildReadyEvent event) {
-        // List of commands to register for the guild
-        List<CommandData> commands = new ArrayList<>();
-
-        // Register /register_clan command with required and optional options
-        commands.add(Commands.slash("register_clan", "Create a new clan in the bot")
-                .addOptions(
-                        new OptionData(OptionType.STRING, "name", "The name of the clan", true),
-                        new OptionData(OptionType.USER, "user", "The name of the user to put on the clan", true),
-                        new OptionData(OptionType.INTEGER, "victories", "How much wins Have the clan,this is not required", false).setMinValue(0L),
-                        new OptionData(OptionType.INTEGER, "losses", "How much loses Have the clan,this is not required", false).setMinValue(0L)
-
-                ));
-
-        commands.add(Commands.slash("add_user", "Add a user to a specific clan")
-                .addOptions(
-                        new OptionData(OptionType.STRING, "clan_name", "The name of the clan", true),
-                        new OptionData(OptionType.USER, "user", "The name of the user to put on the clan", true)));
-
-        commands.add(Commands.slash("kick_user", "Remove a user from a specific clan")
-                .addOptions(
-                        new OptionData(OptionType.STRING, "clan_name", "The name of the clan", true),
-                        new OptionData(OptionType.USER, "user", "The user to remove from the clan", true)));
-
-        commands.add(Commands.slash("edit_wins", "Edit the number of victories for a clan")
-                .addOptions(
-                        new OptionData(OptionType.STRING, "clan_name", "The name of the clan", true),
-                        new OptionData(OptionType.INTEGER, "wins", "The new number of wins", true).setMinValue(0L)
-                ));
-
-        commands.add(Commands.slash("edit_losses", "Edit the number of losses for a clan")
-                .addOptions(
-                        new OptionData(OptionType.STRING, "clan_name", "The name of the clan", true),
-                        new OptionData(OptionType.INTEGER, "losses", "The new number of losses", true).setMinValue(0L)
-                ));
-        commands.add(Commands.slash("info_user", "Info about a specific Player")
-                .addOptions(
-                        new OptionData(OptionType.USER, "user", "The name of the user to put on the clan", true)));
-
-        commands.add(Commands.slash("edit_clan_name", "Edit or create a clan name")
-                .addOptions(
-                        new OptionData(OptionType.STRING, "old_name", "The current name of the clan", true),
-                        new OptionData(OptionType.STRING, "new_name", "The new name for the clan", true)
-                ));
-
-        commands.add(Commands.slash("clan_member_list", "Get the list of all members in a specific clan")
-                .addOption(OptionType.STRING, "clan_name", "The name of the clan", true)
-        );
-
-
-        commands.add(Commands.slash("clan_stat", "Get the list of all members in a specific clan")
-                .addOption(OptionType.STRING, "clan_name", "The name of the clan", true)
-        );
-
-        commands.add(Commands.slash("delete_clan", "Delete an existing clan")
-                .addOption(OptionType.STRING, "clan_name", "The name of the clan to delete", true));
-
-        commands.add(Commands.slash("delete", "Delete an existing clan")
-                .addOption(OptionType.STRING, "clan_name", "The name of the clan to delete", true));
-
-        commands.add(Commands.slash("ft_request", "Send a Clan Battle request")
-                .addOption(OptionType.STRING, "clan_name", "The name of your clan", true));
-
-
-        commands.add(Commands.slash("list_all_clan", "Get the list of all Clan Registrated on the Bot"));
-
-        commands.add(Commands.slash("add_info_card", "Command for the creation of the player info card"));
-
-        commands.add(Commands.slash("my_ninjacard", "Command for the creation of the player info card"));
-
-        commands.add(Commands.slash("edit_ninja_card", "With this command you can edit your ninja card"));
-
-        commands.add(Commands.slash("search_ninjacard", "View the Ninja Card of a user")
-                .addOption(OptionType.USER, "target", "The user you want to view", true));
-
-        commands.add(Commands.slash("delete_lobby", "Permanently deletes the selected lobby post and its associated thread. "));
-
-        commands.add(Commands.slash("complete_lobby", "Archives a lobby post and marks it as completed "));
-
-        commands.add(Commands.slash("results", "Archives a lobby post and marks it as completed "));
-        commands.add(Commands.slash("freestyle", "The bot will send an embeded about the creation of the lobby"));
-
-        commands.add(Commands.slash("add_user_lobby", "add a specific user on your lobby v2")
-                .addOption(OptionType.USER, "player", "The name of the user that you want to block from your lobby", true));
-
-        commands.add(Commands.slash("direct", "Send private lobby"));
-
-
-        // Register the commands to the guild
-        event.getJDA().updateCommands().addCommands(commands).queue();
-    }
-
-     */
 
     @Override
     public void onReady(ReadyEvent event) {
@@ -754,19 +657,19 @@ public class ManagerCommands extends ListenerAdapter {
         Long guildId = Long.valueOf(config.getGuildId());
         Guild guild = event.getJDA().getGuildById(guildId);
 
+        // delete all the global command
         List<Command> commandglobals = event.getJDA().retrieveCommands().complete();
         for (Command cmd : commandglobals) {
             cmd.delete().queue();
             System.out.println("Global command deleted: " + cmd.getName());
         }
+
+        // dispaly all the current global command
         List<Command> commandglobals2 = event.getJDA().retrieveCommands().complete();
         for (Command cmd : commandglobals2) {
             System.out.println("Global command : " + cmd.getName());
-            System.out.println("Global command : " + commandglobals2);
 
         }
-
-
 
         List<CommandData> commands = new ArrayList<>();
 
@@ -838,7 +741,7 @@ public class ManagerCommands extends ListenerAdapter {
         commands.add(Commands.slash("freestyle", "Send lobby creation embed"));
         commands.add(Commands.slash("edit_lobby", "Edit the lobby embed"));
         commands.add(Commands.slash("direct", "Send private lobby"));
-        commands.add(Commands.slash("complete_lobby", "Archive and complete the lobby"));
+   //     commands.add(Commands.slash("complete_lobby", "Archive and complete the lobby"));
         commands.add(Commands.slash("leave_lobby", "Leave the current lobby"));
 
  //       commands.add(Commands.slash("block_user", "Block a user from your lobby")

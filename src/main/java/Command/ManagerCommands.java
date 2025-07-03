@@ -16,6 +16,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import net.dv8tion.jda.api.entities.*;
 
 import static ClanManager.ClanStorage.*;
 
@@ -749,116 +751,107 @@ public class ManagerCommands extends ListenerAdapter {
     @Override
     public void onReady(ReadyEvent event) {
         Config config = new Config();
-        // Update the commands for the bot
-        Long guildId = Long.valueOf(config.getGuildId()); // Replace with your server's ID
+        Long guildId = Long.valueOf(config.getGuildId());
         Guild guild = event.getJDA().getGuildById(guildId);
-        guild.upsertCommand("info", "Info about the bot").queue();
 
-        guild.upsertCommand("commands", "Info about all the bot's commands").queue();
-        guild.upsertCommand("register_clan", "Create a new clan in the bot")
+        List<Command> commandglobals = event.getJDA().retrieveCommands().complete();
+        for (Command cmd : commandglobals) {
+            cmd.delete().queue();
+            System.out.println("Global command deleted: " + cmd.getName());
+        }
+        List<Command> commandglobals2 = event.getJDA().retrieveCommands().complete();
+        for (Command cmd : commandglobals2) {
+            System.out.println("Global command : " + cmd.getName());
+            System.out.println("Global command : " + commandglobals2);
+
+        }
+
+
+
+        List<CommandData> commands = new ArrayList<>();
+
+        commands.add(Commands.slash("info", "Info about the bot"));
+        commands.add(Commands.slash("commands", "Info about all the bot's commands"));
+        commands.add(Commands.slash("register_clan", "Create a new clan in the bot")
                 .addOptions(
                         new OptionData(OptionType.STRING, "name", "The name of the clan", true),
-                        new OptionData(OptionType.USER, "user", "The name of the user to put on the clan", true),
-                        new OptionData(OptionType.INTEGER, "victories", "How much wins Have the clan,this is not required", false).setMinValue(0L),
-                        new OptionData(OptionType.INTEGER, "losses", "How much loses Have the clan,this is not required", false).setMinValue(0L)
-
-                );
-        guild.upsertCommand("add_user", "Add a user to a specific clan")
-                .addOptions(
-                        new OptionData(OptionType.STRING, "clan_name", "The name of the clan", true),
-                        new OptionData(OptionType.USER, "user", "The name of the user to put on the clan", true));
-
-        guild.upsertCommand(Commands.slash("kick_user", "Remove a user from a specific clan")
-                .addOptions(
-                        new OptionData(OptionType.STRING, "clan_name", "The name of the clan", true),
-                        new OptionData(OptionType.USER, "user", "The user to remove from the clan", true)));
-
-        guild.upsertCommand(Commands.slash("edit_wins", "Edit the number of victories for a clan")
-                .addOptions(
-                        new OptionData(OptionType.STRING, "clan_name", "The name of the clan", true),
-                        new OptionData(OptionType.INTEGER, "wins", "The new number of wins", true).setMinValue(0L)
+                        new OptionData(OptionType.USER, "user", "The user to put on the clan", true),
+                        new OptionData(OptionType.INTEGER, "victories", "Clan wins (optional)", false).setMinValue(0L),
+                        new OptionData(OptionType.INTEGER, "losses", "Clan losses (optional)", false).setMinValue(0L)
                 ));
 
-        guild.upsertCommand(Commands.slash("edit_losses", "Edit the number of losses for a clan")
+        commands.add(Commands.slash("add_user", "Add a user to a specific clan")
                 .addOptions(
                         new OptionData(OptionType.STRING, "clan_name", "The name of the clan", true),
-                        new OptionData(OptionType.INTEGER, "losses", "The new number of losses", true).setMinValue(0L)
+                        new OptionData(OptionType.USER, "user", "The user to add to the clan", true)
                 ));
 
-        guild.upsertCommand("info_user", "Info about a specific Player")
+        commands.add(Commands.slash("kick_user", "Remove a user from a specific clan")
                 .addOptions(
-                        new OptionData(OptionType.USER, "user", "The name of the user to put on the clan", true));
+                        new OptionData(OptionType.STRING, "clan_name", "The name of the clan", true),
+                        new OptionData(OptionType.USER, "user", "The user to remove", true)
+                ));
 
-        guild.upsertCommand("edit_clan_name", "Edit or create a clan name")
+        commands.add(Commands.slash("edit_wins", "Edit the number of victories for a clan")
                 .addOptions(
-                        new OptionData(OptionType.STRING, "old_name", "The current name of the clan", true),
-                        new OptionData(OptionType.STRING, "new_name", "The new name for the clan", true)
-                );
+                        new OptionData(OptionType.STRING, "clan_name", "The clan's name", true),
+                        new OptionData(OptionType.INTEGER, "wins", "New number of wins", true).setMinValue(0L)
+                ));
 
-        guild.upsertCommand("clan_member_list", "Get the list of all members in a specific clan")
-                .addOption(OptionType.STRING, "clan_name", "The name of the clan", true)
-                .queue();
-
-        guild.upsertCommand("clan_stat", "Get the list of all members in a specific clan")
-                .addOption(OptionType.STRING, "clan_name", "The name of the clan", true)
-                .queue();
-
-        guild.upsertCommand("delete_clan", "Delete an existing clan")
-                .addOption(OptionType.STRING, "clan_name", "The name of the clan to delete", true).queue();
-
-        guild.upsertCommand("delete", "Delete an existing clan")
-                .addOption(OptionType.STRING, "clan_name", "The name of the clan to delete", true).queue();
-
-        guild.upsertCommand("ft_request", "Send a Clan Battle request")
-                .addOption(OptionType.STRING, "clan_name", "The name of your clan", true).queue();
-
-        guild.upsertCommand("list_all_clan", "Get the list of all Clan Regist rated on the Bot");
-
-        guild.upsertCommand("add_info_card", "Command for the creation of the player info card").queue();
-
-        guild.upsertCommand("my_ninjacard", "The bot will send an embeded about the player ninja card").queue();
-
-        guild.upsertCommand("edit_ninja_card", "With this command you can edit your ninja card").queue();
-
-        guild.upsertCommand("search_ninjacard", "View the Ninja Card of a user")
+        commands.add(Commands.slash("edit_losses", "Edit the number of losses for a clan")
                 .addOptions(
-                        new OptionData(OptionType.USER, "target", "The user you want to view", true)
-                ).queue();
+                        new OptionData(OptionType.STRING, "clan_name", "The clan's name", true),
+                        new OptionData(OptionType.INTEGER, "losses", "New number of losses", true).setMinValue(0L)
+                ));
 
-        guild.upsertCommand("freestyle", "The bot will send an embeded about the creation of the lobby").queue();
-
-        guild.upsertCommand("edit_lobby", "Edit the lobby embeded").queue();
-
-        guild.upsertCommand( Commands.slash("direct", "Send private lobby")).queue();
-
-     //   guild.upsertCommand("delete_lobby", "Permanently deletes the selected lobby post and its associated thread. ").queue();
-
-        guild.upsertCommand("complete_lobby", "Archives a lobby post and marks it as completed ").queue();
-
-        guild.upsertCommand("leave_lobby", "This command will make you leave the current lobby").queue();
-
-
-        guild.upsertCommand("block_user", "Blocks a specific user from your lobby.")
+        commands.add(Commands.slash("info_user", "Info about a specific player")
                 .addOptions(
-                        new OptionData(OptionType.USER, "user", "The name of the user that you want to block from your lobby", true)).queue();
+                        new OptionData(OptionType.USER, "user", "The user", true)
+                ));
 
-        guild.upsertCommand("lobby_stats", "Show the lobby stats").queue();
-
-        guild.upsertCommand("send_player_info_file", "Send a .txt with each player that have the player Info role").queue();
-
-        guild.upsertCommand("results", "Send an Embeded about the lobby to close it or do other stuff").queue();
-
-        guild.upsertCommand("cancel", "If you use this command, you will cancel the lobby you created or joined. v2").queue();
-
-        guild.upsertCommand("add_user_lobby", "add a specific user on your lobby v2")
+        commands.add(Commands.slash("edit_clan_name", "Edit or create a clan name")
                 .addOptions(
-                        new OptionData(OptionType.USER, "player", "The name of the user that you want to block from your lobby", true)).queue();
+                        new OptionData(OptionType.STRING, "old_name", "Current clan name", true),
+                        new OptionData(OptionType.STRING, "new_name", "New clan name", true)
+                ));
 
-        guild.upsertCommand("leave_lobby", "this command will make you leave a lobby").queue();
+        commands.add(Commands.slash("clan_member_list", "List all members in a specific clan")
+                .addOptions(new OptionData(OptionType.STRING, "clan_name", "The clan's name", true)));
 
+        commands.add(Commands.slash("clan_stat", "View clan stats")
+                .addOptions(new OptionData(OptionType.STRING, "clan_name", "The clan's name", true)));
 
-        guild.updateCommands();
+        commands.add(Commands.slash("delete_clan", "Delete an existing clan")
+                .addOptions(new OptionData(OptionType.STRING, "clan_name", "The clan's name", true)));
 
+        commands.add(Commands.slash("ft_request", "Send a Clan Battle request")
+                .addOptions(new OptionData(OptionType.STRING, "clan_name", "Your clan's name", true)));
+
+        commands.add(Commands.slash("list_all_clan", "List all clans registered on the bot"));
+
+        commands.add(Commands.slash("add_info_card", "Create the player info card"));
+        commands.add(Commands.slash("my_ninjacard", "Show your Ninja Card"));
+        commands.add(Commands.slash("edit_ninja_card", "Edit your Ninja Card"));
+        commands.add(Commands.slash("search_ninjacard", "View another user's Ninja Card")
+                .addOptions(new OptionData(OptionType.USER, "target", "The user", true)));
+
+        commands.add(Commands.slash("freestyle", "Send lobby creation embed"));
+        commands.add(Commands.slash("edit_lobby", "Edit the lobby embed"));
+        commands.add(Commands.slash("direct", "Send private lobby"));
+        commands.add(Commands.slash("complete_lobby", "Archive and complete the lobby"));
+        commands.add(Commands.slash("leave_lobby", "Leave the current lobby"));
+
+ //       commands.add(Commands.slash("block_user", "Block a user from your lobby")
+ //               .addOptions(new OptionData(OptionType.USER, "user", "The user to block", true)));
+
+        commands.add(Commands.slash("lobby_stats", "Show lobby stats"));
+        commands.add(Commands.slash("send_player_info_file", "Send a .txt with all players with Player Info role"));
+        commands.add(Commands.slash("results", "Send an embed about the lobby"));
+//        commands.add(Commands.slash("cancel", "Cancel the lobby you created or joined"));
+        commands.add(Commands.slash("add_user_lobby", "Add a user to your lobby")
+                .addOptions(new OptionData(OptionType.USER, "player", "The user to add", true)));
+
+        // Aggiorna tutti i comandi in una singola chiamata pulita
+        guild.updateCommands().addCommands(commands).queue();
     }
-
 }

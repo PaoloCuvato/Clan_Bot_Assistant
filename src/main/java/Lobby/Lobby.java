@@ -86,9 +86,9 @@ public class Lobby extends ListenerAdapter {
             "PS4", "1389940855149695077",
             "PS3", "1389940855149695077",
 
-            "Xbox Series X", "1389940892961341460",
-            "Xbox Series S", "1389940892961341460",
-            "Xbox 360", "1389940892961341460",
+            "Xbox Series X", "1389940871989956618",
+            "Xbox Series S", "1389940871989956618",
+            "Xbox 360", "1389940871989956618",
 
             "PC", "1389940833939095562",
             "RPCS3", "1389997424440901762",
@@ -97,6 +97,22 @@ public class Lobby extends ListenerAdapter {
             "Nintendo Switch 2", "1389940892961341460"
 
     );
+    private static final Map<String, Long> PLATFORM_EMOJI_IDS = Map.of(
+            "PS5", 123456789012345678L,
+            "PS4", 123456789012345678L,
+            "PS3", 123456789012345678L,
+
+            "Xbox Series X", 223456789012345678L,
+            "Xbox Series S", 223456789012345678L,
+            "Xbox 360", 223456789012345678L,
+
+            "PC", 323456789012345678L,
+            "RPCS3", 423456789012345678L,
+
+            "Nintendo Switch 1", 523456789012345678L,
+            "Nintendo Switch 2", 523456789012345678L
+    );
+
 
     private static final Map<String, String> GAME_TAG_IDS = Map.of(
             "NSUNS", "1389612741211324567",
@@ -529,10 +545,41 @@ public class Lobby extends ListenerAdapter {
                             this.setEmbededMessageId(firstMessage.getIdLong());
                             firstMessage.pin().queue();
 
-                            // Reazione con emoji custom gioco
+                            // Emoji piattaforma
+                            Map<String, Long> platformEmojiMap = Map.of(
+                                    "PS5", 1316691275961077830L,
+                                    "PS4", 1316691275961077830L,
+                                    "PS3", 1316691275961077830L,
+
+                                    "Xbox Series X", 1316691225486688297L,
+                                    "Xbox Series S", 1316691225486688297L,
+                                    "Xbox 360", 1316691225486688297L,
+
+                                    "PC", 1316691292930965576L,
+                                    "RPCS3", 1390615505022222366L,
+
+                                    "Nintendo Switch 1", 1316691307875270668L,
+                                    "Nintendo Switch 2", 1316691307875270668L
+                            );
+
+                            Long platformEmojiId = platformEmojiMap.get(platform);
+                            if (platformEmojiId != null) {
+                                RichCustomEmoji platformEmoji = guild.getEmojiById(platformEmojiId);
+                                if (platformEmoji != null) {
+                                    firstMessage.addReaction(platformEmoji).queue();
+                                    System.out.println("✅ Reaction piattaforma aggiunta: " + platformEmoji.getName());
+                                } else {
+                                    System.err.println("⚠️ Emoji piattaforma ID " + platformEmojiId + " non trovata nella guild.");
+                                }
+                            } else {
+                                System.err.println("⚠️ Nessuna emoji configurata per la piattaforma: " + platform);
+                            }
+
+                            // Emoji gioco
                             Map<String, Long> gameEmojiMap = Map.of(
                                     "NSUNSG", 1317938657872838656L,
                                     "NSUNS3", 1317938959472398479L,
+                                    "NSUNSFB", 1317938959472398479L,
                                     "NSUNSR", 1317940351608160317L,
                                     "NSUNS4", 1317940595758600245L,
                                     "NXBUNSC", 1317943597450133514L,
@@ -545,9 +592,9 @@ public class Lobby extends ListenerAdapter {
                                 RichCustomEmoji emoji = guild.getEmojiById(emojiId);
                                 if (emoji != null) {
                                     firstMessage.addReaction(emoji).queue();
-                                    System.out.println("✅ Reaction aggiunta: " + emoji.getName());
+                                    System.out.println("✅ Reaction gioco aggiunta: " + emoji.getName());
                                 } else {
-                                    System.err.println("⚠️ Emoji ID " + emojiId + " non trovata nella guild.");
+                                    System.err.println("⚠️ Emoji gioco ID " + emojiId + " non trovata nella guild.");
                                 }
                             } else {
                                 System.err.println("⚠️ Nessuna emoji configurata per il gioco: " + game);
@@ -592,6 +639,7 @@ public class Lobby extends ListenerAdapter {
                             });
                 });
     }
+
 
     private ForumTag getTagByName(ForumChannel forum, String tagName) {
         if (tagName == null) return null;

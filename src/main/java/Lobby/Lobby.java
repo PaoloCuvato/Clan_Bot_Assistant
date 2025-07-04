@@ -577,13 +577,16 @@ public class Lobby extends ListenerAdapter {
 
                             // Emoji gioco
                             Map<String, Long> gameEmojiMap = Map.of(
+                                    "NSUNS",1390706988975132785L,
+                                    "NSUNS2",1390714684885434459L,
                                     "NSUNSG", 1317938657872838656L,
                                     "NSUNS3", 1317938959472398479L,
-                                    "NSUNSFB", 1317938959472398479L,
+                                    "NSUNSFB", 1390717671766495294L,
                                     "NSUNSR", 1317940351608160317L,
                                     "NSUNS4", 1317940595758600245L,
+                                    "NSUNSRTB", 1390716381024096318L,
                                     "NXBUNSC", 1317943597450133514L,
-                                    "NSUNSE", 1317941842897010800L
+                                    "NSUNSE", 1390719912208633936L
                             );
 
                             String key = game.toUpperCase();

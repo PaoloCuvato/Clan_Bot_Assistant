@@ -817,8 +817,6 @@ public class Lobby extends ListenerAdapter {
         });
     }
 
-
-
     public void completeLobby() {
         if (!isCompleted) {
             isCompleted = true;
@@ -845,7 +843,6 @@ public class Lobby extends ListenerAdapter {
                 error -> System.err.println("❌ Failed to send referee alert: " + error.getMessage())
         );
     }
-
 
     public void incompleteAndCleanupLobby(Guild guild) {
 

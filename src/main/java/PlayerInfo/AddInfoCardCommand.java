@@ -434,6 +434,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
             System.out.println("    " + entry.getValue()); // Assicurati che PlayerInfo abbia un buon toString()
         }
     }
+
     public void finalMessage(StringSelectInteractionEvent event){
         EmbedBuilder finalEmbed = new EmbedBuilder()
                 .setTitle("✅ Player Info Created")
@@ -480,7 +481,6 @@ public class AddInfoCardCommand extends ListenerAdapter {
                                 .build()
                 ).queue();
     }
-
 
     private void askCurrentRegion(SlashCommandInteractionEvent event) {
         EmbedBuilder embed = new EmbedBuilder()
@@ -667,7 +667,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
                                 " * **Ignored Requests: **" + stats.getIgnoredRequestGeneral() + "\n" +
                                 " * **Lobbies Completed: **" + stats.getLobbiesCompletedGeneral() + "\n" +
                                 " * **Lobbies Incomplete: **" + stats.getLobbiesIncompleteGeneral() + "\n" +
-                             //   " * **Lobbies Disbanded: **" + stats.getLobbiesDisbandedGeneral() + "\n" +
+                                " * **Lobbies Disbanded: **" + stats.getLobbiesDisbandedGeneral() + "\n" +
                                 "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
                 )                .setTimestamp(Instant.now()); // 👈 footer automatico con orario
 
@@ -688,7 +688,7 @@ public class AddInfoCardCommand extends ListenerAdapter {
                                 " * **Ignored Requests: **" + stats.getIgnoredRequestDirect() + "\n" +
                                 " * **Lobbies Completed: **" + stats.getLobbiesCompletedDirect() + "\n" +
                                 " * **Lobbies Incomplete: **" + stats.getLobbiesIncompleteDirect() + "\n" +
-                               // " * **Lobbies Disbanded: **" + stats.getLobbiesDisbandedDirect() + "\n" +
+                                " * **Lobbies Disbanded: **" + stats.getLobbiesDisbandedDirect() + "\n" +
                                 "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
                 )                 .setTimestamp(Instant.now()); // 👈 footer automatico con orario
 

@@ -80,6 +80,40 @@ public class Lobby extends ListenerAdapter {
     private boolean directLobby = false; // if the lobby is direct or not
     private final Set<Long> partecipants = new HashSet<>();
 
+    //maps
+    private static final Map<String, String> PLATFORM_TAG_IDS = Map.of(
+            "PS5", "1389940855149695077",
+            "PS4", "1389940855149695077",
+            "PS3", "1389940855149695077",
+
+            "Xbox Series X", "1389940892961341460",
+            "Xbox Series S", "1389940892961341460",
+            "Xbox 360", "1389940892961341460",
+
+            "PC", "1389940833939095562",
+            "RPCS3", "1389997424440901762",
+
+            "Nintendo Switch 1", "1389940892961341460",
+            "Nintendo Switch 2", "1389940892961341460"
+
+    );
+
+    private static final Map<String, String> GAME_TAG_IDS = Map.of(
+            "NSUNS", "1389612741211324567",
+            "NSUNS2", "1389612772303831091",
+            "NSUNSG", "1389612790511046797",
+
+            "NSUNS3", "1389612818701221928",
+            "NSUNSFB", "1389612857313853440",
+            "NSUNSR", "1389612876217716828",
+            "NSUNS4", "1389612902415204383",
+
+            "NSUNSRTB", "1389613031729795213",
+            "NXBUNSC", "1390055655053856971",
+            "NSUNSE", "1389613099081928845"
+
+    );
+
     //stats
     private final Set<Long> blockedUsers = new HashSet<>();
     private long allowedUserId;  // ID dell'utente autorizzato per lobby privat
@@ -102,6 +136,83 @@ public class Lobby extends ListenerAdapter {
 
         }
     }
+
+    public static String getPlatformTagId(String platformName) {
+        return PLATFORM_TAG_IDS.get(platformName);
+    }
+
+    public void applyPlatformTag(ThreadChannel threadChannel, String platformName) {
+        if (threadChannel == null) {
+            System.err.println("❌ ThreadChannel is null.");
+            return;
+        }
+
+        String platformTagId = PLATFORM_TAG_IDS.get(platformName);
+        if (platformTagId == null) {
+            System.err.println("❌ Invalid platform name specified: " + platformName);
+            return;
+        }
+
+        ForumChannel forum = (ForumChannel) threadChannel.getParentChannel();
+        if (forum == null) {
+            System.err.println("❌ Thread is not in a forum channel.");
+            return;
+        }
+
+        ForumTag platformTag = forum.getAvailableTags().stream()
+                .filter(tag -> tag.getId().equals(platformTagId))
+                .findFirst()
+                .orElse(null);
+
+        if (platformTag == null) {
+            System.err.println("❌ Platform tag '" + platformName + "' not found in forum.");
+            return;
+        }
+
+        threadChannel.getManager()
+                .setAppliedTags(Collections.singletonList(platformTag))
+                .queue(
+                        success -> System.out.println("✅ Applied platform tag '" + platformName + "' successfully."),
+                        error -> System.err.println("❌ Failed to apply platform tag: " + error.getMessage())
+                );
+    }
+
+    public void applyGameTag(ThreadChannel threadChannel, String gameKey) {
+        if (threadChannel == null) {
+            System.err.println("❌ ThreadChannel is null.");
+            return;
+        }
+
+        String tagId = GAME_TAG_IDS.get(gameKey);
+        if (tagId == null) {
+            System.err.println("❌ Game key '" + gameKey + "' not recognized.");
+            return;
+        }
+
+        ForumChannel forum = (ForumChannel) threadChannel.getParentChannel();
+        if (forum == null) {
+            System.err.println("❌ Thread is not in a forum channel.");
+            return;
+        }
+
+        ForumTag gameTag = forum.getAvailableTags().stream()
+                .filter(tag -> tag.getId().equals(tagId))
+                .findFirst()
+                .orElse(null);
+
+        if (gameTag == null) {
+            System.err.println("❌ Game tag with ID '" + tagId + "' not found.");
+            return;
+        }
+
+        threadChannel.getManager()
+                .setAppliedTags(Collections.singletonList(gameTag))
+                .queue(
+                        success -> System.out.println("✅ Game tag '" + gameKey + "' applied successfully."),
+                        error -> System.err.println("❌ Failed to apply game tag: " + error.getMessage())
+                );
+    }
+
 
     public void blockUser(long userId) {
         blockedUsers.add(userId);
@@ -345,6 +456,8 @@ public class Lobby extends ListenerAdapter {
         });
     }
 
+
+
     public void sendLobbyAnnouncement(Guild guild, long postChannelId, Runnable onComplete) {
         ForumChannel postChannel = guild.getForumChannelById(postChannelId);
         if (postChannel == null) {
@@ -355,15 +468,34 @@ public class Lobby extends ListenerAdapter {
         this.announcementChannelId = postChannelId;
 
         List<ForumTag> appliedTags = new ArrayList<>();
-        for (ForumTag tag : postChannel.getAvailableTags()) {
-            if (tag.getName().equalsIgnoreCase("Open")) {
-                appliedTags.add(tag);
-            }
-            if (tag.getName().equalsIgnoreCase(skillLevel)) {
-                appliedTags.add(tag);
-            }
+
+        // Tag "Open"
+        ForumTag openTag = getTagByName(postChannel, "Open");
+        if (openTag != null) appliedTags.add(openTag);
+
+        // Tag skillLevel
+        ForumTag skillLevelTag = getTagByName(postChannel, skillLevel);
+        if (skillLevelTag != null) appliedTags.add(skillLevelTag);
+
+        // Tag Platform tramite ID
+        String platformTagId = PLATFORM_TAG_IDS.get(platform);
+        ForumTag platformTag = getTagById(postChannel, platformTagId);
+        if (platformTag != null) {
+            appliedTags.add(platformTag);
+        } else {
+            System.err.println("⚠️ Platform tag '" + platform + "' non trovato tra i tag disponibili nel forum.");
         }
 
+        // Tag Game tramite ID
+        String gameTagId = GAME_TAG_IDS.get(game.toUpperCase());
+        ForumTag gameTag = getTagById(postChannel, gameTagId);
+        if (gameTag != null) {
+            appliedTags.add(gameTag);
+        } else {
+            System.err.println("⚠️ Game tag '" + game + "' non trovato tra i tag disponibili nel forum.");
+        }
+
+        // Costruzione embed
         EmbedBuilder publicEmbed = buildLobbyEmbed();
         Button joinButton = Button.success("join_lobby_" + discordId, "Join");
 
@@ -371,7 +503,7 @@ public class Lobby extends ListenerAdapter {
                 .setEmbeds(publicEmbed.build())
                 .setActionRow(joinButton);
 
-        // Caricamento immagine da resources/images (nome gioco in maiuscolo)
+        // Immagine gioco
         String imageName = game.toUpperCase() + ".png";
         System.out.println("Cerco immagine: images/" + imageName);
         InputStream imageStream = getClass().getClassLoader().getResourceAsStream("images/" + imageName);
@@ -384,6 +516,7 @@ public class Lobby extends ListenerAdapter {
             System.err.println("⚠️ Immagine per il gioco '" + game + "' non trovata nelle risorse (cercato: images/" + imageName + ")");
         }
 
+        // Creazione forum post
         postChannel.createForumPost(playerName + " Lobby", messageBuilder.build())
                 .setTags(appliedTags)
                 .queue(post -> {
@@ -396,7 +529,7 @@ public class Lobby extends ListenerAdapter {
                             this.setEmbededMessageId(firstMessage.getIdLong());
                             firstMessage.pin().queue();
 
-                            // Emoji Map
+                            // Reazione con emoji custom gioco
                             Map<String, Long> gameEmojiMap = Map.of(
                                     "NSUNSG", 1317938657872838656L,
                                     "NSUNS3", 1317938959472398479L,
@@ -427,6 +560,7 @@ public class Lobby extends ListenerAdapter {
 
                     System.out.println("📣 Forum lobby post created! Thread ID: " + threadChannel.getIdLong());
 
+                    // Creazione canale privato
                     guild.createTextChannel(playerName.toLowerCase().replace(" ", "-") + "-lobby")
                             .setParent(guild.getCategoryById(c.getLobbyCategory()))
                             .addPermissionOverride(guild.getPublicRole(), null, EnumSet.of(Permission.VIEW_CHANNEL))
@@ -457,6 +591,21 @@ public class Lobby extends ListenerAdapter {
                                 }
                             });
                 });
+    }
+
+    private ForumTag getTagByName(ForumChannel forum, String tagName) {
+        if (tagName == null) return null;
+        return forum.getAvailableTags().stream()
+                .filter(tag -> tag.getName().equalsIgnoreCase(tagName))
+                .findFirst()
+                .orElse(null);
+    }
+    private ForumTag getTagById(ForumChannel forum, String tagId) {
+        if (tagId == null) return null;
+        return forum.getAvailableTags().stream()
+                .filter(tag -> tag.getId().equals(tagId))
+                .findFirst()
+                .orElse(null);
     }
 
 
@@ -551,17 +700,17 @@ public class Lobby extends ListenerAdapter {
                 .setTitle("▬▬▬▬▬▬▬▬▬▬ " + lobbyType + " Created ▬▬▬▬▬▬▬▬▬▬")
                 .setColor(Color.decode("#1c0b2e"))
                 .setDescription(
-                      //  "# "+"<@"+this.getDiscordId()+">"+" | " +this.getDiscordId() + "\n"+
+                        //  "# "+"<@"+this.getDiscordId()+">"+" | " +this.getDiscordId() + "\n"+
                         "### <@"+this.getDiscordId()+">"+" is available for the next "+ availability +" on " + platform + "\n"+
                                 "* **In Game Name:** " + playerName + "\n" +
                                 "* **Game Target:** " + game + "\n" +
-                             //   "**Platform:** " + platform + "\n" +
+                                //   "**Platform:** " + platform + "\n" +
                                 "* **FPS Target:** " + Fps + "\n" +
                                 "* **Skill Target:** " + skillLevel + " players\n" +
                                 "* **Region Target:** " + region + "\n" +
                                 "* **Connection Method Target: **" + connectionType + "\n" +
                                 "* **Target Rules:** " + rules + "\n\n" +
-                             //   "**Availability:** " + availability + "\n" +
+                                //   "**Availability:** " + availability + "\n" +
                                 "*** Lobby is open - Click to join ***"+
                                 "\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
 
@@ -631,7 +780,7 @@ public class Lobby extends ListenerAdapter {
 
     public void callRefereeInPrivateChannel(Guild guild) {
         String adminRoleId =c.getRefereeRole();
-       // String adminRoleId = "1015310375094337656";
+        // String adminRoleId = "1015310375094337656";
         String message = "<@&" + adminRoleId + "> You have been requested to manage/oversee a dispute between the participants of this lobby.";
 
         TextChannel privateChannel = guild.getTextChannelById(this.privateChannelId);

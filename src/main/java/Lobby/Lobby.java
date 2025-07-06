@@ -472,6 +472,58 @@ public class Lobby extends ListenerAdapter {
         });
     }
 
+    public void applyClosedTagsToThread(ThreadChannel threadChannel) {
+        if (threadChannel == null) {
+            System.err.println("❌ ThreadChannel is null.");
+            return;
+        }
+
+        ForumChannel forum = (ForumChannel) threadChannel.getParentChannel();
+        if (forum == null) {
+            System.err.println("❌ Thread is not in a forum channel.");
+            return;
+        }
+
+        List<ForumTag> appliedTags = new ArrayList<>();
+
+        // Tag "Closed"
+        String closedTagId = "1389612412470038649";
+        ForumTag closedTag = getTagById(forum, closedTagId);
+        if (closedTag != null) {
+            appliedTags.add(closedTag);
+        } else {
+            System.err.println("❌ Tag 'Closed' non trovato.");
+            return;
+        }
+
+        // Tag piattaforma
+        String platformTagId = PLATFORM_TAG_IDS.get(this.platform);
+        ForumTag platformTag = getTagById(forum, platformTagId);
+        if (platformTag != null) {
+            appliedTags.add(platformTag);
+        }
+
+        // Tag gioco
+        String gameTagId = GAME_TAG_IDS.get(this.game.toUpperCase());
+        ForumTag gameTag = getTagById(forum, gameTagId);
+        if (gameTag != null) {
+            appliedTags.add(gameTag);
+        }
+
+        // Tag skillLevel
+        ForumTag skillLevelTag = getTagByName(forum, this.skillLevel);
+        if (skillLevelTag != null) {
+            appliedTags.add(skillLevelTag);
+        }
+
+        threadChannel.getManager()
+                .setAppliedTags(appliedTags)
+                .queue(
+                        success -> System.out.println("✅ Tutti i tag sono stati impostati correttamente."),
+                        error -> System.err.println("❌ Errore nell'impostazione dei tag: " + error.getMessage())
+                );
+    }
+
 
 
     public void sendLobbyAnnouncement(Guild guild, long postChannelId, Runnable onComplete) {

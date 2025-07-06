@@ -471,20 +471,21 @@ public class LobbyCommand extends ListenerAdapter {
                         event.reply("❌ You cannot complete a lobby without participants.").setEphemeral(true).queue();
                         return;
                     }
-                    Lobby l= LobbyManager.getLobby(event.getUser().getIdLong());
-                    System.out.println(l);
+
                     ThreadChannel threadChannel = event.getGuild().getThreadChannels().stream()
-                            .filter(thread -> thread.getIdLong() == l.getPostId())
+                            .filter(thread -> thread.getIdLong() == lobby.getPostId())
                             .findFirst()
                             .orElse(null);
 
-
-                    changeTagFromOpenedToClosed(threadChannel,l.getSkillLevel());
+                    // Chiamata al metodo che imposta tutti i tag
+                    lobby.applyClosedTagsToThread(threadChannel);
                     lobby.archivePost(event.getGuild());
+
                     event.reply("✅ Lobby marked as **completed**!").setEphemeral(true).queue(success -> {
                         event.getMessage().delete().queue();
                     });
                 }
+
                 case "lobby_incompleted" -> {
                     lobby.incompleteLobby(event.getGuild());
                     event.reply("⚠️ Lobby marked as **incomplete**.").setEphemeral(true).queue(success -> {
@@ -847,15 +848,22 @@ public class LobbyCommand extends ListenerAdapter {
         event.replyModal(modal).queue();
     }
 
-    public void changeTagFromOpenedToClosed(ThreadChannel threadChannel, String skillLevel) {
+    public void changeTagFromOpenedToClosed(Lobby lobby, ThreadChannel threadChannel) {
+        if (lobby == null) {
+            System.err.println("❌ Lobby is null.");
+            return;
+        }
+
         if (threadChannel == null) {
             System.err.println("❌ ThreadChannel is null.");
             return;
         }
 
+        String skillLevel = lobby.getSkillLevel();
         List<String> validSkillLevels = Arrays.asList("LF Beginner", "LF Intermediate", "LF Advanced", "LF Any");
-        if (!validSkillLevels.contains(skillLevel)) {
-            System.err.println("❌ Invalid skill level specified: " + skillLevel);
+
+        if (skillLevel == null || !validSkillLevels.contains(skillLevel)) {
+            System.err.println("❌ Invalid or missing skill level in lobby: " + skillLevel);
             return;
         }
 
@@ -865,7 +873,13 @@ public class LobbyCommand extends ListenerAdapter {
             return;
         }
 
-        ForumTag closedTag = forum.getAvailableTags().stream()
+        List<ForumTag> availableTags = forum.getAvailableTags();
+        if (availableTags == null || availableTags.isEmpty()) {
+            System.err.println("❌ No tags available in the forum.");
+            return;
+        }
+
+        ForumTag closedTag = availableTags.stream()
                 .filter(tag -> tag.getName().equalsIgnoreCase("Closed"))
                 .findFirst()
                 .orElse(null);
@@ -875,7 +889,7 @@ public class LobbyCommand extends ListenerAdapter {
             return;
         }
 
-        ForumTag skillLevelTag = forum.getAvailableTags().stream()
+        ForumTag skillLevelTag = availableTags.stream()
                 .filter(tag -> tag.getName().equalsIgnoreCase(skillLevel))
                 .findFirst()
                 .orElse(null);
@@ -885,7 +899,6 @@ public class LobbyCommand extends ListenerAdapter {
             return;
         }
 
-        // Applica i tag
         threadChannel.getManager()
                 .setAppliedTags(Arrays.asList(closedTag, skillLevelTag))
                 .queue(
@@ -1013,7 +1026,7 @@ public class LobbyCommand extends ListenerAdapter {
         lobbySessions.remove(discordId);
     }
 
-
+/*
     @Override
     public void onMessageReactionAdd(MessageReactionAddEvent event) {
         // Ignora i bot
@@ -1079,6 +1092,8 @@ public class LobbyCommand extends ListenerAdapter {
         System.out.println("✅ Lobby completata e pulita correttamente.");
     }
 
+
+ */
 
     private void createTicket(StringSelectInteractionEvent event) {
         Guild guild = event.getGuild();

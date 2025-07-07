@@ -101,13 +101,10 @@ public class ManagerCommands extends ListenerAdapter {
             if (event.getMember() != null) {
                 // Estrai le opzioni dal comando
                 String clanName = event.getOption("name").getAsString();
-                int victories = 0;  // Vittorie
-                int losses = 0;     // Perdite
+                int victories = 0;
+                int losses = 0;
 
-                //    int victories = event.getOption("victories").getAsInt();  // Vittorie
-                //    int losses = event.getOption("losses").getAsInt();       // Perdite
-
-                TextChannel channel = (TextChannel) event.getChannel();   // Canale in cui inviare il messaggio
+                TextChannel channel = (TextChannel) event.getChannel();  // Canale dove inviare il messaggio
 
                 // Crea il nuovo clan
                 Clan clan = new Clan(clanName, event.getUser(), victories, losses);
@@ -127,12 +124,12 @@ public class ManagerCommands extends ListenerAdapter {
                 builder.addField("**Losses**", String.valueOf(clan.getLosses()), true);
                 builder.setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
 
-                // Invio dell'embed come risposta
+                // Invio dell'embed come risposta al comando
                 event.replyEmbeds(builder.build()).setEphemeral(true).queue(success -> {
-                    // Assegna il ruolo "Clan Leader" all'utente specificato
                     Guild guild = event.getGuild();
                     Member member = guild.getMember(event.getUser());
 
+                    // Assegna il ruolo Clan Leader
                     if (guild != null && member != null) {
                         Role clanLeaderRole = guild.getRoleById(735017246786715709L);
                         if (clanLeaderRole != null) {
@@ -143,40 +140,46 @@ public class ManagerCommands extends ListenerAdapter {
                         } else {
                             System.err.println("❌ Clan Leader role not found.");
                         }
+
+                        // Invia l'embed nel canale di log
+                        TextChannel logChannel = guild.getTextChannelById(1391769296975429742L);
+                        if (logChannel != null) {
+                            logChannel.sendMessageEmbeds(builder.build()).queue();
+                        } else {
+                            System.err.println("❌ Log channel not found.");
+                        }
                     }
                 });
+
             } else {
                 event.reply("You don't have the required permissions to register a clan.").setEphemeral(true).queue();
             }
         }
 
+
         if (event.getName().equals("add_clan_member")) {
             String clanName = event.getOption("clan_name").getAsString();
             User user = event.getOption("user").getAsUser();
 
-            // Search for the clan in storage
             Clan clan = ClanStorage.getClan(clanName);
             if (clan == null) {
                 event.reply("Clan `" + clanName + "` does not exist!").setEphemeral(true).queue();
                 return;
             }
 
-            // Add the user to the clan
             try {
                 clan.addUser(user);
 
-                // Update MongoDB
                 boolean dbUpdate = MongoDBManager.addUserToClan(clanName, user.getId());
                 if (!dbUpdate) {
                     event.reply("⚠️ User could not be added to the database.").setEphemeral(true).queue();
                     return;
                 }
 
-                // Embed remains the same
                 EmbedBuilder embed = new EmbedBuilder();
                 embed.setTitle("▬▬▬ User Registered Successfully to a Clan! ▬▬▬▬");
                 embed.setColor(Color.decode("#859BC6"));
-                embed.setDescription("**Your operation was successful!\nThe player has been added to the clan.**");
+                embed.setDescription("**The player has been added to the clan.**");
                 embed.addField("**Player Id:**", user.getId(), true);
                 embed.addField("**Player Name:**", user.getEffectiveName(), true);
                 embed.addField("**Clan Name:**", clan.getName(), false);
@@ -186,24 +189,21 @@ public class ManagerCommands extends ListenerAdapter {
                 embed.setImage("https://media1.tenor.com/m/hmS-_I4TaGAAAAAd/dyar-and.gif");
                 embed.setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
 
-                // Rispondi con l'embed
                 event.replyEmbeds(embed.build()).setEphemeral(true).queue(success -> {
-                    // Dopo la conferma, assegna il ruolo Clan Member
                     Guild guild = event.getGuild();
                     if (guild != null) {
                         Member member = guild.getMember(user);
                         if (member != null) {
                             Role clanMemberRole = guild.getRoleById(1258861925438062724L);
                             if (clanMemberRole != null) {
-                                guild.addRoleToMember(member, clanMemberRole).queue(
-                                        roleSuccess -> System.out.println("[Info] Clan Member role assigned to " + member.getEffectiveName()),
-                                        roleError -> System.err.println("❌ Failed to assign Clan Member role: " + roleError.getMessage())
-                                );
-                            } else {
-                                System.err.println("❌ Clan Member role not found.");
+                                guild.addRoleToMember(member, clanMemberRole).queue();
                             }
-                        } else {
-                            System.err.println("❌ Member not found in the guild.");
+                        }
+
+                        // Invia lo stesso embed nel canale di log
+                        TextChannel logChannel = guild.getTextChannelById(1391769296975429742L);
+                        if (logChannel != null) {
+                            logChannel.sendMessageEmbeds(embed.build()).queue();
                         }
                     }
                 });
@@ -211,6 +211,7 @@ public class ManagerCommands extends ListenerAdapter {
                 event.reply("Cannot add user to the clan: " + e.getMessage()).setEphemeral(true).queue();
             }
         }
+
 
         if (event.getName().equals("kick_clan_member")) {
             String clanName = event.getOption("clan_name").getAsString();
@@ -262,6 +263,11 @@ public class ManagerCommands extends ListenerAdapter {
                         } else {
                             System.err.println("❌ Member not found in the guild.");
                         }
+                        TextChannel logChannel = guild.getTextChannelById(1391769296975429742L);
+                        if (logChannel != null) {
+                            logChannel.sendMessageEmbeds(embed.build()).queue();
+                        }
+
                     }
                 });
             } catch (IllegalStateException e) {
@@ -387,9 +393,21 @@ public class ManagerCommands extends ListenerAdapter {
                                     "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
                     embedBuilder.setImage("https://media1.tenor.com/m/lhsiMCdib-IAAAAd/itachi-uchiha-forehead-protector.gif");
                     embedBuilder.setColor(Color.decode("#20B2AA"));
+
                     event.replyEmbeds(embedBuilder.build()).setEphemeral(true).queue();
+
+                    // Log nel canale
+                    Guild guild = event.getGuild();
+                    if (guild != null) {
+                        TextChannel logChannel = guild.getTextChannelById(1391769296975429742L);
+                        if (logChannel != null) {
+                            logChannel.sendMessageEmbeds(embedBuilder.build()).queue();
+                        } else {
+                            System.err.println("❌ Log channel not found.");
+                        }
+                    }
                 } else {
-                    event.reply("⚠️ Error: Unable to update the clan name,check if a clan with that name already exist").setEphemeral(true).queue();
+                    event.reply("⚠️ Error: Unable to update the clan name, check if a clan with that name already exists").setEphemeral(true).queue();
                 }
             } else {
                 event.reply("⚠️ Error: Clan **" + oldName + "** does not exist.").setEphemeral(true).queue();

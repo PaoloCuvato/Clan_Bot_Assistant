@@ -147,9 +147,11 @@ public class Lobby extends ListenerAdapter {
         } else if (this.lobbyType.equals("Endless")) {
             this.maxPartecipants = 8;
 
-        } else if (this.lobbyType.equals("Tournaments")) {
+        } else if (this.lobbyType.equals("Tournament")) {
             this.maxPartecipants = 8;
 
+        }else if (this.lobbyType.equals("Clan Battle")) {
+            this.maxPartecipants = 8;
         }
     }
 

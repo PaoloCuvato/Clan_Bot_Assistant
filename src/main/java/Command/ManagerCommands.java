@@ -39,7 +39,7 @@ public class ManagerCommands extends ListenerAdapter {
         String command = event.getName();
 
         // Handling the /info command
-        if (command.equals("info") && (Objects.requireNonNull(event.getMember()).hasPermission(Permission.ADMINISTRATOR))) {
+        if (command.equals("info")) {
             if (event.getChannel() instanceof TextChannel) {
                 EmbedBuilder builder = new EmbedBuilder();
                 builder.setTitle("▬▬▬▬▬▬▬▬▬▬ Info ▬▬▬▬▬▬▬▬▬▬▬");
@@ -48,7 +48,7 @@ public class ManagerCommands extends ListenerAdapter {
                         + "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
                 builder.setImage("https://media1.tenor.com/m/4XzoCqoNqjQAAAAd/uzumaki-clan.gif");
                 builder.setColor(Color.decode("#1C638C"));
-                event.replyEmbeds(builder.build()).queue();
+                event.replyEmbeds(builder.build()).setEphemeral(true).queue();
             }
         }
 
@@ -67,7 +67,7 @@ public class ManagerCommands extends ListenerAdapter {
         }
 
         // Handling the /commands command
-        if (command.equals("commands") && (Objects.requireNonNull(event.getMember()).hasPermission(Permission.ADMINISTRATOR))) {
+        if (command.equals("commands")) {
             if (event.getChannel() instanceof TextChannel) {
                 TextChannel channel = (TextChannel) event.getChannel();
                 EmbedBuilder builder = new EmbedBuilder();
@@ -91,16 +91,14 @@ public class ManagerCommands extends ListenerAdapter {
                                 "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
                 builder.setImage("https://media1.tenor.com/m/R8CSlK2ys1AAAAAd/sasuke-scroll.gif");
                 builder.setColor(Color.white);
-                event.replyEmbeds(builder.build()).queue();
+                event.replyEmbeds(builder.build()).setEphemeral(true).queue();
             }
         }
-
-
 
         // Handling the clan command
 
         if (command.equals("register_clan")) {
-            if (event.getMember() != null && event.getMember().hasPermission(Permission.ADMINISTRATOR)) {
+            if (event.getMember() != null) {
                 // Estrai le opzioni dal comando
                 String clanName = event.getOption("name").getAsString();
                 User user = (User) event.getOption("user").getAsUser(); // Utente che crea il clan
@@ -171,7 +169,7 @@ public class ManagerCommands extends ListenerAdapter {
                 embed.setImage("https://media1.tenor.com/m/hmS-_I4TaGAAAAAd/dyar-and.gif");
                 embed.setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
                 //     embed.setFooter(user.getName() +"  "+user.getEffectiveAvatarUrl());
-                event.replyEmbeds(embed.build()).queue();
+                event.replyEmbeds(embed.build()).setEphemeral(true).queue();
             } catch (IllegalStateException e) {
                 event.reply("Cannot add user to the clan: " + e.getMessage()).setEphemeral(true).queue();
             }
@@ -210,75 +208,13 @@ public class ManagerCommands extends ListenerAdapter {
 
                 embed.setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
                 //     embed.setFooter(user.getName() +"  "+user.getEffectiveAvatarUrl());
-                event.replyEmbeds(embed.build()).queue();
+                event.replyEmbeds(embed.build()).setEphemeral(true).queue();
             } catch (IllegalStateException e) {
                 event.reply("Cannot kick user of the clan: " + e.getMessage()).setEphemeral(true).queue();
             }
         }
 
 
-        /*
-
-        if (event.getName().equals("add_user")) {
-            String clanName = event.getOption("clan_name").getAsString();
-            User user = event.getOption("user").getAsUser();
-
-            // Search for the clan in storage
-            Clan clan = ClanStorage.getClan(clanName);
-            if (clan == null) {
-                event.reply("Clan `" + clanName + "` does not exist!").setEphemeral(true).queue();
-                return;
-            }
-
-            // Add the user to the clan
-            try {
-                clan.addUser(user);
-                EmbedBuilder embed = new EmbedBuilder();
-                embed.setTitle(" Player Added Successfully to the clan");
-                embed.setTitle("▬▬▬ User Registered Successfully to a Clan! ▬▬▬");
-                embed.setColor(Color.decode("#859BC6"));
-                embed.setDescription("**Your operation was successful!\nThe player has been added to the clan.**");
-                embed.addField("**Player Id: **", user.getId(), true);
-                embed.addField("**Player Name: **", user.getEffectiveName(), true);
-                embed.addField("**Clan Name: **", clan.getName(), false);
-                embed.addField("**Victories: **", String.valueOf(clan.getWins()), true);
-                embed.addField("**Losses: **", String.valueOf(clan.getLosses()), true);
-                embed.addField("**Clan Creation Date: **", clan.getFormattedCreationDate(), false);
-                embed.setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
-                //     embed.setFooter(user.getName() +"  "+user.getEffectiveAvatarUrl());
-                event.replyEmbeds(embed.build()).queue();
-            } catch (IllegalStateException e) {
-                event.reply("Cannot add user to the clan: " + e.getMessage()).setEphemeral(true).queue();
-            }
-        }
-        if (event.getName().equals("kick_user")) {
-            String clanName = event.getOption("clan_name").getAsString();
-            User user = event.getOption("user").getAsUser();
-
-            Clan clan = ClanStorage.getClan(clanName);
-            if (clan == null) {
-                event.reply("Clan `" + clanName + "` does not exist!").setEphemeral(true).queue();
-                return;
-            }
-
-            try {
-                clan.kickUser(user);
-                EmbedBuilder embed = new EmbedBuilder();
-                embed.setTitle("▬▬▬ User Kicked Successfully of the Clan! ▬▬▬");
-                embed.setColor(Color.red);
-                embed.setDescription("**Your operation was successful!\nThe player has been kicked out of the clan.**");
-                embed.addField("**Player Id: **", user.getId(), true);
-                embed.addField("**Player Name: **", user.getEffectiveName(), true);
-                embed.addField("**Clan Name: **", clan.getName(), false);
-                embed.addField("**Clan Creation Date: **", clan.getFormattedCreationDate(), true);
-                embed.setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
-                //     embed.setFooter(user.getName() +"  "+user.getEffectiveAvatarUrl());
-                event.replyEmbeds(embed.build()).queue();
-            } catch (IllegalStateException e) {
-                event.reply("Cannot kick user of the clan: " + e.getMessage()).setEphemeral(true).queue();
-            }
-        }
-         */
 
         // Parte aggiunta nel metodo onSlashCommandInteraction
         if (event.getName().equals("edit_wins")) {
@@ -304,7 +240,7 @@ public class ManagerCommands extends ListenerAdapter {
             embed.setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
 
             if (updated) {
-                event.replyEmbeds(embed.build()).queue();
+                event.replyEmbeds(embed.build()).setEphemeral(true).queue();
             } else {
                 event.reply("❌ Error updating clan wins in the database.").setEphemeral(true).queue();
             }
@@ -334,7 +270,7 @@ public class ManagerCommands extends ListenerAdapter {
             embed.setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
 
             if (updated) {
-                event.replyEmbeds(embed.build()).queue();
+                event.replyEmbeds(embed.build()).setEphemeral(true).queue();
             } else {
                 event.reply("❌ Error updating clan losses in the database.").setEphemeral(true).queue();
             }
@@ -378,7 +314,7 @@ public class ManagerCommands extends ListenerAdapter {
             embedBuilder.addField("Roles", roles.toString(), false);
 
             // Rispondi con l'embed
-            event.replyEmbeds(embedBuilder.build()).queue();
+            event.replyEmbeds(embedBuilder.build()).setEphemeral(true).queue();
         }
 
         if (event.getName().equals("edit_clan_name")) {
@@ -397,7 +333,7 @@ public class ManagerCommands extends ListenerAdapter {
                                     "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
                     embedBuilder.setImage("https://media1.tenor.com/m/lhsiMCdib-IAAAAd/itachi-uchiha-forehead-protector.gif");
                     embedBuilder.setColor(Color.decode("#20B2AA"));
-                    event.replyEmbeds(embedBuilder.build()).queue();
+                    event.replyEmbeds(embedBuilder.build()).setEphemeral(true).queue();
                 } else {
                     event.reply("⚠️ Error: Unable to update the clan name,check if a clan with that name already exist").setEphemeral(true).queue();
                 }
@@ -468,7 +404,7 @@ public class ManagerCommands extends ListenerAdapter {
             embedBuilder.setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
 
             // Rispondi con l'embed
-            event.replyEmbeds(embedBuilder.build()).queue(
+            event.replyEmbeds(embedBuilder.build()).setEphemeral(true).queue(
                     success -> System.out.println("Embed sent successfully"),
                     failure -> System.out.println("Error sending embed: " + failure.getMessage())
             );
@@ -524,9 +460,8 @@ public class ManagerCommands extends ListenerAdapter {
             embedBuilder.appendDescription("\n**Total members in this clan: ** " + clanMembers.size()+ "\n\n ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
             embedBuilder.setImage("https://media1.tenor.com/m/SbU1R7BA53gAAAAC/naruto-data-naruto.gif");
 
-
             // Rispondi con l'embed
-            event.replyEmbeds(embedBuilder.build()).queue(
+            event.replyEmbeds(embedBuilder.build()).setEphemeral(true).queue(
                     success -> System.out.println("Embed sent successfully"),
                     failure -> System.out.println("Error sending embed: " + failure.getMessage())
             );
@@ -551,7 +486,7 @@ public class ManagerCommands extends ListenerAdapter {
                                     "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
                     embedBuilder.setColor(Color.decode("#B90000")); // Colore rosso per indicare la cancellazione
                     embedBuilder.setImage("https://media1.tenor.com/m/qvsXglbsb7oAAAAd/shinra-tensei.gif");
-                    event.replyEmbeds(embedBuilder.build()).queue();
+                    event.replyEmbeds(embedBuilder.build()).setEphemeral(true).queue();
                     System.out.println("Clan: "+ clanName +" Successfully deleted from the DB");
 
                 } else {
@@ -613,7 +548,7 @@ public class ManagerCommands extends ListenerAdapter {
                 embedBuilder.setColor(Color.orange); // Colore distintivo per la richiesta
                 embedBuilder.setImage("https://media1.tenor.com/m/hR6O2mOHfkgAAAAd/madara-madara-fighting.gif");
                 // vecchia gif kakashi vs obito: embedBuilder.setImage("https://media1.tenor.com/m/12s59XBmULkAAAAd/obito-uchiha-vs-kakashi-hatake-naruto-shippuden.gif");
-                event.replyEmbeds(embedBuilder.build()).queue();
+                event.replyEmbeds(embedBuilder.build()).setEphemeral(true).queue();
             } else {
                 // Risposta se il clan non esiste
                 event.reply("Impossible to create the request. The clan **" + clanName + "** does not exist.")

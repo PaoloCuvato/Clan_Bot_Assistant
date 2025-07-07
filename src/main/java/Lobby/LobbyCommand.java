@@ -848,6 +848,7 @@ public class LobbyCommand extends ListenerAdapter {
                                             .addOption("Player Match", "Player Match")
                                             .addOption("Endless", "Endless")
                                             .addOption("Tournament", "Tournament")
+                                            .addOption("Clan Battle", "Clan Battle")
                                             .build()
                             )
                     )

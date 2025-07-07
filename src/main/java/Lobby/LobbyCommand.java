@@ -179,6 +179,20 @@ public class LobbyCommand extends ListenerAdapter {
                             }
                         }
                     });
+            // Rimuove il ruolo all'utente
+            Guild guild = event.getGuild();
+            Member member = event.getMember();
+            if (guild != null && member != null) {
+                Role role = guild.getRoleById(1391728467367694448L);
+                if (role != null) {
+                    guild.removeRoleFromMember(member, role).queue(
+                            success -> System.out.println("[Info] Role removed successfully."),
+                            error -> System.err.println("❌ Failed to remove role: " + error.getMessage())
+                    );
+                } else {
+                    System.err.println("❌ Role not found.");
+                }
+            }
         }
 
         if (!event.getName().equals("results")) return;
@@ -524,6 +538,21 @@ public class LobbyCommand extends ListenerAdapter {
                     event.reply("✅ Lobby marked as **completed**!").setEphemeral(true).queue(success -> {
                         event.getMessage().delete().queue();
                     });
+
+                    // Rimuove il ruolo all'utente
+                    Guild guild = event.getGuild();
+                    Member member = event.getMember();
+                    if (guild != null && member != null) {
+                        Role role = guild.getRoleById(1391728467367694448L);
+                        if (role != null) {
+                            guild.removeRoleFromMember(member, role).queue(
+                                    success -> System.out.println("[Info] Role removed successfully."),
+                                    error -> System.err.println("❌ Failed to remove role: " + error.getMessage())
+                            );
+                        } else {
+                            System.err.println("❌ Role not found.");
+                        }
+                    }
                 }
 
                 case "lobby_incompleted" -> {
@@ -531,7 +560,23 @@ public class LobbyCommand extends ListenerAdapter {
                     event.reply("⚠️ Lobby marked as **incomplete**.").setEphemeral(true).queue(success -> {
                         event.getMessage().delete().queue();
                     });
+
+                    // Rimuove il ruolo all'utente
+                    Guild guild = event.getGuild();
+                    Member member = event.getMember();
+                    if (guild != null && member != null) {
+                        Role role = guild.getRoleById(1391728467367694448L);
+                        if (role != null) {
+                            guild.removeRoleFromMember(member, role).queue(
+                                    success -> System.out.println("[Info] Role removed successfully."),
+                                    error -> System.err.println("❌ Failed to remove role: " + error.getMessage())
+                            );
+                        } else {
+                            System.err.println("❌ Role not found.");
+                        }
+                    }
                 }
+
                 case "lobby_score" -> {
                     event.getMessage().editMessageComponents().queue();
 
@@ -647,8 +692,25 @@ public class LobbyCommand extends ListenerAdapter {
                     event.reply("❌ No active lobby found.").setEphemeral(true).queue();
                     return;
                 }
+
                 System.out.println("[Info] Setting connection type: " + event.getValues().get(0));
                 lobby.setConnectionType(event.getValues().get(0));
+
+                // Assegna il ruolo
+                Guild guild = event.getGuild();
+                Member member = event.getMember();
+                if (guild != null && member != null) {
+                    Role role = guild.getRoleById(1391728467367694448L);
+                    if (role != null) {
+                        guild.addRoleToMember(member, role).queue(
+                                success -> System.out.println("[Info] Role assigned successfully."),
+                                error -> System.err.println("❌ Failed to assign role: " + error.getMessage())
+                        );
+                    } else {
+                        System.err.println("❌ Role not found.");
+                    }
+                }
+
                 promptLobbyDetailsModal(event);
             }
             default -> System.out.println("[Info] Unknown componentId: " + event.getComponentId());

@@ -101,13 +101,16 @@ public class ManagerCommands extends ListenerAdapter {
             if (event.getMember() != null) {
                 // Estrai le opzioni dal comando
                 String clanName = event.getOption("name").getAsString();
-                User user = (User) event.getOption("user").getAsUser(); // Utente che crea il clan
-                int victories = event.getOption("victories").getAsInt();  // Vittorie
-                int losses = event.getOption("losses").getAsInt();       // Perdite
+                int victories = 0;  // Vittorie
+                int losses = 0;     // Perdite
+
+                //    int victories = event.getOption("victories").getAsInt();  // Vittorie
+                //    int losses = event.getOption("losses").getAsInt();       // Perdite
+
                 TextChannel channel = (TextChannel) event.getChannel();   // Canale in cui inviare il messaggio
 
                 // Crea il nuovo clan
-                Clan clan = new Clan(clanName, user, victories, losses);
+                Clan clan = new Clan(clanName, event.getUser(), victories, losses);
 
                 // Inserisci il clan nel database MongoDB
                 MongoDBManager.insertClan(clan);
@@ -118,17 +121,17 @@ public class ManagerCommands extends ListenerAdapter {
                 builder.setColor(Color.GREEN);
                 builder.setDescription("**The following clan has been registered successfully!**");
                 builder.addField("**Clan Name**", clan.getName(), true);
-                builder.addField("**Created By**", user.getAsTag(), true);
+                builder.addField("**Created By**", event.getUser().getAsTag(), true);
                 builder.addField("**Creation Date**", clan.getFormattedCreationDate(), false);
                 builder.addField("**Victories**", String.valueOf(clan.getWins()), true);
                 builder.addField("**Losses**", String.valueOf(clan.getLosses()), true);
                 builder.setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
 
                 // Invio dell'embed come risposta
-                event.replyEmbeds(builder.build()).queue(success -> {
+                event.replyEmbeds(builder.build()).setEphemeral(true).queue(success -> {
                     // Assegna il ruolo "Clan Leader" all'utente specificato
                     Guild guild = event.getGuild();
-                    Member member = guild.getMember(user);
+                    Member member = guild.getMember(event.getUser());
 
                     if (guild != null && member != null) {
                         Role clanLeaderRole = guild.getRoleById(735017246786715709L);
@@ -581,32 +584,6 @@ public class ManagerCommands extends ListenerAdapter {
             event.replyEmbeds(embedBuilder.build()).queue();
         }
 
-
-        if (event.getName().equals("ft_request")) {
-            String clanName = event.getOption("clan_name").getAsString();
-
-            // Controlla se il clan esiste
-            if (ClanStorage.hasClan(clanName)) {
-                // Crea l'embed per la richiesta FT
-                EmbedBuilder embedBuilder = new EmbedBuilder();
-                embedBuilder.setTitle("▬▬▬▬▬▬▬▬▬▬ FT Request ▬▬▬▬▬▬▬▬▬");
-                embedBuilder.setDescription(
-                        " > **Clan:** `" + clanName + "`\n" +
-                                " > **Status:** Open to all\n\n" +
-                                "This FT request is open to all clans. If interested, reply to this message or contact the clan directly." +
-                                "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
-                );
-                embedBuilder.setColor(Color.orange); // Colore distintivo per la richiesta
-                embedBuilder.setImage("https://media1.tenor.com/m/hR6O2mOHfkgAAAAd/madara-madara-fighting.gif");
-                // vecchia gif kakashi vs obito: embedBuilder.setImage("https://media1.tenor.com/m/12s59XBmULkAAAAd/obito-uchiha-vs-kakashi-hatake-naruto-shippuden.gif");
-                event.replyEmbeds(embedBuilder.build()).setEphemeral(true).queue();
-            } else {
-                // Risposta se il clan non esiste
-                event.reply("Impossible to create the request. The clan **" + clanName + "** does not exist.")
-                        .setEphemeral(true) // Messaggio visibile solo all'utente
-                        .queue();
-            }
-        }
     }
     //test3
 
@@ -663,10 +640,10 @@ public class ManagerCommands extends ListenerAdapter {
         commands.add(Commands.slash("commands", "Info about all the bot's commands"));
         commands.add(Commands.slash("register_clan", "Create a new clan in the bot")
                 .addOptions(
-                        new OptionData(OptionType.STRING, "name", "The name of the clan", true),
-                        new OptionData(OptionType.USER, "user", "The user to put on the clan", true),
-                        new OptionData(OptionType.INTEGER, "victories", "Clan wins (optional)", false).setMinValue(0L),
-                        new OptionData(OptionType.INTEGER, "losses", "Clan losses (optional)", false).setMinValue(0L)
+                        new OptionData(OptionType.STRING, "name", "The name of the clan", true)
+                        //    new OptionData(OptionType.USER, "user", "The user to put on the clan", true)
+                        //    new OptionData(OptionType.INTEGER, "victories", "Clan wins (optional)", false).setMinValue(0L),
+                        //    new OptionData(OptionType.INTEGER, "losses", "Clan losses (optional)", false).setMinValue(0L)
                 ));
 
         commands.add(Commands.slash("add_clan_member", "Add a user to a specific clan")
@@ -713,9 +690,6 @@ public class ManagerCommands extends ListenerAdapter {
         commands.add(Commands.slash("delete_clan", "Delete an existing clan")
                 .addOptions(new OptionData(OptionType.STRING, "clan_name", "The clan's name", true)));
 
-        commands.add(Commands.slash("ft_request", "Send a Clan Battle request")
-                .addOptions(new OptionData(OptionType.STRING, "clan_name", "Your clan's name", true)));
-
         commands.add(Commands.slash("list_all_clan", "List all clans registered on the bot"));
 
         commands.add(Commands.slash("add_info_card", "Create the player info card"));
@@ -727,11 +701,11 @@ public class ManagerCommands extends ListenerAdapter {
         commands.add(Commands.slash("freestyle", "Send lobby creation embed"));
         commands.add(Commands.slash("edit_lobby", "Edit the lobby embed"));
         commands.add(Commands.slash("direct", "Send private lobby"));
-   //     commands.add(Commands.slash("complete_lobby", "Archive and complete the lobby"));
+        //     commands.add(Commands.slash("complete_lobby", "Archive and complete the lobby"));
         commands.add(Commands.slash("leave_lobby", "Leave the current lobby"));
 
- //       commands.add(Commands.slash("block_user", "Block a user from your lobby")
- //               .addOptions(new OptionData(OptionType.USER, "user", "The user to block", true)));
+        //       commands.add(Commands.slash("block_user", "Block a user from your lobby")
+        //               .addOptions(new OptionData(OptionType.USER, "user", "The user to block", true)));
 
         commands.add(Commands.slash("lobby_stats", "Show lobby stats"));
         commands.add(Commands.slash("send_player_info_file", "Send a .txt with all players with Player Info role"));

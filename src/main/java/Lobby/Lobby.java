@@ -277,6 +277,17 @@ public class Lobby extends ListenerAdapter {
                     .orElse(null);
 
             if (threadChannel != null) {
+
+                // Invio embed nel thread
+                EmbedBuilder embed = new EmbedBuilder()
+                        .setTitle("▬▬▬▬▬▬▬▬ Lobby Behavior ▬▬▬▬▬▬▬▬")
+                        .setDescription("This lobby has been marked as incomplete.")
+                        .setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                        .setColor(Color.decode("#1c0b2e"));
+
+                threadChannel.sendMessageEmbeds(embed.build()).queue();
+
+                // Archivio e blocco il thread
                 threadChannel.getManager().setArchived(true).setLocked(true).queue(
                         success -> System.out.println("✅ Post archived and locked (incomplete lobby)."),
                         error -> System.err.println("❌ Unable to archive the post.")
@@ -333,19 +344,18 @@ public class Lobby extends ListenerAdapter {
 
             GuildChannel channel = guild.getGuildChannelById(this.privateChannelId);
             if (channel != null && channel instanceof TextChannel textChannel) {
-                for (Long participantId : new ArrayList<>(partecipants)) { // copia lista per evitare ConcurrentModification
+                for (Long participantId : new ArrayList<>(partecipants)) {
                     if (!participantId.equals(this.discordId)) {
                         Member member = guild.getMemberById(participantId);
                         if (member != null) {
-                            // Rimuovi permessi
-                            textChannel.getPermissionOverride(member).getManager()
-                                    .deny(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND)
-                                    .queue(
-                                            success -> System.out.println("✅ Rimosso permessi a " + member.getEffectiveName()),
-                                            error -> System.err.println("❌ Impossibile rimuovere permessi a " + participantId)
-                                    );
-
-                            // Rimuovi stats
+                            if (textChannel.getPermissionOverride(member) != null) {
+                                textChannel.getPermissionOverride(member).getManager()
+                                        .deny(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND)
+                                        .queue(
+                                                success -> System.out.println("✅ Rimosso permessi a " + member.getEffectiveName()),
+                                                error -> System.err.println("❌ Impossibile rimuovere permessi a " + participantId)
+                                        );
+                            }
                             PlayerStats participantStats = pm.getPlayerStats(participantId);
                             if (participantStats == null) {
                                 participantStats = new PlayerStats();
@@ -354,8 +364,6 @@ public class Lobby extends ListenerAdapter {
                             }
                             participantStats.incrementLobbiesCompletedDirect();
                             PlayerStatMongoDBManager.updatePlayerStats(participantStats);
-
-                            // Rimuovi dalla lobby
                             LobbyManager.removeLobby(participantId);
                             partecipants.remove(participantId);
                         }
@@ -365,7 +373,6 @@ public class Lobby extends ListenerAdapter {
                 System.err.println("❌ Canale privato non trovato o non è un TextChannel.");
             }
 
-            // Rimuovi lobby host
             LobbyManager.removeLobby(this.discordId);
             PlayerStatMongoDBManager.updatePlayerStats(hostStats);
 
@@ -377,6 +384,20 @@ public class Lobby extends ListenerAdapter {
                     .orElse(null);
 
             if (threadChannel != null) {
+
+                // Applica i tag
+                applyClosedTagsToThread(threadChannel);
+
+                // Invia embed nel thread
+                EmbedBuilder embed = new EmbedBuilder()
+                        .setTitle("▬▬▬▬▬▬▬▬ Lobby Behavior ▬▬▬▬▬▬▬▬")
+                        .setDescription("This lobby has been marked as completed")
+                        .setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                        .setColor(Color.decode("#1c0b2e"));
+
+                threadChannel.sendMessageEmbeds(embed.build()).queue();
+
+                // Archivia e blocca
                 threadChannel.getManager().setArchived(true).setLocked(true).queue(
                         success -> System.out.println("✅ Post archiviato e bloccato."),
                         error -> System.err.println("❌ Impossibile archiviare il post.")
@@ -516,12 +537,6 @@ public class Lobby extends ListenerAdapter {
             appliedTags.add(skillLevelTag);
         }
 
-        threadChannel.getManager()
-                .setAppliedTags(appliedTags)
-                .queue(
-                        success -> System.out.println("✅ Tutti i tag sono stati impostati correttamente."),
-                        error -> System.err.println("❌ Errore nell'impostazione dei tag: " + error.getMessage())
-                );
     }
 
 

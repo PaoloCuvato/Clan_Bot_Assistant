@@ -85,7 +85,6 @@ public class LobbyCommand extends ListenerAdapter {
             }
         }
 
-        // Dentro il metodo onSlashCommandInteraction:
         if (event.getName().equalsIgnoreCase("leave_lobby")) {
             long userId = event.getUser().getIdLong();
             Lobby lobby = LobbyManager.getLobby(userId);
@@ -128,6 +127,28 @@ public class LobbyCommand extends ListenerAdapter {
                         Guild guild = event.getGuild();
                         Member member = event.getMember();
                         if (guild != null && member != null) {
+
+                            // Mando l'embed nel thread se NON è una Direct Lobby
+                            if (!lobby.isDirectLobby()) {
+                                ThreadChannel threadChannel = guild.getThreadChannels().stream()
+                                        .filter(thread -> thread.getIdLong() == lobby.getPostId())
+                                        .findFirst()
+                                        .orElse(null);
+
+                                if (threadChannel != null) {
+                                    EmbedBuilder embed = new EmbedBuilder()
+                                            .setTitle("▬▬▬▬▬▬▬▬ Lobby Behavior ▬▬▬▬▬▬▬▬")
+                                            .setDescription("This lobby has been disbanded by the host or participant.")
+                                            .setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                                            .setColor(Color.decode("#1c0b2e"));
+
+                                    threadChannel.sendMessageEmbeds(embed.build()).queue();
+                                } else {
+                                    System.err.println("❌ Thread channel not found.");
+                                }
+                            }
+
+                            // Rimuovi permessi dal canale privato se esiste
                             TextChannel privateChannel = guild.getTextChannelById(lobby.getPrivateChannelId());
                             if (privateChannel != null) {
                                 var override = privateChannel.getPermissionOverride(member);

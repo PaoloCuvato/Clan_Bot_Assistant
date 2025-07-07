@@ -126,9 +126,8 @@ public class LobbyCommand extends ListenerAdapter {
                     .queue(success -> {
                         Guild guild = event.getGuild();
                         Member member = event.getMember();
-                        if (guild != null && member != null) {
 
-                            // Mando l'embed nel thread se NON è una Direct Lobby
+                        if (guild != null && member != null) {
                             if (!lobby.isDirectLobby()) {
                                 ThreadChannel threadChannel = guild.getThreadChannels().stream()
                                         .filter(thread -> thread.getIdLong() == lobby.getPostId())
@@ -136,15 +135,35 @@ public class LobbyCommand extends ListenerAdapter {
                                         .orElse(null);
 
                                 if (threadChannel != null) {
+                                    System.out.println("Thread trovato: " + threadChannel.getId());
+
+                                    // Applica i tag nel thread (metodo esterno, non modificato)
+                                    lobby.applyClosedTagsToThread(threadChannel);
+
+                                    // Prepara embed
                                     EmbedBuilder embed = new EmbedBuilder()
                                             .setTitle("▬▬▬▬▬▬▬▬ Lobby Behavior ▬▬▬▬▬▬▬▬")
                                             .setDescription("This lobby has been disbanded by the host or participant.")
                                             .setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
                                             .setColor(Color.decode("#1c0b2e"));
 
-                                    threadChannel.sendMessageEmbeds(embed.build()).queue();
+                                    // Invia embed con log di successo/errore
+                                    threadChannel.sendMessageEmbeds(embed.build()).queue(
+                                            successMsg -> System.out.println("✅ Embed inviato nel thread."),
+                                            failure -> System.err.println("❌ Errore invio embed: " + failure.getMessage())
+                                    );
+
+                                    // Archivia e blocca il thread
+                                    threadChannel.getManager()
+                                            .setArchived(true)
+                                            .setLocked(true)
+                                            .queue(
+                                                    successArchive -> System.out.println("✅ Thread archiviato e bloccato."),
+                                                    errorArchive -> System.err.println("❌ Errore archiviazione/lock: " + errorArchive.getMessage())
+                                            );
+
                                 } else {
-                                    System.err.println("❌ Thread channel not found.");
+                                    System.err.println("❌ Thread channel non trovato.");
                                 }
                             }
 

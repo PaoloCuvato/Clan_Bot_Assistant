@@ -556,12 +556,25 @@ public class LobbyCommand extends ListenerAdapter {
                 }
 
                 case "lobby_incompleted" -> {
-                    lobby.incompleteLobby(event.getGuild());
+                    // Recupera il thread associato alla lobby
+                    ThreadChannel threadChannel = event.getGuild().getThreadChannels().stream()
+                            .filter(thread -> thread.getIdLong() == lobby.getPostId())
+                            .findFirst()
+                            .orElse(null);
+
+                    // Applica i tag (modifica o crea il metodo giusto in Lobby)
+                    if (threadChannel != null) {
+                        lobby.applyClosedTagsToThread(threadChannel);  // supponendo che esista o lo crei tu
+                        lobby.incompleteLobby(event.getGuild());
+                    }
+
+                    // Segnala lobby incompleta
+
                     event.reply("⚠️ Lobby marked as **incomplete**.").setEphemeral(true).queue(success -> {
                         event.getMessage().delete().queue();
                     });
 
-                    // Rimuove il ruolo all'utente
+                    // Rimuove il ruolo all'utente (come prima)
                     Guild guild = event.getGuild();
                     Member member = event.getMember();
                     if (guild != null && member != null) {

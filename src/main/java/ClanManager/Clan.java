@@ -13,7 +13,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class Clan extends ListenerAdapter {
-    private static final int MAX_MEMBERS = 50; // Maximum number of members in a clan
+    private static final int MAX_MEMBERS = 16; // Maximum number of members in a clan
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MM:dd:yyyy HH:mm:ss");
 
     private ArrayList<User> listClanMember = new ArrayList<>(MAX_MEMBERS);  // Lista dei membri come oggetti User

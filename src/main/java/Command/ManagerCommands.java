@@ -125,14 +125,29 @@ public class ManagerCommands extends ListenerAdapter {
                 builder.setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
 
                 // Invio dell'embed come risposta
-                event.replyEmbeds(builder.build()).queue();
+                event.replyEmbeds(builder.build()).queue(success -> {
+                    // Assegna il ruolo "Clan Leader" all'utente specificato
+                    Guild guild = event.getGuild();
+                    Member member = guild.getMember(user);
+
+                    if (guild != null && member != null) {
+                        Role clanLeaderRole = guild.getRoleById(735017246786715709L);
+                        if (clanLeaderRole != null) {
+                            guild.addRoleToMember(member, clanLeaderRole).queue(
+                                    roleSuccess -> System.out.println("[Info] Clan Leader role assigned to " + member.getEffectiveName()),
+                                    roleError -> System.err.println("❌ Failed to assign Clan Leader role: " + roleError.getMessage())
+                            );
+                        } else {
+                            System.err.println("❌ Clan Leader role not found.");
+                        }
+                    }
+                });
             } else {
-                // Risposta nel caso in cui il membro non abbia i permessi necessari
                 event.reply("You don't have the required permissions to register a clan.").setEphemeral(true).queue();
             }
         }
 
-        if (event.getName().equals("add_user")) {
+        if (event.getName().equals("add_clan_member")) {
             String clanName = event.getOption("clan_name").getAsString();
             User user = event.getOption("user").getAsUser();
 
@@ -156,26 +171,45 @@ public class ManagerCommands extends ListenerAdapter {
 
                 // Embed remains the same
                 EmbedBuilder embed = new EmbedBuilder();
-                embed.setTitle(" Player Added Successfully to the clan");
                 embed.setTitle("▬▬▬ User Registered Successfully to a Clan! ▬▬▬▬");
                 embed.setColor(Color.decode("#859BC6"));
                 embed.setDescription("**Your operation was successful!\nThe player has been added to the clan.**");
-                embed.addField("**Player Id: **", user.getId(), true);
-                embed.addField("**Player Name: **", user.getEffectiveName(), true);
-                embed.addField("**Clan Name: **", clan.getName(), false);
-                embed.addField("**Victories: **", String.valueOf(clan.getWins()), true);
-                embed.addField("**Losses: **", String.valueOf(clan.getLosses()), true);
-                embed.addField("**Clan Creation Date: **", clan.getFormattedCreationDate(), false);
+                embed.addField("**Player Id:**", user.getId(), true);
+                embed.addField("**Player Name:**", user.getEffectiveName(), true);
+                embed.addField("**Clan Name:**", clan.getName(), false);
+                embed.addField("**Victories:**", String.valueOf(clan.getWins()), true);
+                embed.addField("**Losses:**", String.valueOf(clan.getLosses()), true);
+                embed.addField("**Clan Creation Date:**", clan.getFormattedCreationDate(), false);
                 embed.setImage("https://media1.tenor.com/m/hmS-_I4TaGAAAAAd/dyar-and.gif");
                 embed.setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
-                //     embed.setFooter(user.getName() +"  "+user.getEffectiveAvatarUrl());
-                event.replyEmbeds(embed.build()).setEphemeral(true).queue();
+
+                // Rispondi con l'embed
+                event.replyEmbeds(embed.build()).setEphemeral(true).queue(success -> {
+                    // Dopo la conferma, assegna il ruolo Clan Member
+                    Guild guild = event.getGuild();
+                    if (guild != null) {
+                        Member member = guild.getMember(user);
+                        if (member != null) {
+                            Role clanMemberRole = guild.getRoleById(1258861925438062724L);
+                            if (clanMemberRole != null) {
+                                guild.addRoleToMember(member, clanMemberRole).queue(
+                                        roleSuccess -> System.out.println("[Info] Clan Member role assigned to " + member.getEffectiveName()),
+                                        roleError -> System.err.println("❌ Failed to assign Clan Member role: " + roleError.getMessage())
+                                );
+                            } else {
+                                System.err.println("❌ Clan Member role not found.");
+                            }
+                        } else {
+                            System.err.println("❌ Member not found in the guild.");
+                        }
+                    }
+                });
             } catch (IllegalStateException e) {
                 event.reply("Cannot add user to the clan: " + e.getMessage()).setEphemeral(true).queue();
             }
         }
 
-        if (event.getName().equals("kick_user")) {
+        if (event.getName().equals("kick_clan_member")) {
             String clanName = event.getOption("clan_name").getAsString();
             User user = event.getOption("user").getAsUser();
 
@@ -195,25 +229,42 @@ public class ManagerCommands extends ListenerAdapter {
                     return;
                 }
 
-                // Embed remains the same
+                // Embed
                 EmbedBuilder embed = new EmbedBuilder();
-                embed.setTitle("▬▬▬▬ User Kicked Successfully of the Clan! ▬▬▬▬");
+                embed.setTitle("▬▬▬▬ User Kicked Successfully from the Clan! ▬▬▬▬");
                 embed.setColor(Color.red);
                 embed.setDescription("**Your operation was successful!\nThe player has been kicked out of the clan.**");
-                embed.addField("**Player Id: **", user.getId(), true);
-                embed.addField("**Player Name: **", user.getEffectiveName(), true);
-                embed.addField("**Clan Name: **", clan.getName(), false);
-                embed.addField("**Clan Creation Date: **", clan.getFormattedCreationDate(), true);
+                embed.addField("**Player Id:**", user.getId(), true);
+                embed.addField("**Player Name:**", user.getEffectiveName(), true);
+                embed.addField("**Clan Name:**", clan.getName(), false);
+                embed.addField("**Clan Creation Date:**", clan.getFormattedCreationDate(), true);
                 embed.setImage("https://media1.tenor.com/m/kUaBa_GPTfAAAAAC/obito-death.gif");
-
                 embed.setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
-                //     embed.setFooter(user.getName() +"  "+user.getEffectiveAvatarUrl());
-                event.replyEmbeds(embed.build()).setEphemeral(true).queue();
+
+                event.replyEmbeds(embed.build()).setEphemeral(true).queue(success -> {
+                    // Dopo il messaggio, rimuovi il ruolo Clan Member
+                    Guild guild = event.getGuild();
+                    if (guild != null) {
+                        Member member = guild.getMember(user);
+                        if (member != null) {
+                            Role clanMemberRole = guild.getRoleById(1258861925438062724L);
+                            if (clanMemberRole != null) {
+                                guild.removeRoleFromMember(member, clanMemberRole).queue(
+                                        roleSuccess -> System.out.println("[Info] Clan Member role removed from " + member.getEffectiveName()),
+                                        roleError -> System.err.println("❌ Failed to remove Clan Member role: " + roleError.getMessage())
+                                );
+                            } else {
+                                System.err.println("❌ Clan Member role not found.");
+                            }
+                        } else {
+                            System.err.println("❌ Member not found in the guild.");
+                        }
+                    }
+                });
             } catch (IllegalStateException e) {
-                event.reply("Cannot kick user of the clan: " + e.getMessage()).setEphemeral(true).queue();
+                event.reply("Cannot kick user from the clan: " + e.getMessage()).setEphemeral(true).queue();
             }
         }
-
 
 
         // Parte aggiunta nel metodo onSlashCommandInteraction
@@ -618,13 +669,13 @@ public class ManagerCommands extends ListenerAdapter {
                         new OptionData(OptionType.INTEGER, "losses", "Clan losses (optional)", false).setMinValue(0L)
                 ));
 
-        commands.add(Commands.slash("add_user", "Add a user to a specific clan")
+        commands.add(Commands.slash("add_clan_member", "Add a user to a specific clan")
                 .addOptions(
                         new OptionData(OptionType.STRING, "clan_name", "The name of the clan", true),
                         new OptionData(OptionType.USER, "user", "The user to add to the clan", true)
                 ));
 
-        commands.add(Commands.slash("kick_user", "Remove a user from a specific clan")
+        commands.add(Commands.slash("kick_clan_member", "Remove a user from a specific clan")
                 .addOptions(
                         new OptionData(OptionType.STRING, "clan_name", "The name of the clan", true),
                         new OptionData(OptionType.USER, "user", "The user to remove", true)

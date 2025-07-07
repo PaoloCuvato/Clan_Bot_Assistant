@@ -1,238 +1,110 @@
 package Config;
 
+import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.Properties;
 
 @Slf4j
-@NoArgsConstructor
 public class Config {
 
-    public String getToken(){
-        Properties props = new Properties();
+    private final Properties props = new Properties();
 
-        try (FileInputStream fis = new FileInputStream("config.properties")) {
-            props.load(fis);
-            return props.getProperty("bot.token");
-
-        }catch (IOException e){
-            e.printStackTrace();
-            System.out.println(e.getCause() + "\n" + e.getMessage());
-            return null;
-        }
+    public Config() {
+        loadProperties();
     }
-    public String getGuildId(){
-        Properties props = new Properties();
 
-        try (FileInputStream fis = new FileInputStream("config.properties")) {
-            props.load(fis);
-            return props.getProperty("guild.id");
+    private void loadProperties() {
+        try {
+            File file = new File("config.properties");
+            InputStream input;
 
-        }catch (IOException e){
-            e.printStackTrace();
-            System.out.println(e.getCause() + "\n" + e.getMessage());
-            return null;
-        }
-    }
-    public String getMatchMakingCategory(){
-        Properties props = new Properties();
+            if (file.exists()) {
+                log.info("Caricamento config.properties dal filesystem.");
+                input = new FileInputStream(file);
+            } else {
+                log.info("Caricamento config.properties dalle risorse del JAR.");
+                input = getClass().getClassLoader().getResourceAsStream("config.properties");
+                if (input == null) {
+                    throw new FileNotFoundException("config.properties non trovato né nel filesystem né nelle risorse!");
+                }
+            }
 
-        try (FileInputStream fis = new FileInputStream("config.properties")) {
-            props.load(fis);
-            return props.getProperty("matchmaking.category");
+            props.load(input);
+            log.info("config.properties caricato con successo.");
 
-        }catch (IOException e){
-            e.printStackTrace();
-            System.out.println(e.getCause() + "\n" + e.getMessage());
-            return null;
-        }
-    }
-    public String getMatchmakinngGlobalChannel(){
-        Properties props = new Properties();
-
-        try (FileInputStream fis = new FileInputStream("config.properties")) {
-            props.load(fis);
-            return props.getProperty("matchmaking.globalchannel");
-
-        }catch (IOException e){
-            e.printStackTrace();
-            System.out.println(e.getCause() + "\n" + e.getMessage());
-            return null;
-        }
-    }
-    public String getMatchmakingForumPost(){
-        Properties props = new Properties();
-
-        try (FileInputStream fis = new FileInputStream("config.properties")) {
-            props.load(fis);
-            return props.getProperty("matchmaking.forum.post.channel");
-
-        }catch (IOException e){
-            e.printStackTrace();
-            System.out.println(e.getCause() + "\n" + e.getMessage());
-            return null;
-        }
-    }
-    public String getMatchmakingForumPost2(){
-        Properties props = new Properties();
-
-        try (FileInputStream fis = new FileInputStream("config.properties")) {
-            props.load(fis);
-            return props.getProperty("matchmaking.forum.post.channel2");
-
-        }catch (IOException e){
-            e.printStackTrace();
-            System.out.println(e.getCause() + "\n" + e.getMessage());
-            return null;
-        }
-    }
-    public String getLobbyCategory(){
-        Properties props = new Properties();
-
-        try (FileInputStream fis = new FileInputStream("config.properties")) {
-            props.load(fis);
-            return props.getProperty("category.lobby");
-
-        }catch (IOException e){
-            e.printStackTrace();
-            System.out.println(e.getCause() + "\n" + e.getMessage());
-            return null;
-        }
-    }
-    public String getCategoryLog(){
-        Properties props = new Properties();
-
-        try (FileInputStream fis = new FileInputStream("config.properties")) {
-            props.load(fis);
-            return props.getProperty("category.log");
-
-        }catch (IOException e){
-            e.printStackTrace();
-            System.out.println(e.getCause() + "\n" + e.getMessage());
-            return null;
-        }
-    }
-    public String getNinjacardChannel(){
-        Properties props = new Properties();
-
-        try (FileInputStream fis = new FileInputStream("config.properties")) {
-            props.load(fis);
-            return props.getProperty("ninjacard.channel.log");
-
-        }catch (IOException e){
-            e.printStackTrace();
-            System.out.println(e.getCause() + "\n" + e.getMessage());
-            return null;
-        }
-    }
-    public String getLobbyChannelLog(){
-        Properties props = new Properties();
-
-        try (FileInputStream fis = new FileInputStream("config.properties")) {
-            props.load(fis);
-            return props.getProperty("lobby.channel.log");
-
-        }catch (IOException e){
-            e.printStackTrace();
-            System.out.println(e.getCause() + "\n" + e.getMessage());
-            return null;
-        }
-    }
-    public String getPlayerInfoRole(){
-        Properties props = new Properties();
-
-        try (FileInputStream fis = new FileInputStream("config.properties")) {
-            props.load(fis);
-            return props.getProperty("role.playerinfo");
-
-        }catch (IOException e){
-            e.printStackTrace();
-            System.out.println(e.getCause() + "\n" + e.getMessage());
-            return null;
-        }
-    }
-    public String getClanleaderRole(){
-        Properties props = new Properties();
-
-        try (FileInputStream fis = new FileInputStream("config.properties")) {
-            props.load(fis);
-            return props.getProperty("role.clanleader");
-
-        }catch (IOException e){
-            e.printStackTrace();
-            System.out.println(e.getCause() + "\n" + e.getMessage());
-            return null;
-        }
-    }
-    public String getClanMemberRole(){
-        Properties props = new Properties();
-
-        try (FileInputStream fis = new FileInputStream("config.properties")) {
-            props.load(fis);
-            return props.getProperty("role.clanmember");
-
-        }catch (IOException e){
-            e.printStackTrace();
-            System.out.println(e.getCause() + "\n" + e.getMessage());
-            return null;
-        }
-    }
-    public String getRefereeRole(){
-        Properties props = new Properties();
-
-        try (FileInputStream fis = new FileInputStream("config.properties")) {
-            props.load(fis);
-            return props.getProperty("role.referee");
-
-        }catch (IOException e){
-            e.printStackTrace();
-            System.out.println(e.getCause() + "\n" + e.getMessage());
-            return null;
-        }
-    }
-    public String getDesputesCategory(){
-        Properties props = new Properties();
-
-        try (FileInputStream fis = new FileInputStream("config.properties")) {
-            props.load(fis);
-            return props.getProperty("disputes.category");
-
-        }catch (IOException e){
-            e.printStackTrace();
-            System.out.println(e.getCause() + "\n" + e.getMessage());
-            return null;
-        }
-    }
-    // Db Part
-    public String getDbConnection(){
-        Properties props = new Properties();
-
-        try (FileInputStream fis = new FileInputStream("config.properties")) {
-            props.load(fis);
-            return props.getProperty("db.connection");
-
-        }catch (IOException e){
-            e.printStackTrace();
-            System.out.println(e.getCause() + "\n" + e.getMessage());
-            return null;
+        } catch (IOException e) {
+            log.error("Errore nel caricamento di config.properties", e);
         }
     }
 
-    public String getDbName(){
-        Properties props = new Properties();
-
-        try (FileInputStream fis = new FileInputStream("config.properties")) {
-            props.load(fis);
-            return props.getProperty("db.name");
-
-        }catch (IOException e){
-            e.printStackTrace();
-            System.out.println(e.getCause() + "\n" + e.getMessage());
-            return null;
-        }
+    public String getToken() {
+        return props.getProperty("bot.token");
     }
 
+    public String getGuildId() {
+        return props.getProperty("guild.id");
+    }
+
+    public String getMatchMakingCategory() {
+        return props.getProperty("matchmaking.category");
+    }
+
+    public String getMatchmakinngGlobalChannel() {
+        return props.getProperty("matchmaking.globalchannel");
+    }
+
+    public String getMatchmakingForumPost() {
+        return props.getProperty("matchmaking.forum.post.channel");
+    }
+
+    public String getMatchmakingForumPost2() {
+        return props.getProperty("matchmaking.forum.post.channel2");
+    }
+
+    public String getLobbyCategory() {
+        return props.getProperty("category.lobby");
+    }
+
+    public String getCategoryLog() {
+        return props.getProperty("category.log");
+    }
+
+    public String getNinjacardChannel() {
+        return props.getProperty("ninjacard.channel.log");
+    }
+
+    public String getLobbyChannelLog() {
+        return props.getProperty("lobby.channel.log");
+    }
+
+    public String getPlayerInfoRole() {
+        return props.getProperty("role.playerinfo");
+    }
+
+    public String getClanleaderRole() {
+        return props.getProperty("role.clanleader");
+    }
+
+    public String getClanMemberRole() {
+        return props.getProperty("role.clanmember");
+    }
+
+    public String getRefereeRole() {
+        return props.getProperty("role.referee");
+    }
+
+    public String getDesputesCategory() {
+        return props.getProperty("disputes.category");
+    }
+
+    public String getDbConnection() {
+        return props.getProperty("db.connection");
+    }
+
+    public String getDbName() {
+        return props.getProperty("db.name");
+    }
 }

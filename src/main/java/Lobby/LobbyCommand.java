@@ -29,6 +29,7 @@ import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import java.awt.*;
+import java.io.InputStream;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;

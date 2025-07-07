@@ -510,7 +510,7 @@ public class Lobby extends ListenerAdapter {
             appliedTags.add(gameTag);
         }
 
-        // Tag skillLevel
+        // Tag skillLevel (messo per ultimo)
         ForumTag skillLevelTag = getTagByName(forum, this.skillLevel);
         if (skillLevelTag != null) {
             appliedTags.add(skillLevelTag);

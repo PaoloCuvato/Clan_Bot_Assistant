@@ -108,6 +108,7 @@ public class ManagerCommands extends ListenerAdapter {
 
                 // Crea il nuovo clan
                 Clan clan = new Clan(clanName, event.getUser(), victories, losses);
+                clan.setClanLeaderId(event.getMember().getId());
 
                 // Inserisci il clan nel database MongoDB
                 MongoDBManager.insertClan(clan);
@@ -167,7 +168,7 @@ public class ManagerCommands extends ListenerAdapter {
             }
 
             try {
-                clan.addUser(user);
+                clan.addUser(event.getUser(),user, event.getChannel());
 
                 boolean dbUpdate = MongoDBManager.addUserToClan(clanName, user.getId());
                 if (!dbUpdate) {
@@ -223,7 +224,7 @@ public class ManagerCommands extends ListenerAdapter {
             }
 
             try {
-                clan.kickUser(user);
+                clan.kickUser(event.getUser(), user,event.getChannel());
 
                 // Update MongoDB
                 boolean dbUpdate = MongoDBManager.removeUserFromClan(clanName, user.getId());

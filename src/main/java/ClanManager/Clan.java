@@ -1,16 +1,21 @@
 package ClanManager;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.User;
 
 @Data
+@AllArgsConstructor
 @NoArgsConstructor
 public class Clan extends ListenerAdapter {
     private static final int MAX_MEMBERS = 16; // Maximum number of members in a clan
@@ -26,6 +31,7 @@ public class Clan extends ListenerAdapter {
     private int wins = 0;
     private int losses = 0;
     private LocalDateTime creationDate;
+    private String clanLeaderId;
 
     // Constructor con un singolo membro
     public Clan(String name, User member) {
@@ -88,25 +94,63 @@ public class Clan extends ListenerAdapter {
 
         ClanStorage.addClan(this); // Aggiungi automaticamente il clan a ClanStorage
     }
-
-    // Metodo per aggiungere un membro
-    public void addUser(User user) {
-        if (listClanMember.contains(user)) {
-            throw new IllegalStateException("User is already in the clan.");
+    public boolean isLeader(String userId) {
+        if (userId == null || clanLeaderId == null) {
+            return false;
         }
-        if (listClanMember.size() >= MAX_MEMBERS) {
-            throw new IllegalStateException("Clan is full. Cannot add more members.");
-        }
-        listClanMember.add(user);
+        return userId.equals(clanLeaderId);
     }
 
-    // Metodo per rimuovere un membro
-    public boolean kickUser(User user) {
-        if (!listClanMember.contains(user)) {
-            throw new IllegalStateException("User is not in the clan.");
+    // Add a member – only if the executor is the clan leader
+    public void addUser(User executor, User userToAdd, MessageChannel channel) {
+        if (!isLeader(executor.getId())) {
+            sendErrorEmbed(channel, "Only the clan leader can add members.");
+            return;
         }
-        listClanMember.remove(user);
-        return true;
+        if (listClanMember.contains(userToAdd)) {
+            sendErrorEmbed(channel, "This user is already in the clan.");
+            return;
+        }
+        if (listClanMember.size() >= MAX_MEMBERS) {
+            sendErrorEmbed(channel, "The clan is full. Cannot add more members.");
+            return;
+        }
+        listClanMember.add(userToAdd);
+    }
+
+    // Remove a member – only if the executor is the clan leader
+    public void kickUser(User executor, User userToKick, MessageChannel channel) {
+        if (!isLeader(executor.getId())) {
+            sendErrorEmbed(channel, "Only the clan leader can remove members.");
+            return;
+        }
+        if (!listClanMember.contains(userToKick)) {
+            sendErrorEmbed(channel, "This user is not a member of the clan.");
+            return;
+        }
+        listClanMember.remove(userToKick);
+    }
+
+    // Update clan name – only if the executor is the clan leader
+    public void updateClanName(User executor, String newName, MessageChannel channel) {
+        if (!isLeader(executor.getId())) {
+            sendErrorEmbed(channel, "Only the clan leader can change the clan name.");
+            return;
+        }
+        if (newName == null || newName.trim().isEmpty()) {
+            sendErrorEmbed(channel, "The new name cannot be empty.");
+            return;
+        }
+        this.name = newName.trim();
+    }
+
+    // Sends an error embed to the specified channel
+    private void sendErrorEmbed(MessageChannel channel, String message) {
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setTitle("❌ Error");
+        eb.setDescription(message);
+        eb.setColor(0xFF5555); // Red color
+        channel.sendMessageEmbeds(eb.build()).queue();
     }
 
     // Restituisce la data di creazione formattata
@@ -115,13 +159,7 @@ public class Clan extends ListenerAdapter {
     }
 
     // Metodo per aggiornare il nome del clan
-    public boolean updateClanName(String newName) {
-        if (newName == null || newName.trim().isEmpty()) {
-            return false;
-        }
-        this.name = newName.trim();
-        return true;
-    }
+
 
     // Metodo per aggiungere una vittoria
     public void addWin() {
@@ -166,5 +204,8 @@ public class Clan extends ListenerAdapter {
                 ", losses=" + losses +
                 ", creationDate=" + getFormattedCreationDate() +
                 '}';
+    }
+
+    public void updateClanName(String newName) {
     }
 }

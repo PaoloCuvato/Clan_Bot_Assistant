@@ -241,81 +241,79 @@ public class ClanStorage extends ListenerAdapter {
             int wins = document.getInteger("wins", 0);
             int losses = document.getInteger("losses", 0);
             String creationDateStr = document.getString("creationDate");
-            List<String> members = document.getList("members", String.class);  // Membri come ID stringa
+            String clanLeaderId = document.getString("clanLeaderId");
+            List<String> memberIds = document.getList("members", String.class);
 
-            // Log del documento caricato per il debug
-            System.out.println("Document loaded: " + document.toJson());
+            System.out.println("Loaded document: " + document.toJson());
 
-            // Converte la data di creazione in un oggetto LocalDateTime
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM:dd:yyyy HH:mm:ss");
             LocalDateTime creationDate = LocalDateTime.parse(creationDateStr, formatter);
 
-            // Crea il clan
-            Clan clan = new Clan(name, members.toArray(), wins, losses);
-            System.out.println("Clan created: " + clan);
+            // Initialize clan
+            Clan clan = new Clan(name, memberIds.toArray(), wins, losses);
+            clan.setCreationDate(creationDate);
+            clan.setClanLeaderId(clanLeaderId);
 
-            // Rimuove eventuali membri nulli o vuoti e elimina i duplicati
-            if (members != null) {
-                members = members.stream()
-                        .filter(member -> member != null && !member.isEmpty())  // Filtro per eliminare nulli e vuoti
-                        .distinct()  // Rimuove i duplicati
-                        .collect(Collectors.toList());
-            }
+            // Clear existing list just in case
+            clan.getListClanMember().clear();
 
-            // Aggiungi i membri al clan (convertendo gli ID in oggetti User)
-            for (String memberId : members) {
-                // Recupera il membro dalla guild tramite l'ID
-                User user = getUserFromId(memberId);  // Usa il metodo che hai definito per recuperare il member
-                if (user != null) {
-                    System.out.println("Recuperato utente per l'ID: " + memberId);
-
-                    // Controlla se l'utente è già nel clan
-                    if (!clan.getMembersList().contains(user)) {  // Assicurati che il metodo getMembersList() restituisca i membri del clan
-                        // Aggiungi l'utente al clan
-                        clan.addUser(user);
-                    } else {
-                        System.out.println("L'utente con ID: " + memberId + " è già presente nel clan.");
-                    }
-                } else {
-                    System.out.println("Utente non trovato per l'ID: " + memberId);
-                }
+            if (memberIds != null) {
+                memberIds.stream()
+                        .filter(id -> id != null && !id.isEmpty())
+                        .distinct()
+                        .forEach(id -> {
+                            User user = getUserFromId(id);
+                            if (user != null) {
+                                clan.getListClanMember().add(user);
+                                System.out.println("User added to clan: " + user.getName());
+                            } else {
+                                System.out.println("User not found for ID: " + id);
+                            }
+                        });
             }
 
             return clan;
-        } catch (Exception e) {
-            System.out.println("Errore durante la conversione del documento in clan: " + e.getMessage());
-        }
-        return null;  // Restituisce null se qualcosa va storto
-    }
 
+        } catch (Exception e) {
+            System.out.println("Error converting document to clan: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
 
     public static void loadAllClansFromDatabase() {
         MongoCollection<Document> collection = getDatabase().getCollection("clans");
 
-        // Verifica la connessione al database
+        // Check if the collection exists
         if (collection == null) {
-            System.out.println("Errore: la collezione 'clans' non è stata trovata nel database.");
+            System.out.println("Error: The 'clans' collection was not found in the database.");
             return;
         }
 
-        // Log per verificare il numero di documenti
+        // Log how many documents are present
         long count = collection.countDocuments();
-        System.out.println("Totale documenti nella collezione clans: " + count);
+        System.out.println("Total documents in 'clans' collection: " + count);
 
         FindIterable<Document> documents = collection.find();
 
-        // Verifica se ci sono documenti da caricare
+        // Check if there are any documents to load
         if (!documents.iterator().hasNext()) {
-            System.out.println("Nessun documento trovato nella collezione 'clans'.");
+            System.out.println("No clan documents found in the collection.");
+            return;
         }
 
+        // Loop through each document and convert it into a Clan object
         for (Document document : documents) {
             Clan clan = documentToClan(document);
             if (clan != null) {
                 addClan(clan);
-                System.out.println("Clan caricato: " + clan.getName());  // Log quando il clan viene caricato
+                System.out.println("Loaded clan: " + clan.getName());
+            } else {
+                System.out.println("Failed to load a clan from document: " + document.toJson());
             }
         }
+
+        System.out.println("Finished loading all clans from the database.");
     }
 
     @Override

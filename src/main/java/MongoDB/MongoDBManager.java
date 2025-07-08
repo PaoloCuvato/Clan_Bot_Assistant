@@ -46,6 +46,7 @@ public class MongoDBManager {
 
         // Creazione del documento
         Document clanDocument = new Document("name", clan.getName())
+                .append("clanLeaderId", clan.getClanLeaderId())
                 .append("wins", clan.getWins())
                 .append("losses", clan.getLosses())
                 .append("creationDate", clan.getFormattedCreationDate())

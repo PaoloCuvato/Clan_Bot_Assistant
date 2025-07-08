@@ -130,6 +130,39 @@ public class Lobby extends ListenerAdapter {
 
     );
 
+    private static final Map<String, String> PLATFORM_TAG_IDS_CLAN = Map.of(
+            "PS5", "1392110160675078225",
+            "PS4", "1392110160675078225",
+            "PS3", "1392110160675078225",
+
+            "Xbox Series X", "1392110172444430346",
+            "Xbox Series S", "1392110172444430346",
+            "Xbox 360", "1392110172444430346",
+
+            "PC", "1392110116139958386",
+            "RPCS3", "1392110274596835369",
+
+            "Nintendo Switch 1", "1392110240555864136",
+            "Nintendo Switch 2", "1392110240555864136"
+
+    );
+
+    private static final Map<String, String> GAME_TAG_IDS_CLAN = Map.of(
+            "NSUNS", "1392109606381293678",
+            "NSUNS2", "1392109686228258961",
+            "NSUNSG", "1392109726485053541",
+
+            "NSUNS3", "1392109775335981076",
+            "NSUNSFB", "1392109814795997235",
+            "NSUNSR", "1392109866663022693",
+            "NSUNS4", "1392109910707277896",
+
+            "NSUNSRTB", "1392109955917549608",
+            "NXBUNSC", "1392110324492009552",
+            "NSUNSE", "1392110052596387871"
+
+    );
+
     //stats
     private final Set<Long> blockedUsers = new HashSet<>();
     private long allowedUserId;  // ID dell'utente autorizzato per lobby privat
@@ -509,8 +542,11 @@ public class Lobby extends ListenerAdapter {
 
         List<ForumTag> appliedTags = new ArrayList<>();
 
-        // Tag "Closed"
-        String closedTagId = "1389612412470038649";
+        // Tag "Closed" - cambia ID se è Clan Battle
+        String closedTagId = this.lobbyType != null && this.lobbyType.equalsIgnoreCase("Clan Battle")
+                ? "1392109187240300604"
+                : "1389612412470038649";
+
         ForumTag closedTag = getTagById(forum, closedTagId);
         if (closedTag != null) {
             appliedTags.add(closedTag);
@@ -519,35 +555,48 @@ public class Lobby extends ListenerAdapter {
             return;
         }
 
+        // Seleziona la mappa corretta (normale o Clan)
+        Map<String, String> platformTagMap = this.lobbyType != null && this.lobbyType.equalsIgnoreCase("Clan Battle")
+                ? PLATFORM_TAG_IDS_CLAN
+                : PLATFORM_TAG_IDS;
+
+        Map<String, String> gameTagMap = this.lobbyType != null && this.lobbyType.equalsIgnoreCase("Clan Battle")
+                ? GAME_TAG_IDS_CLAN
+                : GAME_TAG_IDS;
+
         // Tag piattaforma
-        String platformTagId = PLATFORM_TAG_IDS.get(this.platform);
+        String platformTagId = platformTagMap.get(this.platform);
         ForumTag platformTag = getTagById(forum, platformTagId);
         if (platformTag != null) {
             appliedTags.add(platformTag);
         }
 
         // Tag gioco
-        String gameTagId = GAME_TAG_IDS.get(this.game.toUpperCase());
+        String gameTagId = gameTagMap.get(this.game.toUpperCase());
         ForumTag gameTag = getTagById(forum, gameTagId);
         if (gameTag != null) {
             appliedTags.add(gameTag);
         }
 
-        // Tag skillLevel (messo per ultimo)
+        // Tag skillLevel
         ForumTag skillLevelTag = getTagByName(forum, this.skillLevel);
         if (skillLevelTag != null) {
             appliedTags.add(skillLevelTag);
         }
 
+        // Applica i tag al thread
+        threadChannel.getManager().setAppliedTags(appliedTags).queue(
+                success -> System.out.println("✅ Tag chiusura applicati al thread."),
+                error -> System.err.println("❌ Errore durante l'applicazione dei tag al thread: " + error.getMessage())
+        );
     }
 
 
 
     public void sendLobbyAnnouncement(Guild guild, long postChannelId, Runnable onComplete) {
-// Override del canale se è Clan Battle
-        long finalChannelId = this.lobbyType != null && this.lobbyType.equalsIgnoreCase("Clan Battle")
-                ? 1391434101059354804L
-                : postChannelId;
+        boolean isClanBattle = this.lobbyType != null && this.lobbyType.equalsIgnoreCase("Clan Battle");
+
+        long finalChannelId = isClanBattle ? 1391434101059354804L : postChannelId;
 
         ForumChannel postChannel = guild.getForumChannelById(finalChannelId);
 
@@ -569,8 +618,12 @@ public class Lobby extends ListenerAdapter {
         ForumTag skillLevelTag = getTagByName(postChannel, skillLevel);
         if (skillLevelTag != null) appliedTags.add(skillLevelTag);
 
+        // Seleziona la mappa tag corretta (Clan vs Normale)
+        Map<String, String> platformTagMap = isClanBattle ? PLATFORM_TAG_IDS_CLAN : PLATFORM_TAG_IDS;
+        Map<String, String> gameTagMap = isClanBattle ? GAME_TAG_IDS_CLAN : GAME_TAG_IDS;
+
         // Tag Platform tramite ID
-        String platformTagId = PLATFORM_TAG_IDS.get(platform);
+        String platformTagId = platformTagMap.get(platform);
         ForumTag platformTag = getTagById(postChannel, platformTagId);
         if (platformTag != null) {
             appliedTags.add(platformTag);
@@ -579,7 +632,7 @@ public class Lobby extends ListenerAdapter {
         }
 
         // Tag Game tramite ID
-        String gameTagId = GAME_TAG_IDS.get(game.toUpperCase());
+        String gameTagId = gameTagMap.get(game.toUpperCase());
         ForumTag gameTag = getTagById(postChannel, gameTagId);
         if (gameTag != null) {
             appliedTags.add(gameTag);
@@ -622,23 +675,7 @@ public class Lobby extends ListenerAdapter {
                             firstMessage.pin().queue();
 
                             // Emoji piattaforma
-                            Map<String, Long> platformEmojiMap = Map.of(
-                                    "PS5", 1316691275961077830L,
-                                    "PS4", 1316691275961077830L,
-                                    "PS3", 1316691275961077830L,
-
-                                    "Xbox Series X", 1316691225486688297L,
-                                    "Xbox Series S", 1316691225486688297L,
-                                    "Xbox 360", 1316691225486688297L,
-
-                                    "PC", 1316691292930965576L,
-                                    "RPCS3", 1390615505022222366L,
-
-                                    "Nintendo Switch 1", 1316691307875270668L,
-                                    "Nintendo Switch 2", 1316691307875270668L
-                            );
-
-                            Long platformEmojiId = platformEmojiMap.get(platform);
+                            Long platformEmojiId = PLATFORM_EMOJI_IDS.get(platform);
                             if (platformEmojiId != null) {
                                 RichCustomEmoji platformEmoji = guild.getEmojiById(platformEmojiId);
                                 if (platformEmoji != null) {
@@ -653,8 +690,8 @@ public class Lobby extends ListenerAdapter {
 
                             // Emoji gioco
                             Map<String, Long> gameEmojiMap = Map.of(
-                                    "NSUNS",1390706988975132785L,
-                                    "NSUNS2",1390714684885434459L,
+                                    "NSUNS", 1390706988975132785L,
+                                    "NSUNS2", 1390714684885434459L,
                                     "NSUNSG", 1317938657872838656L,
                                     "NSUNS3", 1317938959472398479L,
                                     "NSUNSFB", 1390717671766495294L,

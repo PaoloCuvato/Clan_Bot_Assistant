@@ -1,5 +1,7 @@
 package Bot;
 
+import ClanManager.ClanManager;
+import ClanManager.ClanService;
 import ClanManager.ClanStorage;
 import Command.ManagerCommands;
 import Lobby.Lobby;
@@ -10,6 +12,7 @@ import PlayerInfo.AddInfoCardCommand;
 import PlayerInfo.SlashPlayerInfoManager;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
@@ -20,7 +23,7 @@ import Lobby.*;
 import java.util.EnumSet;
 import Config.*;
 
-public class Bot {
+public class Bot extends ListenerAdapter {
     Config config = new Config();
     String token = config.getToken();
 
@@ -36,7 +39,7 @@ public class Bot {
         manager.setAutoReconnect(true);
         manager.setStatus(OnlineStatus.ONLINE);
         manager.addEventListeners(new ManagerCommands(), new ForumMatchmaking(), new AddInfoCardCommand(),new SlashPlayerInfoManager()); // Aggiungi i comandi
-        manager.addEventListeners(new ClanStorage(), new LobbyCommand(), new ButtonLobbyManager(), new Lobby());
+        manager.addEventListeners(new ClanStorage(), new LobbyCommand(), new ButtonLobbyManager(), new Lobby(), new ClanService(),new ClanManager());
         manager.addEventListeners(new InactivityInitializer(categoryId));
 
         // Abilita i permessi di intenti

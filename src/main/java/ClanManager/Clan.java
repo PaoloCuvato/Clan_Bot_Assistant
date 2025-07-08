@@ -3,8 +3,11 @@ package ClanManager;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 import java.time.LocalDateTime;
@@ -13,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.User;
+import org.jetbrains.annotations.NotNull;
 
 @Data
 @AllArgsConstructor
@@ -32,6 +36,7 @@ public class Clan extends ListenerAdapter {
     private int losses = 0;
     private LocalDateTime creationDate;
     private String clanLeaderId;
+    private GuildReadyEvent event;
 
     // Constructor con un singolo membro
     public Clan(String name, User member) {
@@ -94,6 +99,29 @@ public class Clan extends ListenerAdapter {
 
         ClanStorage.addClan(this); // Aggiungi automaticamente il clan a ClanStorage
     }
+
+    public Clan(String name, String leaderId, List<String> members, int wins, int losses, String creationDate) {
+        this.name = name;
+        this.clanLeaderId = leaderId;
+        this.memberIds = new ArrayList<>(members);
+        this.wins = wins;
+        this.losses = losses;
+        this.creationDate = LocalDateTime.parse(creationDate, DATE_FORMATTER);
+
+        this.listClanMember = new ArrayList<>(MAX_MEMBERS);
+    }
+
+    public void loadMembersFromGuild(Guild guild) {
+        listClanMember.clear();
+        for (String memberId : memberIds) {
+            Member member = guild.getMemberById(memberId);
+            if (member != null) {
+                listClanMember.add(member.getUser());
+            }
+        }
+    }
+
+
     public boolean isLeader(String userId) {
         if (userId == null || clanLeaderId == null) {
             return false;
@@ -207,5 +235,11 @@ public class Clan extends ListenerAdapter {
     }
 
     public void updateClanName(String newName) {
+    }
+
+    @Override
+    public void onGuildReady(@NotNull GuildReadyEvent event) {
+        super.onGuildReady(event);
+        this.event=event;
     }
 }

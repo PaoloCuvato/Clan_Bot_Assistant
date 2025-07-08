@@ -28,7 +28,6 @@ public class MongoDBManager {
         return database;
     }
 
-
     public static void close() {
         if (mongoClient != null) {
             mongoClient.close();

@@ -28,6 +28,10 @@ public class ClanStorage extends ListenerAdapter {
     static GuildReadyEvent event;
     @Getter
     private static final Map<String, Clan> clans = new HashMap<>();
+    private static final Map<String, Clan> Leaderclans = new HashMap<>();
+
+    private static final Map<String, Clan> userClanMap = new HashMap<>();
+
 
     // Aggiungi un clan alla memoria
     public static void addClan(Clan clan) {
@@ -95,81 +99,14 @@ public class ClanStorage extends ListenerAdapter {
     }
 
 
-    // Rimuovi un clan dalla memoria
-    public static boolean deleteClan(String clanName) {
-        if (clans.containsKey(clanName)) {
-            clans.remove(clanName);
-            return true;
-        }
-        return false;
-    }
-
     // ===================================
     // Metodi per interagire con il Database
     // ===================================
-
-    // Aggiungi un clan nel database MongoDB
     public static void addClanToDatabase(Clan clan) {
         if (clan == null || clan.getName() == null || clan.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Clan or clan name cannot be null or empty.");
         }
         MongoDBManager.insertClan(clan); // Inserisce nel database
-    }
-
-    // Recupera un clan da MongoDB
-    public static Clan getClanFromDatabase(String name) {
-        return MongoDBManager.getClanByName(name); // Recupera dal database
-    }
-
-    // Rimuovi un clan da MongoDB
-    public static void removeClanFromDatabase(String name) {
-        MongoDBManager.deleteClan(name); // Rimuove dal database
-    }
-
-    // Aggiorna un clan nel database MongoDB
-    public static void updateClanInDatabase(Clan clan) {
-        MongoDBManager.updateClan(clan); // Aggiorna nel database
-    }
-
-    // Controlla se un clan esiste nel database MongoDB
-    public static boolean hasClanInDatabase(String name) {
-        return MongoDBManager.getClanByName(name) != null;
-    }
-
-    // Trova il clan di appartenenza di un utente (dal database)
-    public static Clan getClanByUserFromDatabase(User user) {
-        MongoCollection<Document> collection = getDatabase().getCollection("clans");
-
-        // Crea il filtro per trovare un clan che contiene l'utente
-        FindIterable<Document> iterable = collection.find(Filters.eq("members", user.getId())); // Assuming "members" is an array of user IDs
-
-        MongoCursor<Document> cursor = iterable.iterator();
-
-        while (cursor.hasNext()) {
-            Document doc = cursor.next();
-            // Deserializzare il documento BSON in un oggetto Clan
-            Clan clan = documentToClan(doc);
-            if (clan.getListClanMember().contains(user)) { // Verifica se l'utente è nel clan
-                return clan;
-            }
-        }
-        return null; // Se non trovato
-    }
-
-
-    // Cambia il nome del clan nel database
-    public static boolean updateClanNameInDatabase(String oldName, String newName) {
-        if (!hasClanInDatabase(oldName)) {
-            return false; // Il clan con il vecchio nome non esiste
-        }
-        if (newName == null || newName.trim().isEmpty() || hasClanInDatabase(newName)) {
-            throw new IllegalArgumentException("New clan name is invalid or already exists.");
-        }
-        // Recupera il clan dal database e aggiorna il nome
-        Clan clan = MongoDBManager.getClanByName(oldName);
-        clan.updateClanName(newName);
-        MongoDBManager.updateClan(clan);
-        return true;
     }
 
     // Elimina un clan dal database

@@ -156,7 +156,6 @@ public class ManagerCommands extends ListenerAdapter {
             }
         }
 
-
         if (event.getName().equals("add_clan_member")) {
             String clanName = event.getOption("clan_name").getAsString();
             User user = event.getOption("user").getAsUser();

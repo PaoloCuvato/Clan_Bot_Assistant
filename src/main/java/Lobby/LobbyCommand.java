@@ -429,9 +429,6 @@ public class LobbyCommand extends ListenerAdapter {
                 });
     }
 
-
-
-
     private void handleFreestyle(SlashCommandInteractionEvent event) {
         long discordId = event.getUser().getIdLong();
         Lobby existingLobby = LobbyManager.getLobby(discordId);
@@ -484,7 +481,6 @@ public class LobbyCommand extends ListenerAdapter {
         promptPlatformSelection(event);
     }
 
-
     private void handleEditLobby(SlashCommandInteractionEvent event) {
         long discordId = event.getUser().getIdLong();
         Lobby lobby = LobbyManager.getLobby(discordId);
@@ -499,7 +495,6 @@ public class LobbyCommand extends ListenerAdapter {
         lobbySessions.put(discordId, lobby);
         promptPlatformSelection(event);
     }
-
 
     @Override
     public void onStringSelectInteraction(StringSelectInteractionEvent event) {

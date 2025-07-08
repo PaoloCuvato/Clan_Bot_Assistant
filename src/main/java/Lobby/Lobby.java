@@ -544,13 +544,20 @@ public class Lobby extends ListenerAdapter {
 
 
     public void sendLobbyAnnouncement(Guild guild, long postChannelId, Runnable onComplete) {
-        ForumChannel postChannel = guild.getForumChannelById(postChannelId);
+// Override del canale se è Clan Battle
+        long finalChannelId = this.lobbyType != null && this.lobbyType.equalsIgnoreCase("Clan Battle")
+                ? 1391434101059354804L
+                : postChannelId;
+
+        ForumChannel postChannel = guild.getForumChannelById(finalChannelId);
+
         if (postChannel == null) {
             System.err.println("❌ Forum post channel not found!");
             return;
         }
 
-        this.announcementChannelId = postChannelId;
+        this.announcementChannelId = finalChannelId;
+        System.out.println("📌 Annuncio lobby in canale forum ID: " + finalChannelId + " (Tipo: " + lobbyType + ")");
 
         List<ForumTag> appliedTags = new ArrayList<>();
 

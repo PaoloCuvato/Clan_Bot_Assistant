@@ -816,7 +816,7 @@ public class ManagerCommands extends ListenerAdapter {
 
         commands.add(Commands.slash("my_ninjacard", "Show your Ninja Card"));
 
-        commands.add(Commands.slash("edit_ninja_card", "Edit your Ninja Card"));
+       // commands.add(Commands.slash("edit_ninja_card", "Edit your Ninja Card"));
 
         commands.add(Commands.slash("search_ninjacard", "View another user's Ninja Card")
                 .addOptions(new OptionData(OptionType.USER, "target", "The user", true)));

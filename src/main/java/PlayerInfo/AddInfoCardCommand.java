@@ -244,17 +244,28 @@ public class AddInfoCardCommand extends ListenerAdapter {
                 player.setSkillLevel(event.getValues().get(0));
                 PlayerInfoStorage.addOrUpdatePlayerInfo(discordId, player);
                 event.deferEdit().queue();
+
                 if (event.getGuild() != null) {
-                    long roleId = Long.parseLong(config.getPlayerInfoRole());
+                    long playerInfoRoleId = Long.parseLong(config.getPlayerInfoRole());
+                    long optOutRoleId = Long.parseLong(config.getOptOutRole());
+
                     event.getGuild().retrieveMemberById(discordId).queue(member -> {
-                        event.getGuild().addRoleToMember(member, event.getGuild().getRoleById(roleId)).queue(
+                        // Assegna il ruolo Player Info
+                        event.getGuild().addRoleToMember(member, event.getGuild().getRoleById(playerInfoRoleId)).queue(
                                 success -> System.out.println("✅ Player Info role assigned to " + member.getEffectiveName()),
                                 error -> System.err.println("❌ Could not assign Player Info role: " + error.getMessage())
+                        );
+
+                        // Rimuove il ruolo Opt-Out PvP
+                        event.getGuild().removeRoleFromMember(member, event.getGuild().getRoleById(optOutRoleId)).queue(
+                                success -> System.out.println("✅ Opt-Out PvP role removed from " + member.getEffectiveName()),
+                                error -> System.err.println("❌ Failed to remove Opt-Out PvP role: " + error.getMessage())
                         );
                     }, error -> System.err.println("❌ User not found: " + error.getMessage()));
                 }
                 handleSkillLevelSelection(event);
             }
+
 
 
 

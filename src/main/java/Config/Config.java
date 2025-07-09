@@ -107,4 +107,9 @@ public class Config {
     public String getDbName() {
         return props.getProperty("db.name");
     }
+
+    public String getOptOutRole() {
+        return props.getProperty("role.opt.out.pvp");
+    }
+
 }

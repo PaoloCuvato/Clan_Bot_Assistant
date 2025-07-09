@@ -421,63 +421,70 @@ public class ManagerCommands extends ListenerAdapter {
 
 
         if (event.getName().equals("edit_wins")) {
+            event.deferReply(true).queue(); // <-- Risponde subito per evitare timeout
+
             String clanName = event.getOption("clan_name").getAsString();
             int newWins = event.getOption("wins").getAsInt();
 
-            Clan clan = ClanStorage.getClan(clanName);
-            if (clan == null) {
-                event.reply("Clan `" + clanName + "` does not exist!").setEphemeral(true).queue();
+            ClanService clanService = ClanService.getInstance();
+
+            Clan targetClan = clanService.getClanMap().values().stream()
+                    .filter(c -> c.getName().equalsIgnoreCase(clanName))
+                    .findFirst()
+                    .orElse(null);
+
+            if (targetClan == null) {
+                event.getHook().sendMessage("❌ Clan `" + clanName + "` does not exist.").setEphemeral(true).queue();
                 return;
             }
 
-            // Aggiorna localmente e nel database
-            clan.setWins(newWins);
-            boolean updated = updateClanWinsInDatabase(clanName, newWins);
+            targetClan.setWins(newWins);
+            clanService.addOrUpdateClan(targetClan);
 
             EmbedBuilder embed = new EmbedBuilder();
             embed.setTitle("▬▬▬▬▬ Victories Updated Successfully ▬▬▬▬▬");
             embed.setColor(Color.decode("#1CAFEC"));
             embed.setDescription("**The victories of the clan have been updated successfully!**");
-            embed.addField("**Clan Name:**", clan.getName(), true);
-            embed.addField("**New Wins:**", String.valueOf(clan.getWins()), true);
+            embed.addField("**Clan Name:**", targetClan.getName(), true);
+            embed.addField("**New Wins:**", String.valueOf(targetClan.getWins()), true);
             embed.setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
 
-            if (updated) {
-                event.replyEmbeds(embed.build()).setEphemeral(true).queue();
-            } else {
-                event.reply("❌ Error updating clan wins in the database.").setEphemeral(true).queue();
-            }
+            event.getHook().sendMessageEmbeds(embed.build()).setEphemeral(true).queue();
         }
+
+
 
 
         if (event.getName().equals("edit_losses")) {
             String clanName = event.getOption("clan_name").getAsString();
             int newLosses = event.getOption("losses").getAsInt();
 
-            Clan clan = ClanStorage.getClan(clanName);
-            if (clan == null) {
-                event.reply("Clan `" + clanName + "` does not exist!").setEphemeral(true).queue();
+            ClanService clanService = ClanService.getInstance();
+
+            Clan targetClan = clanService.getClanMap().values().stream()
+                    .filter(c -> c.getName().equalsIgnoreCase(clanName))
+                    .findFirst()
+                    .orElse(null);
+
+            if (targetClan == null) {
+                event.reply("❌ Clan `" + clanName + "` does not exist.").setEphemeral(true).queue();
                 return;
             }
 
-            // Aggiorna localmente e nel database
-            clan.setLosses(newLosses);
-            boolean updated = updateClanLossesInDatabase(clanName, newLosses);
+            // Aggiorna sconfitte
+            targetClan.setLosses(newLosses);
+            clanService.addOrUpdateClan(targetClan);
 
             EmbedBuilder embed = new EmbedBuilder();
             embed.setTitle("▬▬▬▬▬ Losses Updated Successfully ▬▬▬▬▬");
             embed.setColor(Color.decode("#776644"));
             embed.setDescription("**The losses of the clan have been updated successfully!**");
-            embed.addField("**Clan Name:**", clan.getName(), true);
-            embed.addField("**New Losses:**", String.valueOf(clan.getLosses()), true);
+            embed.addField("**Clan Name:**", targetClan.getName(), true);
+            embed.addField("**New Losses:**", String.valueOf(targetClan.getLosses()), true);
             embed.setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
-
-            if (updated) {
-                event.replyEmbeds(embed.build()).setEphemeral(true).queue();
-            } else {
-                event.reply("❌ Error updating clan losses in the database.").setEphemeral(true).queue();
-            }
+            event.replyEmbeds(embed.build()).setEphemeral(true).queue();
         }
+
 
         if (event.getName().equals("info_user")) {
             Member member = event.getOption("user").getAsMember();
@@ -760,8 +767,8 @@ public class ManagerCommands extends ListenerAdapter {
 
         List<CommandData> commands = new ArrayList<>();
 
-        commands.add(Commands.slash("info", "Info about the bot"));
         commands.add(Commands.slash("commands", "Info about all the bot's commands"));
+
         commands.add(Commands.slash("register_clan", "Create a new clan in the bot")
                 .addOptions(
                         new OptionData(OptionType.STRING, "name", "The name of the clan", true)
@@ -793,10 +800,6 @@ public class ManagerCommands extends ListenerAdapter {
                         new OptionData(OptionType.INTEGER, "losses", "New number of losses", true).setMinValue(0L)
                 ));
 
-        commands.add(Commands.slash("info_user", "Info about a specific player")
-                .addOptions(
-                        new OptionData(OptionType.USER, "user", "The user", true)
-                ));
 
         commands.add(Commands.slash("edit_clan_name", "Edit or create a clan name")
                 .addOptions(
@@ -807,33 +810,29 @@ public class ManagerCommands extends ListenerAdapter {
         commands.add(Commands.slash("clan_member_list", "List all members in a specific clan")
                 .addOptions(new OptionData(OptionType.STRING, "clan_name", "The clan's name", true)));
 
-        commands.add(Commands.slash("clan_stat", "View clan stats")
-                .addOptions(new OptionData(OptionType.STRING, "clan_name", "The clan's name", true)));
-
-        commands.add(Commands.slash("delete_clan", "Delete an existing clan")
-                .addOptions(new OptionData(OptionType.STRING, "clan_name", "The clan's name", true)));
-
         commands.add(Commands.slash("list_all_clan", "List all clans registered on the bot"));
 
         commands.add(Commands.slash("add_info_card", "Create the player info card"));
+
         commands.add(Commands.slash("my_ninjacard", "Show your Ninja Card"));
+
         commands.add(Commands.slash("edit_ninja_card", "Edit your Ninja Card"));
+
         commands.add(Commands.slash("search_ninjacard", "View another user's Ninja Card")
                 .addOptions(new OptionData(OptionType.USER, "target", "The user", true)));
 
         commands.add(Commands.slash("freestyle", "Send lobby creation embed"));
+
         commands.add(Commands.slash("edit_lobby", "Edit the lobby embed"));
+
         commands.add(Commands.slash("direct", "Send private lobby"));
         //     commands.add(Commands.slash("complete_lobby", "Archive and complete the lobby"));
         commands.add(Commands.slash("leave_lobby", "Leave the current lobby"));
 
-        //       commands.add(Commands.slash("block_user", "Block a user from your lobby")
-        //               .addOptions(new OptionData(OptionType.USER, "user", "The user to block", true)));
-
-        commands.add(Commands.slash("lobby_stats", "Show lobby stats"));
         commands.add(Commands.slash("send_player_info_file", "Send a .txt with all players with Player Info role"));
+
         commands.add(Commands.slash("results", "Send an embed about the lobby"));
-//        commands.add(Commands.slash("cancel", "Cancel the lobby you created or joined"));
+
         commands.add(Commands.slash("add_user_lobby", "Add a user to your lobby")
                 .addOptions(new OptionData(OptionType.USER, "player", "The user to add", true)));
 
@@ -841,3 +840,22 @@ public class ManagerCommands extends ListenerAdapter {
         guild.updateCommands().addCommands(commands).queue();
     }
 }
+
+/*
+        commands.add(Commands.slash("info", "Info about the bot"));
+        commands.add(Commands.slash("cancel", "Cancel the lobby you created or joined"));
+
+        commands.add(Commands.slash("clan_stat", "View clan stats")
+                .addOptions(new OptionData(OptionType.STRING, "clan_name", "The clan's name", true)));
+
+        commands.add(Commands.slash("info_user", "Info about a specific player")
+                .addOptions(
+                        new OptionData(OptionType.USER, "user", "The user", true)
+                ));
+                        commands.add(Commands.slash("delete_clan", "Delete an existing clan")
+                .addOptions(new OptionData(OptionType.STRING, "clan_name", "The clan's name", true)));
+        commands.add(Commands.slash("block_user", "Block a user from your lobby")
+                      .addOptions(new OptionData(OptionType.USER, "user", "The user to block", true)));
+
+         commands.add(Commands.slash("lobby_stats", "Show lobby stats"));
+ */

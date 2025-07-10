@@ -74,23 +74,37 @@ public class ManagerCommands extends ListenerAdapter {
                 TextChannel channel = (TextChannel) event.getChannel();
                 EmbedBuilder builder = new EmbedBuilder();
                 builder.setTitle("▬▬▬▬▬▬▬▬▬ All Commands ▬▬▬▬▬▬▬▬▬");
-                builder.setDescription(
-                        "\n\n > This is the complete List of the commands for this bot:" +
-                                "\n\n > * **/info** -> __This command will show you info about the bot__" +
-                                "\n\n > * **/clear** -> __This command will clear the chat in a specific channel__" +
-                                "\n\n > * **/commands** -> __This command will show you all the commands of the bot__" +
-                                "\n\n > * **/register_clan** -> __This command will register a new clan in the bot__" +
-                                "\n\n > * **/edit_clan_name** -> __This command will edit the name of a specific clan__" +
-                                "\n\n > * **/clan_stat** -> __This command will give you all info about a specific clan__" +
-                                "\n\n > * **/ft_request** -> __This command will make a friendly challenge between 2 random clans__" +
-                                "\n\n > * **/clan_win** -> __This command will update the victory count for a specific clan__" +
-                                "\n\n > * **/clan_loses** -> __This command will update the losses for a specific clan__" +
-                                "\n\n > * **/clan_list** -> __This command will give you a list of all player in a clan__" +
-                                "\n\n > * **/info_user** -> __This command will provide info about a specific user__" +
-                                "\n\n > * **/add_user** -> __This command will add a user to a specific clan__" +
-                                "\n\n > * **/kick_user** -> __This command will kick a user from a specific clan__" +
-                                "\n\n > * **/matchmaking** -> __This command will  Opens a modal that asks for all necessary details to create the lobby, and then creates it__" +
-                                "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
+
+                builder.setDescription("### __Commands only `@everyone` can use__" +
+                                       "\n - __*/add_info_card*__ - This command allows you to create a personalized player card for server matchmaking."+
+                                       "\n - __*/search_ninjacard*__ - This command allows you to search up any users registered ninja info card in this server."+
+                                       "\n - __*/clan_member_list*__ - This command allows you to search up members of a registered clan in this server."+
+                                       "\n - __*/commands*__ - This command sends a view only message detailing every perk that can be used with the server bot."+
+                                       "\n - __*/list_all_clan*__ - This command will send you a list of every registered clan in this server.\n"+
+
+                                        "### __Commands only `@Ninja Assembly/RN` can use__"+
+                                        "\n - __*/freestyle*__ - This command allows you to create public in server PVP lobbies for https://discord.com/channels/420393601176961025/1389588609295712357 & https://discord.com/channels/420393601176961025/1391434101059354804."+
+                                        "\n - __*/direct*__ - This command allows you to create private in server PVP lobbies."+
+                                        "\n - __*/my_ninjacard*__ - This command sends a drop down allowing you to look at your ninja info card and lobby stats of the server."+
+                                        "\n - __*/retire*__ - This command is for players that want to retire their solo or clan journey in this server.\n"+
+
+                                        "### __Commands only `@Ninja Hideout` can use__"+
+                                        "\n - __*/add_user_lobby*__ - This allows the host of a lobby to invite registered players of this server to their direct lobby."+
+                                        "\n - __*/leave_lobby*__ - This command allows the host of a lobby to leave before someone joined."+
+                                        "\n - __*/results*__ - This command allows the host of a lobby to mark the results between all participants.\n"+
+
+                                        "### __Commands only `@Ninja Proctor` can use__"+
+                                        "\n - __*/edit_wins*__ - This command allows the lobby referee to edit the win score of a player."+
+                                        "\n - __*/edit_losses*__ - This command allows the lobby referee to edit the lose score of a player."+
+                                        "\n - __*/results*__ - This command allows the lobby referee to mark the results between participants.\n"+
+
+                                        "### __Commands only `@Clan Leader` can use__"+
+                                        "\n - __*/register_clan*__ - This command allows a player to create a guild for this server."+
+                                        "\n - __*/add_clan_member*__ - This command allows a user to add members of this server to their registered clan."+
+                                        "\n - __*/edit_clan_name*__ - This command allows a user to edit the name of their registered clan."+
+                                        "\n - __*/kick_clan_member*__ - This command allows a user to kick a player out of their registered clan."+
+                                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
+
                 builder.setImage("https://media1.tenor.com/m/R8CSlK2ys1AAAAAd/sasuke-scroll.gif");
                 builder.setColor(Color.white);
                 event.replyEmbeds(builder.build()).setEphemeral(true).queue();

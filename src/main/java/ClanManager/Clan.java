@@ -46,6 +46,43 @@ public class Clan extends ListenerAdapter {
         listClanMember.add(member);
         ClanStorage.addClan(this); // Aggiungi automaticamente il clan a ClanStorage
     }
+    public Clan(String name, String leaderId, List<String> members, int wins, int losses, String creationDate) {
+        this.name = name;
+        this.clanLeaderId = leaderId;
+        this.wins = wins;
+        this.losses = losses;
+        this.creationDate = LocalDateTime.parse(creationDate, DATE_FORMATTER);
+
+        this.memberIds = new ArrayList<>();
+        this.listClanMember = new ArrayList<>(MAX_MEMBERS);
+
+        // Aggiungi il leader come primo membro
+        if (leaderId != null && !leaderId.isEmpty()) {
+            this.memberIds.add(leaderId);
+
+            User leaderUser = ClanStorage.getUserFromId(leaderId);
+            if (leaderUser != null) {
+                this.listClanMember.add(leaderUser);
+            }
+        }
+
+        // Aggiungi altri membri (escludi duplicati e il leader se già aggiunto)
+        if (members != null) {
+            for (String memberId : members) {
+                if (memberId != null && !this.memberIds.contains(memberId)) {
+                    this.memberIds.add(memberId);
+
+                    User user = ClanStorage.getUserFromId(memberId);
+                    if (user != null) {
+                        this.listClanMember.add(user);
+                    }
+                }
+            }
+        }
+
+        ClanStorage.addClan(this); // Facoltativo se vuoi inserirlo subito nello storage
+    }
+
 
     // Constructor con un singolo membro e vittorie
     public Clan(String name, User member, int victories) {
@@ -100,16 +137,17 @@ public class Clan extends ListenerAdapter {
         ClanStorage.addClan(this); // Aggiungi automaticamente il clan a ClanStorage
     }
 
-    public Clan(String name, String leaderId, List<String> members, int wins, int losses, String creationDate) {
-        this.name = name;
-        this.clanLeaderId = leaderId;
-        this.memberIds = new ArrayList<>(members);
-        this.wins = wins;
-        this.losses = losses;
-        this.creationDate = LocalDateTime.parse(creationDate, DATE_FORMATTER);
-
-        this.listClanMember = new ArrayList<>(MAX_MEMBERS);
-    }
+//    public Clan(String name, String leaderId, List<String> members, int wins, int losses, String creationDate) {
+//        this.name = name;
+//        this.clanLeaderId = leaderId;
+//        this.memberIds = new ArrayList<>(members);
+//
+//        this.wins = wins;
+//        this.losses = losses;
+//        this.creationDate = LocalDateTime.parse(creationDate, DATE_FORMATTER);
+//
+//        this.listClanMember = new ArrayList<>(MAX_MEMBERS);
+//    }
 
     public void loadMembersFromGuild(Guild guild) {
         listClanMember.clear();

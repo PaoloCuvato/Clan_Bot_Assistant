@@ -34,6 +34,9 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
@@ -644,9 +647,39 @@ public class LobbyCommand extends ListenerAdapter {
                 if(lobby.isDirectLobby()) {
                     promptLobbyTypeStep(event); // Salta FPS se è Direct
                 } else {
-                    promptFpsSelection(event);
+                    promptLobbyDurtationSelection(event);
                 }
             }
+
+            case "lobby_duration_select" -> {
+                Lobby lobby = lobbySessions.get(event.getUser().getIdLong());
+                if (lobby == null) {
+                    event.reply("❌ No active lobby found.").setEphemeral(true).queue();
+                    return;
+                }
+
+                String selectedValue = event.getValues().get(0);
+                int durationMinutes = Integer.parseInt(selectedValue);
+                System.out.println("[Info] Lobby duration set to " + durationMinutes + " minutes");
+
+                lobby.setDurationMinutes(durationMinutes); // assicurati che questo metodo esista
+
+                // Avvia il timer per marcare la lobby come incompleta allo scadere
+                ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+                scheduler.schedule(() -> {
+                    if (!lobby.isCompleted()) {
+                        lobby.incompleteLobby(event.getGuild()); // assicurati che questo metodo esista
+                        System.out.println("⏰ Lobby marked as incomplete after " + durationMinutes + " minutes.");
+                    } else {
+                        System.out.println("⏳ Timer ended, but lobby was already locked or completed. No action taken.");
+                    }
+                }, durationMinutes, TimeUnit.MINUTES);
+
+                promptFpsSelection(event);
+
+
+            }
+
             case "lobby_fps_select" -> {
                 Lobby lobby = lobbySessions.get(event.getUser().getIdLong());
                 if (lobby == null) {
@@ -863,6 +896,35 @@ public class LobbyCommand extends ListenerAdapter {
                     )
                     .queue();
         }
+
+    private void promptLobbyDurtationSelection(StringSelectInteractionEvent event) {
+        EmbedBuilder embed = new EmbedBuilder()
+                .setTitle("▬▬▬▬▬▬ ⏰ Select Lobby Duration ▬▬▬▬▬▬")
+                .setDescription(" > For how much time are you available to play on this lobby?" +
+                        "\n (After that time, the lobby will be marked as incomplete if you don't close it first)." +
+                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                .setColor(Color.white);
+
+        event.deferEdit().queue(); // <- questa rimuove il "loading" del menu
+        event.getHook().editOriginalEmbeds(embed.build())
+                .setComponents(
+                        ActionRow.of(
+                                StringSelectMenu.create("lobby_duration_select")
+                                        .addOption("1 Min", "1")
+                                        .addOption("15 Min", "15")
+                                        .addOption("30 Min", "30")
+                                        .addOption("45 Min", "45")
+                                        .addOption("60 Min", "60")
+                                        .addOption("1.30h", "90")
+                                        .addOption("2h", "120")
+                                        .addOption("2h 30 min", "150")
+                                        .addOption("3h", "180")
+                                        .build()
+                        )
+                )
+                .queue();
+    }
+
 
     private void promptRegionSelection(StringSelectInteractionEvent event) {
         EmbedBuilder embed = new EmbedBuilder()

@@ -39,7 +39,7 @@ public class ClanStorage extends ListenerAdapter {
             throw new IllegalArgumentException("Clan or clan name cannot be null or empty.");
         }
         clans.put(clan.getName(), clan);
-        System.out.println("Clan added to the map: " + clan.getName());  // Log per confermare l'aggiunta
+        System.out.println("[Info] Clan added to the map: " + clan.getName());  // Log per confermare l'aggiunta
 
     }
 
@@ -70,11 +70,11 @@ public class ClanStorage extends ListenerAdapter {
 
     public static boolean updateClanName(String oldName, String newName) {
         if (!hasClan(oldName)) {
-            System.out.println("❌ Error: Clan " + oldName + " does not exist in memory.");
+            System.out.println("[Error] ❌ Error: Clan " + oldName + " does not exist in memory.");
             return false; // Clan not found in memory
         }
         if (hasClan(newName)) {
-            System.out.println("❌ Error: A clan with the name " + newName + " already exists.");
+            System.out.println("[Error] ❌ Error: A clan with the name " + newName + " already exists.");
             return false; // The new name is already in use
         }
 
@@ -90,11 +90,11 @@ public class ClanStorage extends ListenerAdapter {
         boolean dbUpdated = MongoDBManager.updateClanNameInDatabase(oldName, newName);
 
         if (!dbUpdated) {
-            System.out.println("⚠️ Warning: Database update failed!");
+            System.out.println("[⚠️ Warning]: Database update failed!");
             return false;
         }
 
-        System.out.println("✅ Clan name updated successfully: " + oldName + " ➝ " + newName);
+        System.out.println("[Info] ✅ Clan name updated successfully: " + oldName + " ➝ " + newName);
         return true;
     }
 
@@ -129,7 +129,7 @@ public class ClanStorage extends ListenerAdapter {
 
         try {
             if (collection.updateOne(query, update).getModifiedCount() > 0) {
-                System.out.println("✅ Clan wins updated in MongoDB: " + clanName + " ➝ Wins: " + newWins);
+                System.out.println("[Info] ✅ Clan wins updated in MongoDB: " + clanName + " ➝ Wins: " + newWins);
                 return true;
             } else {
                 System.out.println("❌ Error: Clan " + clanName + " not found in the database.");
@@ -151,14 +151,14 @@ public class ClanStorage extends ListenerAdapter {
 
         try {
             if (collection.updateOne(query, update).getModifiedCount() > 0) {
-                System.out.println("✅ Clan losses updated in MongoDB: " + clanName + " ➝ Losses: " + newLosses);
+                System.out.println("[Info] ✅ Clan losses updated in MongoDB: " + clanName + " ➝ Losses: " + newLosses);
                 return true;
             } else {
-                System.out.println("❌ Error: Clan " + clanName + " not found in the database.");
+                System.out.println("[❌ Error] Clan " + clanName + " not found in the database.");
                 return false;
             }
         } catch (Exception e) {
-            System.err.println("❌ Error updating clan losses in the database: " + e.getMessage());
+            System.err.println("[❌ Error] updating clan losses in the database: " + e.getMessage());
             return false;
         }
     }
@@ -181,7 +181,7 @@ public class ClanStorage extends ListenerAdapter {
             String clanLeaderId = document.getString("clanLeaderId");
             List<String> memberIds = document.getList("members", String.class);
 
-            System.out.println("Loaded document: " + document.toJson());
+            System.out.println("[Info] Loaded document: " + document.toJson());
 
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM:dd:yyyy HH:mm:ss");
             LocalDateTime creationDate = LocalDateTime.parse(creationDateStr, formatter);
@@ -202,9 +202,9 @@ public class ClanStorage extends ListenerAdapter {
                             User user = getUserFromId(id);
                             if (user != null) {
                                 clan.getListClanMember().add(user);
-                                System.out.println("User added to clan: " + user.getName());
+                                System.out.println("[Info] User added to clan: " + user.getName());
                             } else {
-                                System.out.println("User not found for ID: " + id);
+                                System.out.println("[Info] User not found for ID: " + id);
                             }
                         });
             }
@@ -212,7 +212,7 @@ public class ClanStorage extends ListenerAdapter {
             return clan;
 
         } catch (Exception e) {
-            System.out.println("Error converting document to clan: " + e.getMessage());
+            System.out.println("[Error] Error converting document to clan: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
@@ -223,19 +223,19 @@ public class ClanStorage extends ListenerAdapter {
 
         // Check if the collection exists
         if (collection == null) {
-            System.out.println("Error: The 'clans' collection was not found in the database.");
+            System.out.println("[Error] The 'clans' collection was not found in the database.");
             return;
         }
 
         // Log how many documents are present
         long count = collection.countDocuments();
-        System.out.println("Total documents in 'clans' collection: " + count);
+        System.out.println("[Info] Total documents in 'clans' collection: " + count);
 
         FindIterable<Document> documents = collection.find();
 
         // Check if there are any documents to load
         if (!documents.iterator().hasNext()) {
-            System.out.println("No clan documents found in the collection.");
+            System.out.println("[Error] No clan documents found in the collection.");
             return;
         }
 
@@ -244,23 +244,23 @@ public class ClanStorage extends ListenerAdapter {
             Clan clan = documentToClan(document);
             if (clan != null) {
                 addClan(clan);
-                System.out.println("Loaded clan: " + clan.getName());
+                System.out.println("[Info] Loaded clan: " + clan.getName());
             } else {
-                System.out.println("Failed to load a clan from document: " + document.toJson());
+                System.out.println("[Error] Failed to load a clan from document: " + document.toJson());
             }
         }
 
-        System.out.println("Finished loading all clans from the database.");
+        System.out.println("[Info] Finished loading all clans from the database.");
     }
 
     @Override
     public void onGuildReady(GuildReadyEvent event) {
         this.event= event;
         this.guild = event.getGuild();
-        System.out.println("Guild is ready, loading clans...");
+        System.out.println("[Info] Guild is ready, loading clans...");
 
         ClanStorage.loadAllClansFromDatabase();
-        System.out.println("All clans loaded.");
+        System.out.println("[Info] All clans loaded.");
     }
 
 }

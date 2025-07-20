@@ -22,6 +22,6 @@ public class InactivityInitializer extends ListenerAdapter {
         InactivityManager inactivityManager = new InactivityManager(jda, categoryId);
         jda.addEventListener(inactivityManager);
 
-        System.out.println("✅ InactivityManager registrato per la guild: " + guild.getName());
+        System.out.println("[Info] ✅ InactivityManager registrato per la guild: " + guild.getName());
     }
 }

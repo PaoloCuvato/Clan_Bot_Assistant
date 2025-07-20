@@ -17,6 +17,7 @@ import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.entities.channel.forums.ForumTag;
+import net.dv8tion.jda.api.entities.channel.forums.ForumTagSnowflake;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
@@ -69,6 +70,7 @@ public class Lobby extends ListenerAdapter {
     private long announcementChannelId;  // nuovo campo
     private int maxPartecipants = 2;
     private String Fps;  // nuovo campo
+    private int durationMinutes= 180;
 
     // other stuff not on lobby stat
     private long PostId;
@@ -106,7 +108,7 @@ public class Lobby extends ListenerAdapter {
             "Xbox Series S", 223456789012345678L,
             "Xbox 360", 223456789012345678L,
 
-            "PC", 323456789012345678L,
+            "PC", 1316691292930965576L,
             "RPCS3", 423456789012345678L,
 
             "Nintendo Switch 1", 523456789012345678L,
@@ -285,7 +287,6 @@ public class Lobby extends ListenerAdapter {
             return;
         }
 
-        // Mark lobby as incomplete
         this.isCompleted = false;
 
         PlayerStatsManager pm = PlayerStatsManager.getInstance();
@@ -299,44 +300,71 @@ public class Lobby extends ListenerAdapter {
         }
 
         if (this.directLobby) {
-            // SOLO STATS DIRECT
             creatorStats.incrementLobbiesIncompleteDirect();
         } else {
-            // STATS GENERAL
             creatorStats.incrementLobbiesIncompleteGeneral();
 
             // ARCHIVIA THREAD FORUM
-            ThreadChannel threadChannel = guild.getThreadChannels().stream()
-                    .filter(thread -> thread.getIdLong() == this.PostId)
-                    .findFirst()
-                    .orElse(null);
+            ThreadChannel threadChannel = guild.getThreadChannelById(this.PostId);
 
             if (threadChannel != null) {
-
-                // Invio embed nel thread
+                // Invia embed nel thread
                 EmbedBuilder embed = new EmbedBuilder()
-                        .setTitle("▬▬▬▬▬▬▬▬ Lobby Behavior ▬▬▬▬▬▬▬▬")
-                        .setDescription("This lobby has been marked as incomplete.")
-                        .setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
-                        .setColor(Color.decode("#1c0b2e"));
+                        .setTitle("📌 Lobby Status: Incomplete")
+                        .setDescription("This lobby has been automatically marked as **incomplete** due to inactivity.")
+                        .setColor(Color.decode("#5c5470")) // viola spento
+                        .setFooter("Forum post archived and locked");
 
                 threadChannel.sendMessageEmbeds(embed.build()).queue();
 
+                // 🔖 Aggiunta tag con ID 1389612412470038649
+                ForumTagSnowflake tagToAdd = ForumTagSnowflake.fromId(1389612412470038649L);
+                List<ForumTagSnowflake> currentTags = new ArrayList<>(threadChannel.getAppliedTags());
+
+                if (!currentTags.contains(tagToAdd)) {
+                    currentTags.add(tagToAdd);
+                }
+
+                threadChannel.getManager()
+                        .setAppliedTags(currentTags)
+                        .queue(
+                                success -> System.out.println("🏷 Tag 'Incompleta' aggiunto mantenendo i precedenti."),
+                                error -> System.err.println("❌ Errore nell'aggiornare i tag.")
+                        );
+
                 // Archivio e blocco il thread
-                threadChannel.getManager().setArchived(true).setLocked(true).queue(
-                        success -> System.out.println("✅ Post archived and locked (incomplete lobby)."),
-                        error -> System.err.println("❌ Unable to archive the post.")
-                );
+                if (threadChannel.isArchived()) {
+                    threadChannel.getManager()
+                            .setArchived(false)
+                            .queue(unarchived -> {
+                                threadChannel.getManager()
+                                        .setArchived(true)
+                                        .setLocked(true)
+                                        .queue(
+                                                success -> System.out.println("✅ Thread unarchived, then archived and locked."),
+                                                error -> System.err.println("❌ Failed to archive/lock thread.")
+                                        );
+                            }, err -> System.err.println("❌ Failed to unarchive thread."));
+                } else {
+                    threadChannel.getManager()
+                            .setArchived(true)
+                            .setLocked(true)
+                            .queue(
+                                    success -> System.out.println("✅ Thread archived and locked."),
+                                    error -> System.err.println("❌ Failed to archive/lock thread.")
+                            );
+                }
             } else {
-                System.err.println("❌ Forum thread not found.");
+                System.err.println("❌ Forum thread not found for ID: " + this.PostId);
             }
         }
+
         PlayerStatMongoDBManager.updatePlayerStats(creatorStats);
 
-        // Remove lobby for creator
+        // Rimuove la lobby per il creatore
         LobbyManager.removeLobby(this.discordId);
 
-        // Update and remove lobby for each participant (excluding creator)
+        // Aggiorna e rimuove la lobby per ogni partecipante (escluso creatore)
         for (Long participantId : partecipants) {
             if (!participantId.equals(this.discordId)) {
                 PlayerStats participantStats = pm.getPlayerStats(participantId);
@@ -352,7 +380,6 @@ public class Lobby extends ListenerAdapter {
                     participantStats.incrementLobbiesIncompleteGeneral();
                 }
                 PlayerStatMongoDBManager.updatePlayerStats(participantStats);
-
                 LobbyManager.removeLobby(participantId);
             }
         }

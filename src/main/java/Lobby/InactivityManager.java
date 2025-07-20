@@ -101,7 +101,7 @@ public class InactivityManager extends ListenerAdapter {
             GuildMessageChannel channel = guild.getChannelById(GuildMessageChannel.class, channelId);
             if (channel != null) {
                 channel.delete().queue(
-                        success -> System.out.println("Cancellato canale inattivo: " + channel.getName()),
+                        success -> System.out.println("[Info] Cancellato canale inattivo: " + channel.getName()),
                         failure -> System.err.println("Errore durante eliminazione canale: " + failure.getMessage())
                 );
                 lastActivityMap.remove(channelId);

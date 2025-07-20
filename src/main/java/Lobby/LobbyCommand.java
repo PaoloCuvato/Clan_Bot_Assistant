@@ -57,9 +57,9 @@ public class LobbyCommand extends ListenerAdapter {
         long discordId = event.getUser().getIdLong();
 
         switch (event.getName()) {
-            case "freestyle" -> handleFreestyle(event);
+            case "create_lobby" -> handleFreestyle(event);
             case "edit_lobby" -> handleEditLobby(event);
-            case "direct" -> handleDirect(event);
+            case "create_private_lobby" -> handleDirect(event);
             case "add_user_lobby" -> handleAddUserLobby(event, discordId);
             case "kick_user_lobby" -> handleKickUserLobby(event, discordId);
 

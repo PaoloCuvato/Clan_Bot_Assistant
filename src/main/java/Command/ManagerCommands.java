@@ -54,6 +54,22 @@ public class ManagerCommands extends ListenerAdapter {
             }
         }
 
+        if (command.equals("credits")) {
+            if (event.getChannel() instanceof TextChannel) {
+                EmbedBuilder builder = new EmbedBuilder();
+                builder.setTitle("▬▬▬▬▬▬▬▬▬▬ Credits ▬▬▬▬▬▬▬▬▬▬▬");
+                builder.setDescription(" > **With this command, we want to give all the recognition to the people that contribute to this.\n" +
+                        "* The first individual we would like to acknowledge is Playco_Armboy, who was the first to attempt to develop this matchmaking system. A lot of the idea, and how to set this up, are thanks to him.\n" +
+                        "* Malad and everyone else who helped to create this amazing tool deserve our second heartfelt thank you.\n" +
+                        "* The third person to say thanks is DarkoSenju and his company that allow us to create all of this.\n" +
+                        "* We would like to express our sincere gratitude to Azrael/Ade2995, who was the driving force behind this project and coded the entire system. We appreciate all of your time and effort. :heart:**"
+                        + "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
+                builder.setImage("https://tenor.com/view/hurray-bonzai-naruto-anime-anonymouskun-gif-21617813");
+                builder.setColor(Color.decode("#1C638C"));
+                event.replyEmbeds(builder.build()).setEphemeral(true).queue();
+            }
+        }
+
         // Handling the /clear command
         if (command.equals("clear") && (Objects.requireNonNull(event.getMember()).hasPermission(Permission.ADMINISTRATOR))) {
             if (event.getChannel() instanceof TextChannel) {
@@ -83,20 +99,20 @@ public class ManagerCommands extends ListenerAdapter {
                                        "\n - __*/list_all_clan*__ - This command will send you a list of every registered clan in this server.\n"+
 
                                         "### __Commands only `@Ninja Assembly/RN` can use__"+
-                                        "\n - __*/freestyle*__ - This command allows you to create public in server PVP lobbies for https://discord.com/channels/420393601176961025/1389588609295712357 & https://discord.com/channels/420393601176961025/1391434101059354804."+
-                                        "\n - __*/direct*__ - This command allows you to create private in server PVP lobbies."+
+                                        "\n - __*/create_lobby*__ - This command allows you to create public in server PVP lobbies for https://discord.com/channels/420393601176961025/1389588609295712357 & https://discord.com/channels/420393601176961025/1391434101059354804."+
+                                        "\n - __*/create_private_lobby*__ - This command allows you to create private in server PVP lobbies."+
                                         "\n - __*/my_ninjacard*__ - This command sends a drop down allowing you to look at your ninja info card and lobby stats of the server."+
                                         "\n - __*/retire*__ - This command is for players that want to retire their solo or clan journey in this server.\n"+
 
                                         "### __Commands only `@Ninja Hideout` can use__"+
                                         "\n - __*/add_user_lobby*__ - This allows the host of a lobby to invite registered players of this server to their direct lobby."+
                                         "\n - __*/leave_lobby*__ - This command allows the host of a lobby to leave before someone joined."+
-                                        "\n - __*/results*__ - This command allows the host of a lobby to mark the results between all participants.\n"+
+                                        "\n - __*/close_lobby*__ - This command allows the host of a lobby to mark the results between all participants and close the lobby.\n"+
 
                                         "### __Commands only `@Ninja Proctor` can use__"+
                                         "\n - __*/edit_wins*__ - This command allows the lobby referee to edit the win score of a player."+
                                         "\n - __*/edit_losses*__ - This command allows the lobby referee to edit the lose score of a player."+
-                                        "\n - __*/results*__ - This command allows the lobby referee to mark the results between participants.\n"+
+                                        "\n - __*/close_lobby*__ - This command allows the lobby referee to mark the results between participants and close the lobby.\n"+
 
                                         "### __Commands only `@Clan Leader` can use__"+
                                         "\n - __*/register_clan*__ - This command allows a player to create a guild for this server."+
@@ -835,17 +851,17 @@ public class ManagerCommands extends ListenerAdapter {
         commands.add(Commands.slash("search_ninjacard", "View another user's Ninja Card")
                 .addOptions(new OptionData(OptionType.USER, "target", "The user", true)));
 
-        commands.add(Commands.slash("freestyle", "Send lobby creation embed"));
+        commands.add(Commands.slash("create_lobby", "Send lobby creation embed"));
 
         commands.add(Commands.slash("edit_lobby", "Edit the lobby embed"));
 
-        commands.add(Commands.slash("direct", "Send private lobby"));
+        commands.add(Commands.slash("create_private_lobby", "Create a private lobby"));
         //     commands.add(Commands.slash("complete_lobby", "Archive and complete the lobby"));
         commands.add(Commands.slash("leave_lobby", "Leave the current lobby"));
 
         commands.add(Commands.slash("send_player_info_file", "Send a .txt with all players with Player Info role"));
 
-        commands.add(Commands.slash("results", "Send an embed about the lobby"));
+        commands.add(Commands.slash("close_lobby", "allow you to close the lobby"));
 
         commands.add(Commands.slash("add_user_lobby", "Add a user to your lobby")
                 .addOptions(new OptionData(OptionType.USER, "player", "The user to add", true)));

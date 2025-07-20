@@ -1005,12 +1005,7 @@ public class LobbyCommand extends ListenerAdapter {
                                 .setRequired(true)
                                 .build()
                 )
-                .addActionRow(
-                        TextInput.create("lobby_availability", "Availability", TextInputStyle.PARAGRAPH)
-                                .setPlaceholder("Specify how many minutes you will be available for, e.g. 60 Minutes,120 Minutes...")
-                                .setRequired(true)
-                                .build()
-                )
+
                 .addActionRow(
                         TextInput.create("lobby_rule", "Lobby Rules", TextInputStyle.PARAGRAPH)
                                 .setPlaceholder("Write the possible rules for the match, e.g. ban, character/stage selection, etc.")

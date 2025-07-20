@@ -50,7 +50,7 @@ public class Bot extends ListenerAdapter {
         manager.enableCache(Arrays.asList(CacheFlag.values()));
         manager.build();
 
-        System.out.println("The bot is running");
+        System.out.println("[Info] The bot is running");
     }
 
     // Quando il bot si spegne, chiude la connessione MongoDB

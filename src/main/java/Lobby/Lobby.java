@@ -536,7 +536,7 @@ public class Lobby extends ListenerAdapter {
                                 " * **Skill Level:** " + skillLevel + "\n" +
                                 " * **Connection:** " + connectionType + "\n" +
                                 " * **Lobby Type:** " + lobbyType + "\n" +
-                                " * **Availability:** " + availability + "\n" +
+                                " * **Availability:** " + durationMinutes + " Min \n" +
                                 " * **Rules:** " + (rules != null && !rules.isEmpty() ? rules : "N/A") + "\n" +
                                 " * **Post URL:** " + "<#"+PostId+">"+ " | " + PostId + "\n" +
                                 " * **Created At:** " + creationTimeFormatted + "\n" +
@@ -858,7 +858,7 @@ public class Lobby extends ListenerAdapter {
                                             " * **Skill Level:** "     + skillLevel  + "\n" +
                                             " * **Connection:** "      + connectionType + "\n" +
                                             " * **Lobby Type:** "      + lobbyType   + "\n" +
-                                            " * **Availability:** "    + availability + "\n" +
+                                            " * **Availability:** "    + durationMinutes + " Min \n" +
                                             " * **Rules:** "           + (rules != null && !rules.isEmpty() ? rules : "N/A") + "\n" +
                                             " * **Created At:** "      + creationTimeFormatted + "\n\n" +
                                             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
@@ -892,7 +892,7 @@ public class Lobby extends ListenerAdapter {
                 .setColor(Color.decode("#1c0b2e"))
                 .setDescription(
                         //  "# "+"<@"+this.getDiscordId()+">"+" | " +this.getDiscordId() + "\n"+
-                        "### <@"+this.getDiscordId()+">"+" is available for the next "+ availability +" on " + platform + "\n"+
+                        "### <@"+this.getDiscordId()+">"+" is available for the next "+ durationMinutes +" Min on " + platform + "\n"+
                                 "* **In Game Name:** " + playerName + "\n" +
                                 "* **Game Target:** " + game + "\n" +
                                 //   "**Platform:** " + platform + "\n" +

@@ -170,6 +170,17 @@ public class Lobby extends ListenerAdapter {
     private long allowedUserId;  // ID dell'utente autorizzato per lobby privat
     private Config c = new Config();
 
+    private final Map<Long, Integer> declinedAttemptsPerUser = new HashMap<>();
+
+    public void incrementDeclineForUser(long userId) {
+        declinedAttemptsPerUser.put(userId, declinedAttemptsPerUser.getOrDefault(userId, 0) + 1);
+    }
+
+    public int getDeclineCountForUser(long userId) {
+        return declinedAttemptsPerUser.getOrDefault(userId, 0);
+    }
+
+
     // this  method will set up the max people on the lobby
     public void checkMaxpartecipants() {
 

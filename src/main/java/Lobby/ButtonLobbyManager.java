@@ -56,6 +56,13 @@ public class ButtonLobbyManager extends ListenerAdapter {
             Lobby lobby = LobbyManager.getLobby(Long.parseLong(creatorId));
             if (lobby == null) return;
 
+            int declineCount = lobby.getDeclineCountForUser(joiner.getIdLong());
+            if (declineCount >= 2) {
+                event.reply("❌ You have been declined too many times from this lobby. You can no longer request to join.").setEphemeral(true).queue();
+                return;
+            }
+
+
             if (lobby.isUserBlocked(joiner.getIdLong())) {
                 event.reply("❌ You have been blocked by the lobby creator. You cannot join.").setEphemeral(true).queue();
                 return;
@@ -153,6 +160,8 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 event.reply("❌ Could not find the related lobby.").setEphemeral(true).queue();
                 return;
             }
+
+            lobby.incrementDeclineForUser(declinedUser.getIdLong());
 
             long threadPostId = lobby.getPostId();
             ThreadChannel thread = guild.getThreadChannelById(threadPostId);

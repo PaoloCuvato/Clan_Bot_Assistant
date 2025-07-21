@@ -86,8 +86,6 @@ public class ManagerCommands extends ListenerAdapter {
 
         // Handling the /commands command
         if (command.equals("commands")) {
-            if (event.getChannel() instanceof TextChannel) {
-                TextChannel channel = (TextChannel) event.getChannel();
                 EmbedBuilder builder = new EmbedBuilder();
                 builder.setTitle("▬▬▬▬▬▬▬▬▬ All Commands ▬▬▬▬▬▬▬▬▬");
 
@@ -124,7 +122,6 @@ public class ManagerCommands extends ListenerAdapter {
                 builder.setImage("https://media1.tenor.com/m/R8CSlK2ys1AAAAAd/sasuke-scroll.gif");
                 builder.setColor(Color.white);
                 event.replyEmbeds(builder.build()).setEphemeral(true).queue();
-            }
         }
 
         // Handling the clan command

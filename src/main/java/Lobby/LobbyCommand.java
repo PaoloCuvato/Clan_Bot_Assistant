@@ -199,7 +199,7 @@ public class LobbyCommand extends ListenerAdapter {
             }
         }
 
-        if (!event.getName().equals("results")) return;
+        if (!event.getName().equals("close_lobby")) return;
 
         // Ricava membro e utente che hanno invocato il comando
         Member member = event.getMember();
@@ -899,10 +899,10 @@ public class LobbyCommand extends ListenerAdapter {
 
     private void promptLobbyDurtationSelection(StringSelectInteractionEvent event) {
         EmbedBuilder embed = new EmbedBuilder()
-                .setTitle("▬▬▬▬▬▬ ⏰ Select Lobby Duration ▬▬▬▬▬▬")
+                .setTitle("▬▬▬▬▬▬▬▬▬ ⏰ Select Lobby Duration ▬▬▬▬▬▬▬▬▬")
                 .setDescription(" > For how much time are you available to play on this lobby?" +
                         "\n (After that time, the lobby will be marked as incomplete if you don't close it first)." +
-                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
+                        "\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
                 .setColor(Color.white);
 
         event.deferEdit().queue(); // <- questa rimuove il "loading" del menu
@@ -1113,12 +1113,10 @@ public class LobbyCommand extends ListenerAdapter {
 
         // Leggi i campi
         String playerName   = event.getValue("lobby_playername").getAsString();
-        String availability = event.getValue("lobby_availability").getAsString();
         String rules        = event.getValue("lobby_rule").getAsString();
 
         // Aggiorna la lobby
         lobby.setPlayerName(playerName);
-        lobby.setAvailability(availability);
         lobby.setRules(rules);
         lobby.setCreatedAt(LocalDateTime.now());
 

@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
@@ -89,19 +90,33 @@ public class ButtonLobbyManager extends ListenerAdapter {
 
                 lobby.getPartecipants().add(joiner.getIdLong());
 
-                TextChannel privateChannel = guild.getTextChannelById(lobby.getPrivateChannelId());
-                if (privateChannel != null) {
+                GuildChannel rawChannel = guild.getGuildChannelById(lobby.getPrivateChannelId());
+
+                if (rawChannel instanceof TextChannel privateChannel) {
                     privateChannel.getManager()
                             .putPermissionOverride(joiner, EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND), null)
                             .queue();
 
                     event.reply("✅ You have successfully joined the private lobby.").setEphemeral(true).queue();
                     privateChannel.sendMessage("✅ " + joiner.getAsMention() + " has joined the private lobby.").queue();
+
+                } else if (rawChannel instanceof ThreadChannel threadChannel) {
+                    threadChannel.addThreadMember(joiner.getUser()).queue(
+                            success -> {
+                                event.reply("✅ You have successfully joined the private lobby.").setEphemeral(true).queue();
+                                threadChannel.sendMessage("✅ " + joiner.getAsMention() + " has joined the private lobby.").queue();
+                            },
+                            error -> {
+                                event.reply("❌ Could not add you to the thread.").setEphemeral(true).queue();
+                                System.err.println("❌ Error adding member to thread: " + error.getMessage());
+                            }
+                    );
+
                 } else {
-                    event.reply("❌ Private channel not found.").setEphemeral(true).queue();
+                    event.reply("❌ Private channel not found or unsupported type.").setEphemeral(true).queue();
                 }
-                return;
             }
+
 
             hostStats.incrementIgnoredRequestGeneral();
             joinerStats.incrementLobbiesJoinedGeneral();
@@ -233,21 +248,12 @@ public class ButtonLobbyManager extends ListenerAdapter {
 
             lobby.getPartecipants().add(userIdLong);
 
-            TextChannel privateChannel = guild.getTextChannelById(lobby.getPrivateChannelId());
-            if (privateChannel == null) {
-                event.reply("❌ Private channel not found.").setEphemeral(true).queue();
-                return;
-            }
-
+            GuildChannel rawChannel = guild.getGuildChannelById(lobby.getPrivateChannelId());
             Member acceptedMember = guild.getMemberById(playerId);
-            if (acceptedMember == null) {
-                event.reply("❌ Player not found.").setEphemeral(true).queue();
+            if (rawChannel == null || acceptedMember == null) {
+                event.reply("❌ Private channel or player not found.").setEphemeral(true).queue();
                 return;
             }
-
-            privateChannel.getManager()
-                    .putPermissionOverride(acceptedMember, EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND), null)
-                    .queue();
 
             long threadPostId = lobby.getPostId();
             ThreadChannel thread = guild.getThreadChannelById(threadPostId);
@@ -262,17 +268,28 @@ public class ButtonLobbyManager extends ListenerAdapter {
                     .setFooter("▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬")
                     .setColor(Color.decode("#1c0b2e"));
 
-            // Unica chiamata a deferEdit
+            // Gestione canale (TextChannel o ThreadChannel)
             event.deferEdit().queue(success -> {
                 event.getMessage().delete().queue();
-                privateChannel.sendMessage("✅ " + acceptedMember.getAsMention() + " has been accepted by " + creator.getAsMention() + ".").queue();
+
+                if (rawChannel instanceof TextChannel privateChannel) {
+                    privateChannel.getManager()
+                            .putPermissionOverride(acceptedMember, EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND), null)
+                            .queue();
+
+                    privateChannel.sendMessage("✅ " + acceptedMember.getAsMention() + " has been accepted by " + creator.getAsMention() + ".").queue();
+                } else if (rawChannel instanceof ThreadChannel threadChannel) {
+                    threadChannel.addThreadMember(acceptedUser).queue();
+                    threadChannel.sendMessage("✅ " + acceptedMember.getAsMention() + " has been accepted by " + creator.getAsMention() + ".").queue();
+                }
+
                 thread.sendMessageEmbeds(embed.build()).queue();
             });
         }
 
 
         // ✅ LOGICA AGGIUNTA PER YES / NO
-        else if (componentId.startsWith("lobby_add_yes:") || componentId.startsWith("lobby_add_no:")) {
+        if (componentId.startsWith("lobby_add_yes:") || componentId.startsWith("lobby_add_no:")) {
             String[] parts = componentId.split(":");
             boolean accepted = parts[0].endsWith("_yes");
             long ownerId = Long.parseLong(parts[1]);
@@ -290,7 +307,7 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 return;
             }
 
-            TextChannel priv = guild.getTextChannelById(lobby.getPrivateChannelId());
+            GuildChannel priv = guild.getGuildChannelById(lobby.getPrivateChannelId());
             Member invited = guild.getMemberById(userId);
             if (priv == null || invited == null) {
                 event.reply("❌ Channel or member missing.").setEphemeral(true).queue();
@@ -324,15 +341,26 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 PlayerStatMongoDBManager.updatePlayerStats(creatorStats);
                 PlayerStatMongoDBManager.updatePlayerStats(invitedStats);
 
-                priv.getManager()
-                        .putPermissionOverride(invited,
-                                EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND),
-                                EnumSet.noneOf(Permission.class))
-                        .queue(v -> {
-                            lobby.getPartecipants().add(userId);
-                            event.reply("✅ You have joined!").setEphemeral(true).queue();
-                            priv.sendMessage(invited.getAsMention() + " has joined the lobby.").queue();
-                        }, failure -> event.reply("❌ Failed to grant permissions.").setEphemeral(true).queue());
+                if (priv instanceof TextChannel textChannel) {
+                    textChannel.getManager()
+                            .putPermissionOverride(invited,
+                                    EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND),
+                                    EnumSet.noneOf(Permission.class))
+                            .queue(v -> {
+                                lobby.getPartecipants().add(userId);
+                                event.reply("✅ You have joined!").setEphemeral(true).queue();
+                                textChannel.sendMessage(invited.getAsMention() + " has joined the lobby.").queue();
+                            }, failure -> event.reply("❌ Failed to grant permissions.").setEphemeral(true).queue());
+                } else if (priv instanceof ThreadChannel threadChannel) {
+                    threadChannel.addThreadMember(invited.getUser()).queue(v -> {
+                        lobby.getPartecipants().add(userId);
+                        event.reply("✅ You have joined!").setEphemeral(true).queue();
+                        threadChannel.sendMessage(invited.getAsMention() + " has joined the lobby.").queue();
+                    }, failure -> event.reply("❌ Failed to add to thread.").setEphemeral(true).queue());
+                } else {
+                    event.reply("❌ Unsupported channel type.").setEphemeral(true).queue();
+                }
+
             } else {
                 // ✅ Incrementa declined per creatore
                 creatorStats.incrementWasDeclinedDirect();
@@ -340,66 +368,94 @@ public class ButtonLobbyManager extends ListenerAdapter {
                 invitedStats.decrementIgnoredRequestDirect();
 
                 PlayerStatMongoDBManager.updatePlayerStats(creatorStats);
-                PlayerStatMongoDBManager.updatePlayerStats(invitedStats);  // <-- Aggiorna anche invitedStats
+                PlayerStatMongoDBManager.updatePlayerStats(invitedStats);
 
-                priv.getManager()
-                        .putPermissionOverride(invited,
-                                EnumSet.noneOf(Permission.class),
-                                EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND))
-                        .queue(v -> {
-                            lobby.blockUser(userId);
-                            event.reply("❌ You declined the invitation.").setEphemeral(true).queue();
-                            priv.sendMessage(invited.getAsMention() + " has declined the invitation.").queue();
-                        }, failure -> event.reply("❌ Failed to update permissions.").setEphemeral(true).queue());
+                if (priv instanceof TextChannel textChannel) {
+                    textChannel.getManager()
+                            .putPermissionOverride(invited,
+                                    EnumSet.noneOf(Permission.class),
+                                    EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND))
+                            .queue(v -> {
+                                lobby.blockUser(userId);
+                                event.reply("❌ You declined the invitation.").setEphemeral(true).queue();
+                                textChannel.sendMessage(invited.getAsMention() + " has declined the invitation.").queue();
+                            }, failure -> event.reply("❌ Failed to update permissions.").setEphemeral(true).queue());
+                } else if (priv instanceof ThreadChannel threadChannel) {
+                    // Non si possono togliere permessi in un ThreadChannel, quindi solo blocco e messaggio
+                    lobby.blockUser(userId);
+                    event.reply("❌ You declined the invitation.").setEphemeral(true).queue();
+                    threadChannel.sendMessage(invited.getAsMention() + " has declined the invitation.").queue();
+                } else {
+                    event.reply("❌ Unsupported channel type.").setEphemeral(true).queue();
+                }
             }
+            return;
         }
 
 
-        String buttonId = event.getComponentId();
-        TextChannel channel = event.getChannel().asTextChannel();
+
         Guild guild = event.getGuild();
         if (guild == null) return;
 
-// Controlla che il canale sia nella categoria giusta
+        GuildChannel genericChannel = (GuildChannel) event.getChannel();
+
+        TextChannel channel = null;
+        if (genericChannel instanceof TextChannel) {
+            channel = (TextChannel) genericChannel;
+        } else if (genericChannel instanceof ThreadChannel thread) {
+            var parent = thread.getParentChannel();
+            if (parent instanceof TextChannel parentTextChannel) {
+                channel = parentTextChannel;
+            }
+        }
+
+        if (channel == null) {
+            event.reply("❌ Impossibile determinare il canale di testo o il suo genitore.")
+                    .setEphemeral(true).queue();
+            return;
+        }
+
         Category category = channel.getParentCategory();
         if (category == null || (!category.getId().equals(config.getDesputesCategory()) && !category.getName().equalsIgnoreCase("Ninja Disputes"))) {
-           // if (category == null || (!category.getId().equals("1386825398402285599") && !category.getName().equalsIgnoreCase("Ninja Disputes"))) {
-
-                // Non è un canale nella categoria ticket, esci senza fare nulla
+            // Canale non nella categoria giusta, esci senza fare nulla
             return;
         }
 
         String topic = channel.getTopic();
         if (topic == null || !topic.contains("Ticket Owner ID:")) {
-            event.deferReply(true).queue(); // deferReply con ephemeral = true
-            event.getHook().sendMessage("❌ Ticket owner ID not found in the topic.").queue();
+            event.deferReply(true).queue();
+            event.getHook().sendMessage("❌ Ticket owner ID non trovato nel topic.").queue();
             return;
         }
 
         String userId = topic.replaceAll(".*Ticket Owner ID:\\s*", "").trim();
         Member ticketOwner = guild.getMemberById(userId);
         if (ticketOwner == null) {
-            event.reply("❌ Could not find the ticket owner.").setEphemeral(true).queue();
+            event.reply("❌ Impossibile trovare il proprietario del ticket.")
+                    .setEphemeral(true).queue();
             return;
         }
 
-        switch (buttonId) {
+        switch (componentId) {
             case "ticket:close":
                 channel.getPermissionOverride(ticketOwner).getManager()
                         .deny(Permission.VIEW_CHANNEL).queue();
 
                 channel.getManager().setName("closed-" + channel.getName()).queue();
 
-                event.reply("🔒 Ticket has been closed.")
-                        .addActionRow(Button.success("ticket:reopen", "Reopen Ticket")).queue();
+                event.reply("🔒 Ticket chiuso.")
+                        .addActionRow(Button.success("ticket:reopen", "Riapri Ticket")).queue();
                 break;
 
             case "ticket:reopen":
                 channel.getPermissionOverride(ticketOwner).getManager()
                         .grant(Permission.VIEW_CHANNEL).queue();
-                event.reply("🔓 Ticket has been reopened.").queue();
+                event.reply("🔓 Ticket riaperto.").queue();
+                break;
+
+            default:
+                // Gestione altri bottoni o dropdown se serve
                 break;
         }
-
     }
 }
